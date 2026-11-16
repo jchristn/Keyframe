@@ -480,7 +480,9 @@
     "toast": {
       "submitted": "Kerja {{id}} diterima."
     },
-    "languagePlaceholder": "en"
+    "languagePlaceholder": "en",
+    "emptyTitle": "Belum ada kerja video",
+    "emptyMessage": "Pilih fail atau URL di atas dan hantar. Kemajuan, babak, transkrip dan hasil dipaparkan di sini."
   },
   "samples": {
     "image": {
@@ -603,7 +605,7 @@
     "jsonTitle": "JSON kerja",
     "autoRefresh": "Dimuat semula setiap beberapa saat semasa kerja dalam baris gilir atau sedang berjalan.",
     "emptyTitle": "Belum ada kerja",
-    "emptyMessage": "Analisis video dijalankan sebagai kerja. Hantar satu dari Analisis video.",
+    "emptyMessage": "Analisis video dan audio dijalankan sebagai kerja. Hantar satu daripada Analisis video atau Analisis audio.",
     "emptyFiltered": "Tiada kerja yang sepadan dengan penapis ini",
     "emptyFilteredMessage": "Kosongkan atau ubah penapis untuk melihat lebih banyak kerja.",
     "toast": {
@@ -1266,18 +1268,20 @@
     "transcribeRequired": "Transkripsi diperlukan: ringkasan dan medan dihasilkan daripada transkrip.",
     "summaryHelp": "Ditulis oleh titik akhir teks daripada transkrip.",
     "submit": "Hantar kerja audio",
-    "jobTitle": "Kerja",
-    "openJob": "Buka kerja",
-    "polling": "Menyemak kemajuan setiap beberapa saat. Anda boleh meninggalkan halaman ini; kerja akan terus berjalan.",
     "emptyTitle": "Belum ada kerja audio",
     "emptyMessage": "Pilih fail atau URL di atas dan hantar. Kemajuan, transkrip, dan hasil dipaparkan di sini.",
     "toast": {
-      "submitted": "Kerja audio {{id}} dimasukkan ke dalam baris gilir.",
-      "cancelFailed": "Tidak dapat membatalkan kerja: {{message}}"
+      "submitted": "Kerja audio {{id}} dimasukkan ke dalam baris gilir."
     },
     "errors": {
       "notSupported": "Pelayan ini tidak menyokong analisis audio (POST /v1.0/audio tidak ditemui)."
     }
+  },
+  "analysisJob": {
+    "title": "Kerja",
+    "openJob": "Buka kerja",
+    "polling": "Menyemak kemajuan setiap beberapa saat. Anda boleh meninggalkan halaman ini; kerja akan terus berjalan.",
+    "cancelFailed": "Tidak dapat membatalkan kerja: {{message}}"
   },
   "segments": {
     "uploadedTitle": "Media sumber telah dimuat naik",

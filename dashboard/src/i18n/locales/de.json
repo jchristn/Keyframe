@@ -484,7 +484,9 @@
     "toast": {
       "submitted": "Job {{id}} angenommen."
     },
-    "languagePlaceholder": "en"
+    "languagePlaceholder": "en",
+    "emptyTitle": "Noch kein Video-Job",
+    "emptyMessage": "Wählen Sie oben eine Datei oder URL und senden Sie sie ab. Fortschritt, Szenen, Transkript und Ergebnisse erscheinen hier."
   },
   "samples": {
     "image": {
@@ -613,7 +615,7 @@
     "jsonTitle": "Job-JSON",
     "autoRefresh": "Wird alle paar Sekunden aktualisiert, solange Jobs warten oder laufen.",
     "emptyTitle": "Noch keine Jobs",
-    "emptyMessage": "Videoanalysen laufen als Jobs. Übermitteln Sie einen über Video analysieren.",
+    "emptyMessage": "Video- und Audioanalysen laufen als Jobs. Starten Sie eine über Video analysieren oder Audio analysieren.",
     "emptyFiltered": "Keine Jobs entsprechen diesen Filtern",
     "emptyFilteredMessage": "Setzen Sie die Filter zurück oder ändern Sie sie, um mehr Jobs zu sehen.",
     "toast": {
@@ -1282,18 +1284,20 @@
     "transcribeRequired": "Die Transkription ist erforderlich: Zusammenfassung und Felder werden aus dem Transkript erstellt.",
     "summaryHelp": "Wird vom Text-Endpunkt aus dem Transkript erstellt.",
     "submit": "Audio-Job übermitteln",
-    "jobTitle": "Job",
-    "openJob": "Job öffnen",
-    "polling": "Der Fortschritt wird alle paar Sekunden geprüft. Sie können diese Seite verlassen; der Job läuft weiter.",
     "emptyTitle": "Noch kein Audio-Job",
     "emptyMessage": "Wählen Sie oben eine Datei oder URL und übermitteln Sie sie. Fortschritt, Transkript und Ergebnisse erscheinen hier.",
     "toast": {
-      "submitted": "Audio-Job {{id}} in Warteschlange gestellt.",
-      "cancelFailed": "Der Job konnte nicht abgebrochen werden: {{message}}"
+      "submitted": "Audio-Job {{id}} in Warteschlange gestellt."
     },
     "errors": {
       "notSupported": "Dieser Server unterstützt keine Audioanalyse (POST /v1.0/audio wurde nicht gefunden)."
     }
+  },
+  "analysisJob": {
+    "title": "Job",
+    "openJob": "Job öffnen",
+    "polling": "Der Fortschritt wird alle paar Sekunden geprüft. Sie können diese Seite verlassen; der Job läuft weiter.",
+    "cancelFailed": "Der Job konnte nicht abgebrochen werden: {{message}}"
   },
   "segments": {
     "uploadedTitle": "Die Quellmedien wurden hochgeladen",

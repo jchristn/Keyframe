@@ -484,7 +484,9 @@
     "toast": {
       "submitted": "Trabajo {{id}} aceptado."
     },
-    "languagePlaceholder": "en"
+    "languagePlaceholder": "en",
+    "emptyTitle": "Aún no hay trabajo de vídeo",
+    "emptyMessage": "Elija un archivo o una URL arriba y envíelo. El progreso, las escenas, la transcripción y los resultados aparecen aquí."
   },
   "samples": {
     "image": {
@@ -613,7 +615,7 @@
     "jsonTitle": "JSON del trabajo",
     "autoRefresh": "Se actualiza cada pocos segundos mientras haya trabajos en cola o en ejecución.",
     "emptyTitle": "Aún no hay trabajos",
-    "emptyMessage": "Los análisis de vídeo se ejecutan como trabajos. Envíe uno desde Analizar vídeo.",
+    "emptyMessage": "Los análisis de vídeo y audio se ejecutan como trabajos. Envíe uno desde Analizar vídeo o Analizar audio.",
     "emptyFiltered": "Ningún trabajo coincide con estos filtros",
     "emptyFilteredMessage": "Borre o cambie los filtros para ver más trabajos.",
     "toast": {
@@ -1282,18 +1284,20 @@
     "transcribeRequired": "La transcripción es obligatoria: el resumen y los campos se generan a partir de la transcripción.",
     "summaryHelp": "Lo redacta el endpoint de texto a partir de la transcripción.",
     "submit": "Enviar trabajo de audio",
-    "jobTitle": "Trabajo",
-    "openJob": "Abrir trabajo",
-    "polling": "Comprobando el progreso cada pocos segundos. Puede salir de esta página; el trabajo sigue en ejecución.",
     "emptyTitle": "Aún no hay trabajos de audio",
     "emptyMessage": "Elija un archivo o una URL arriba y envíelo. El progreso, la transcripción y los resultados aparecerán aquí.",
     "toast": {
-      "submitted": "Trabajo de audio {{id}} en cola.",
-      "cancelFailed": "No se pudo cancelar el trabajo: {{message}}"
+      "submitted": "Trabajo de audio {{id}} en cola."
     },
     "errors": {
       "notSupported": "Este servidor no admite el análisis de audio (no se encontró POST /v1.0/audio)."
     }
+  },
+  "analysisJob": {
+    "title": "Trabajo",
+    "openJob": "Abrir trabajo",
+    "polling": "Comprobando el progreso cada pocos segundos. Puede salir de esta página; el trabajo sigue en ejecución.",
+    "cancelFailed": "No se pudo cancelar el trabajo: {{message}}"
   },
   "segments": {
     "uploadedTitle": "El contenido multimedia de origen se subió",

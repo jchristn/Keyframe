@@ -484,7 +484,9 @@
     "toast": {
       "submitted": "Job {{id}} accettato."
     },
-    "languagePlaceholder": "en"
+    "languagePlaceholder": "en",
+    "emptyTitle": "Nessun job video",
+    "emptyMessage": "Scegli un file o un URL qui sopra e invia. Avanzamento, scene, trascrizione e risultati compaiono qui."
   },
   "samples": {
     "image": {
@@ -613,7 +615,7 @@
     "jsonTitle": "JSON del job",
     "autoRefresh": "Aggiornamento automatico ogni pochi secondi mentre ci sono job in coda o in esecuzione.",
     "emptyTitle": "Ancora nessun job",
-    "emptyMessage": "Le analisi video vengono eseguite come job. Inviane uno da Analizza video.",
+    "emptyMessage": "Le analisi video e audio vengono eseguite come job. Inviane una da Analizza video o Analizza audio.",
     "emptyFiltered": "Nessun job corrisponde a questi filtri",
     "emptyFilteredMessage": "Cancella o modifica i filtri per vedere altri job.",
     "toast": {
@@ -1282,18 +1284,20 @@
     "transcribeRequired": "La trascrizione è obbligatoria: il riepilogo e i campi vengono prodotti dalla trascrizione.",
     "summaryHelp": "Scritto dall'endpoint di testo a partire dalla trascrizione.",
     "submit": "Invia job audio",
-    "jobTitle": "Job",
-    "openJob": "Apri job",
-    "polling": "Verifica dell'avanzamento ogni pochi secondi. Puoi lasciare questa pagina: il job continua a essere eseguito.",
     "emptyTitle": "Ancora nessun job audio",
     "emptyMessage": "Scegli un file o un URL qui sopra e invia. Avanzamento, trascrizione e risultati compaiono qui.",
     "toast": {
-      "submitted": "Job audio {{id}} in coda.",
-      "cancelFailed": "Impossibile annullare il job: {{message}}"
+      "submitted": "Job audio {{id}} in coda."
     },
     "errors": {
       "notSupported": "Questo server non supporta l'analisi audio (POST /v1.0/audio non trovato)."
     }
+  },
+  "analysisJob": {
+    "title": "Job",
+    "openJob": "Apri job",
+    "polling": "Verifica dell'avanzamento ogni pochi secondi. Puoi lasciare questa pagina: il job continua a essere eseguito.",
+    "cancelFailed": "Impossibile annullare il job: {{message}}"
   },
   "segments": {
     "uploadedTitle": "Il contenuto di origine è stato caricato",

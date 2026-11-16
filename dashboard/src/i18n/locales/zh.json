@@ -480,7 +480,9 @@
     "toast": {
       "submitted": "已接受任务 {{id}}。"
     },
-    "languagePlaceholder": "en"
+    "languagePlaceholder": "en",
+    "emptyTitle": "尚无视频任务",
+    "emptyMessage": "在上方选择文件或 URL 并提交。进度、场景、转录和结果会显示在这里。"
   },
   "samples": {
     "image": {
@@ -603,7 +605,7 @@
     "jsonTitle": "任务 JSON",
     "autoRefresh": "有任务排队或运行时，每隔几秒自动刷新。",
     "emptyTitle": "暂无任务",
-    "emptyMessage": "视频分析以任务形式运行。请在“分析视频”中提交任务。",
+    "emptyMessage": "视频和音频分析以任务形式运行。请从“分析视频”或“分析音频”提交。",
     "emptyFiltered": "没有符合这些筛选条件的任务",
     "emptyFilteredMessage": "清除或更改筛选条件以查看更多任务。",
     "toast": {
@@ -1266,18 +1268,20 @@
     "transcribeRequired": "必须进行转录：摘要和字段都根据转录文本生成。",
     "summaryHelp": "由文本端点根据转录文本生成。",
     "submit": "提交音频任务",
-    "jobTitle": "任务",
-    "openJob": "打开任务",
-    "polling": "每隔几秒检查一次进度。您可以离开此页面，任务会继续运行。",
     "emptyTitle": "尚无音频任务",
     "emptyMessage": "在上方选择文件或 URL 并提交。进度、转录文本和结果将显示在此处。",
     "toast": {
-      "submitted": "音频任务 {{id}} 已加入队列。",
-      "cancelFailed": "无法取消任务：{{message}}"
+      "submitted": "音频任务 {{id}} 已加入队列。"
     },
     "errors": {
       "notSupported": "此服务器不支持音频分析（未找到 POST /v1.0/audio）。"
     }
+  },
+  "analysisJob": {
+    "title": "任务",
+    "openJob": "打开任务",
+    "polling": "每隔几秒检查一次进度。您可以离开此页面，任务会继续运行。",
+    "cancelFailed": "无法取消任务：{{message}}"
   },
   "segments": {
     "uploadedTitle": "源媒体是上传的",

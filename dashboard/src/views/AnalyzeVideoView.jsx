@@ -1,5 +1,4 @@
-import { useId, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useLocale } from '../i18n';
@@ -8,8 +7,9 @@ import FieldBuilder from '../components/FieldBuilder';
 import ContextEditor, { createContextRow } from '../components/ContextEditor';
 import PresetBar from '../components/PresetBar';
 import Icon from '../components/Icon';
-import { ErrorBanner } from '../components/States';
+import { EmptyState, ErrorBanner } from '../components/States';
 import { MediaInput, ModelPicker, SnippetPanel, SummarizeOptions, toSummarizeSpec } from '../components/AnalysisParts';
+import AnalysisJobPanel, { useAnalysisJob } from '../components/AnalysisJobPanel';
 import useRemote from '../hooks/useRemote';
 import { createField, fromFieldSpec, toContextItems, toFieldSpec, validateFields } from '../utils/fields';
 import { STORAGE_KEYS } from '../utils/storage';
@@ -44,7 +44,6 @@ function NumberInput({ label, value, onChange, min, max, step = 1, help = null, 
 /** Video analysis: same builder as images plus scenes and transcription; submits a job. */
 function AnalyzeVideoView() {
   const { t } = useLocale();
-  const navigate = useNavigate();
   const { apiClient, serverUrl } = useAuth();
   const { notify } = useToast();
   const endpoints = useRemote(() => apiClient.listEndpoints(), [apiClient]);
@@ -68,6 +67,12 @@ function AnalyzeVideoView() {
   const [showErrors, setShowErrors] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const { job, result, resultError, canceling, track, cancel, loadResult, active } = useAnalysisJob();
+  const resultRef = useRef(null);
+
+  useEffect(() => {
+    if (job && resultRef.current && resultRef.current.scrollIntoView) resultRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [job && job.Id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const base = validateAnalysisForm({ media, summarize, extractEnable, fields, context });
   const sceneFieldErrors = scenes.Enable && sceneExtractEnable ? validateFields(sceneFields, sceneSummarize.Enable ? sceneSummarize.Key : null) : { byUid: {}, count: 0 };
@@ -124,11 +129,10 @@ function AnalyzeVideoView() {
     setError(null);
     try {
       const body = { ...requestBody, Video: await buildMediaSource(media) };
-      const result = await apiClient.analyzeVideo(body);
-      const job = result.data || {};
-      const id = job.Id;
-      notify('success', 'analyzeVideo.toast.submitted', { id });
-      navigate('/dashboard/jobs/' + encodeURIComponent(id));
+      const response = await apiClient.analyzeVideo(body);
+      const data = response.data || {};
+      if (!(response.status === 200 && data.MediaKind)) notify('success', 'analyzeVideo.toast.submitted', { id: data.Id });
+      track(data, 'Video');
     } catch (err) {
       setError(err);
     } finally {
@@ -305,7 +309,7 @@ function AnalyzeVideoView() {
               {noFunction ? t('analyzeVideo.errors.noFunction') : t('analyze.errors.fixFields')}
             </span>
           ) : null}
-          <button type="submit" className="button button-primary" disabled={submitting}>
+          <button type="submit" className="button button-primary" disabled={submitting || active}>
             <Icon name="play" />
             {submitting ? t('analyzeVideo.submitting') : t('analyzeVideo.submit')}
           </button>
@@ -315,6 +319,15 @@ function AnalyzeVideoView() {
           <SnippetPanel method="POST" url={serverUrl + '/v1.0/video'} body={requestBody} />
         </details>
       </form>
+      <div ref={resultRef}>
+        {job ? (
+          <AnalysisJobPanel job={job} file={media.mode === 'upload' ? media.file : null} result={result} resultError={resultError} onCancel={cancel} canceling={canceling} onRetryResult={() => loadResult(job.Id)} />
+        ) : (
+          <section className="panel">
+            <EmptyState icon="video" title={t('analyzeVideo.emptyTitle')} message={t('analyzeVideo.emptyMessage')} />
+          </section>
+        )}
+      </div>
     </div>
   );
 }

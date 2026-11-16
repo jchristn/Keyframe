@@ -484,7 +484,9 @@
     "toast": {
       "submitted": "Job {{id}} accepted."
     },
-    "languagePlaceholder": "en"
+    "languagePlaceholder": "en",
+    "emptyTitle": "No video job yet",
+    "emptyMessage": "Choose a file or URL above and submit. Progress, scenes, the transcript, and results appear here."
   },
   "samples": {
     "image": {
@@ -613,7 +615,7 @@
     "jsonTitle": "Job JSON",
     "autoRefresh": "Refreshing every few seconds while jobs are queued or running.",
     "emptyTitle": "No jobs yet",
-    "emptyMessage": "Video analyses run as jobs. Submit one from Analyze video.",
+    "emptyMessage": "Video and audio analyses run as jobs. Submit one from Analyze video or Analyze audio.",
     "emptyFiltered": "No jobs match these filters",
     "emptyFilteredMessage": "Clear or change the filters to see more jobs.",
     "toast": {
@@ -1282,18 +1284,20 @@
     "transcribeRequired": "Transcription is required: the summary and fields are produced from the transcript.",
     "summaryHelp": "Written by the text endpoint from the transcript.",
     "submit": "Submit audio job",
-    "jobTitle": "Job",
-    "openJob": "Open job",
-    "polling": "Checking progress every few seconds. You can leave this page; the job keeps running.",
     "emptyTitle": "No audio job yet",
     "emptyMessage": "Choose a file or URL above and submit. Progress, the transcript, and results appear here.",
     "toast": {
-      "submitted": "Audio job {{id}} queued.",
-      "cancelFailed": "Could not cancel the job: {{message}}"
+      "submitted": "Audio job {{id}} queued."
     },
     "errors": {
       "notSupported": "This server does not support audio analysis (POST /v1.0/audio was not found)."
     }
+  },
+  "analysisJob": {
+    "title": "Job",
+    "openJob": "Open job",
+    "polling": "Checking progress every few seconds. You can leave this page; the job keeps running.",
+    "cancelFailed": "Could not cancel the job: {{message}}"
   },
   "segments": {
     "uploadedTitle": "The source media was uploaded",

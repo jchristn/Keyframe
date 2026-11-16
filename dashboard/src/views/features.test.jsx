@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import AnalyticsView from './AnalyticsView';
 import AnalyzeAudioView, { buildAudioRequest } from './AnalyzeAudioView';
 import AnalyzeImageView from './AnalyzeImageView';
+import AnalyzeVideoView from './AnalyzeVideoView';
 import ApiExplorerView from './ApiExplorerView';
 import RequestHistoryView, { REQUEST_HISTORY_CHART_HEIGHT } from './RequestHistoryView';
 import JobDetailView from './JobDetailView';
@@ -163,6 +164,49 @@ describe('AnalyzeAudioView', () => {
       await waitFor(() => expect(api.getJobResult).toHaveBeenCalledWith('kfj_900'));
       expect(await screen.findByText(/audio analysis ships before the analytics page/)).toBeInTheDocument();
       expect(screen.getAllByRole('button', { name: 'Download audio' }).length).toBe(3);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe('AnalyzeVideoView', () => {
+  it('stays on the page like image and audio: polls the job and shows scenes when it finishes', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      const videoJob = (status) => audioJob(status, { Id: 'kfj_901', MediaKind: 'Video', SourceUrl: 'https://media.example.com/talk.mp4' });
+      const videoResult = {
+        ...audioResult(),
+        MediaKind: 'Video',
+        Results: { Summary: 'A keynote with slides about the product roadmap.' },
+        Scenes: [
+          { Index: 0, StartMs: 0, EndMs: 4000, Results: { Summary: 'Title slide.' }, Fields: [], Keyframes: [] },
+          { Index: 1, StartMs: 4000, EndMs: 9000, Results: { Summary: 'Speaker at a podium.' }, Fields: [], Keyframes: [] }
+        ]
+      };
+      const api = {
+        listEndpoints: vi.fn().mockResolvedValue(ENDPOINTS),
+        analyzeVideo: vi.fn().mockResolvedValue({ status: 202, data: videoJob('Queued') }),
+        getJob: vi.fn().mockResolvedValueOnce(videoJob('Running')).mockResolvedValue(videoJob('Succeeded')),
+        getJobResult: vi.fn().mockResolvedValue(videoResult)
+      };
+      renderWithProviders(<AnalyzeVideoView />, { auth: makeAuth({ apiClient: api }), route: '/dashboard/analyze/video' });
+      expect(screen.getByText('No video job yet')).toBeInTheDocument();
+      await user.type(screen.getByLabelText('Video URL'), 'https://media.example.com/talk.mp4');
+      await user.click(screen.getByRole('button', { name: 'Submit job' }));
+      await waitFor(() => expect(api.analyzeVideo).toHaveBeenCalled());
+      expect(await screen.findByText('kfj_901')).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Open job' })).toHaveAttribute('href', '/dashboard/jobs/kfj_901');
+      await act(async () => {
+        vi.advanceTimersByTime(1600);
+      });
+      await act(async () => {
+        vi.advanceTimersByTime(1600);
+      });
+      await waitFor(() => expect(api.getJobResult).toHaveBeenCalledWith('kfj_901'));
+      expect(await screen.findByRole('tab', { name: /Scenes/ })).toHaveAttribute('aria-selected', 'true');
+      expect(await screen.findByText('Title slide.')).toBeInTheDocument();
     } finally {
       vi.useRealTimers();
     }

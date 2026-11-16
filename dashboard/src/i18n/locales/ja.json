@@ -480,7 +480,9 @@
     "toast": {
       "submitted": "ジョブ {{id}} を受け付けました。"
     },
-    "languagePlaceholder": "en"
+    "languagePlaceholder": "en",
+    "emptyTitle": "動画ジョブはまだありません",
+    "emptyMessage": "上でファイルまたは URL を選んで送信してください。進捗、シーン、文字起こし、結果がここに表示されます。"
   },
   "samples": {
     "image": {
@@ -603,7 +605,7 @@
     "jsonTitle": "ジョブ JSON",
     "autoRefresh": "ジョブがキュー待ちまたは実行中の間は、数秒ごとに更新されます。",
     "emptyTitle": "ジョブはまだありません",
-    "emptyMessage": "動画の分析はジョブとして実行されます。「動画を分析」から送信してください。",
+    "emptyMessage": "動画と音声の分析はジョブとして実行されます。「動画を分析」または「音声を分析」から送信してください。",
     "emptyFiltered": "これらのフィルターに一致するジョブはありません",
     "emptyFilteredMessage": "フィルターをクリアまたは変更すると、さらにジョブが表示されます。",
     "toast": {
@@ -1266,18 +1268,20 @@
     "transcribeRequired": "文字起こしは必須です: 要約とフィールドは文字起こしから生成されます。",
     "summaryHelp": "テキストエンドポイントが文字起こしから作成します。",
     "submit": "音声ジョブを送信",
-    "jobTitle": "ジョブ",
-    "openJob": "ジョブを開く",
-    "polling": "数秒ごとに進捗を確認しています。このページを離れてもジョブは実行され続けます。",
     "emptyTitle": "音声ジョブはまだありません",
     "emptyMessage": "上でファイルまたは URL を選択して送信してください。進捗、文字起こし、結果がここに表示されます。",
     "toast": {
-      "submitted": "音声ジョブ {{id}} をキューに追加しました。",
-      "cancelFailed": "ジョブをキャンセルできませんでした: {{message}}"
+      "submitted": "音声ジョブ {{id}} をキューに追加しました。"
     },
     "errors": {
       "notSupported": "このサーバーは音声の分析に対応していません (POST /v1.0/audio が見つかりませんでした)。"
     }
+  },
+  "analysisJob": {
+    "title": "ジョブ",
+    "openJob": "ジョブを開く",
+    "polling": "数秒ごとに進捗を確認しています。このページを離れてもジョブは実行され続けます。",
+    "cancelFailed": "ジョブをキャンセルできませんでした: {{message}}"
   },
   "segments": {
     "uploadedTitle": "ソースメディアはアップロードされたものです",

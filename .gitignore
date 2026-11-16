@@ -54,3 +54,6 @@ Thumbs.db
 
 # Claude Code machine-local settings
 .claude/settings.local.json
+
+# Ollama models for the optional container (docker compose --profile ollama)
+docker/ollama-models/

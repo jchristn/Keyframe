@@ -1,9 +1,10 @@
 @echo off
 rem Factory reset for the Keyframe Docker stack. DESTRUCTIVE.
 rem
-rem Stops the stack, deletes its named volumes (database, media temp, logs, Prometheus, Tempo, Loki, Grafana,
-rem Whisper and Ollama models), removes any local data directories, restores keyframe.json from the factory copy (Ollama
-rem and Whisper endpoints, default keys), and brings the stack back up.
+rem Stops the stack, deletes its state volumes (database, media temp, logs, Prometheus, Tempo, Loki, Grafana),
+rem removes any local data directories, restores keyframe.json from the factory copy (Ollama and Whisper endpoints,
+rem default keys), and brings the stack back up. Downloaded models are kept: the Whisper model volume
+rem (keyframe_whisper-models) and the Ollama models in docker\ollama-models. Delete those by hand to reclaim space.
 rem
 rem Usage: reset.bat [-y]    (-y skips the confirmation prompt)
 
@@ -32,9 +33,15 @@ if /i not "%confirm%"=="y" (
 
 :confirmed
 echo.
-echo Stopping containers and deleting volumes...
-call docker compose -f "%COMPOSE_FILE%" --profile ollama down -v --remove-orphans
+echo Stopping containers...
+call docker compose -f "%COMPOSE_FILE%" --profile ollama down --remove-orphans
 if errorlevel 1 echo Warning: docker compose down failed; continuing with the local reset.
+
+echo.
+echo Deleting state volumes (model caches are kept)...
+for %%V in (data temp logs prometheus tempo loki grafana) do (
+    docker volume rm keyframe_%%V >nul 2>&1 && echo   removed keyframe_%%V
+)
 
 echo.
 echo Removing local data directories...

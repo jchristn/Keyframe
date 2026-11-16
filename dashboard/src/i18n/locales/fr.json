@@ -484,7 +484,9 @@
     "toast": {
       "submitted": "Tâche {{id}} acceptée."
     },
-    "languagePlaceholder": "en"
+    "languagePlaceholder": "en",
+    "emptyTitle": "Aucune tâche vidéo pour l'instant",
+    "emptyMessage": "Choisissez un fichier ou une URL ci-dessus et lancez l'analyse. La progression, les scènes, la transcription et les résultats s'affichent ici."
   },
   "samples": {
     "image": {
@@ -613,7 +615,7 @@
     "jsonTitle": "JSON de la tâche",
     "autoRefresh": "Actualisation toutes les quelques secondes tant que des tâches sont en file d'attente ou en cours.",
     "emptyTitle": "Aucune tâche pour l'instant",
-    "emptyMessage": "Les analyses vidéo s'exécutent sous forme de tâches. Soumettez-en une depuis Analyser une vidéo.",
+    "emptyMessage": "Les analyses vidéo et audio s'exécutent comme des tâches. Lancez-en une depuis Analyser une vidéo ou Analyser un audio.",
     "emptyFiltered": "Aucune tâche ne correspond à ces filtres",
     "emptyFilteredMessage": "Effacez ou modifiez les filtres pour voir plus de tâches.",
     "toast": {
@@ -1282,18 +1284,20 @@
     "transcribeRequired": "La transcription est obligatoire : le résumé et les champs sont produits à partir de la transcription.",
     "summaryHelp": "Rédigé par le point de terminaison texte à partir de la transcription.",
     "submit": "Soumettre la tâche audio",
-    "jobTitle": "Tâche",
-    "openJob": "Ouvrir la tâche",
-    "polling": "Vérification de la progression toutes les quelques secondes. Vous pouvez quitter cette page ; la tâche continue de s'exécuter.",
     "emptyTitle": "Aucune tâche audio pour l'instant",
     "emptyMessage": "Choisissez un fichier ou une URL ci-dessus et soumettez. La progression, la transcription et les résultats s'affichent ici.",
     "toast": {
-      "submitted": "Tâche audio {{id}} mise en file d'attente.",
-      "cancelFailed": "Impossible d'annuler la tâche : {{message}}"
+      "submitted": "Tâche audio {{id}} mise en file d'attente."
     },
     "errors": {
       "notSupported": "Ce serveur ne prend pas en charge l'analyse audio (POST /v1.0/audio est introuvable)."
     }
+  },
+  "analysisJob": {
+    "title": "Tâche",
+    "openJob": "Ouvrir la tâche",
+    "polling": "Vérification de la progression toutes les quelques secondes. Vous pouvez quitter cette page ; la tâche continue de s'exécuter.",
+    "cancelFailed": "Impossible d'annuler la tâche : {{message}}"
   },
   "segments": {
     "uploadedTitle": "Le média source a été importé",

@@ -3,7 +3,7 @@
 # host (host.docker.internal:11434): ollama pull gemma3:4b qwen3-vl:8b gpt-oss:20b
 #
 #   docker compose up -d                    # everything
-#   docker compose --profile ollama up -d   # also start a local Ollama for vision models
+#   docker compose --profile ollama up -d   # also run Ollama in a container (models persist in ./ollama-models)
 #
 # Host ports (plan D7): server 8700, dashboard 8701, MCP 8702 (HTTP) / 8703 (TCP) / 8704 (WebSocket), Whisper 8000,
 # Grafana 3700, Prometheus 9700, Tempo 3710, OTLP 4717 (gRPC) / 4718 (HTTP).
@@ -139,8 +139,13 @@ services:
   # ------------------------------------------------------------------
   # Optional Ollama in a container: docker compose --profile ollama up -d
   # The default endpoints use the host's Ollama (host.docker.internal:11434). To use this container instead,
-  # stop the host Ollama (both bind port 11434), point the ollama-* endpoints in keyframe.json at
-  # http://ollama:11434, and pull the models, for example: docker exec keyframe-ollama ollama pull gemma3:4b
+  # stop the host Ollama (both bind port 11434) and point the ollama-* endpoints in keyframe.json at
+  # http://ollama:11434.
+  #
+  # Models live in ./ollama-models on the host (a bind mount, not a named volume), so they survive restarts,
+  # "docker compose down", "docker compose down -v", image updates, and factory resets. Delete that folder to
+  # reclaim the space. keyframe-ollama-init pulls the default models on first start; it is a quick no-op once
+  # they are present. Pull others with: docker exec keyframe-ollama ollama pull <model>
   # ------------------------------------------------------------------
   ollama:
     container_name: keyframe-ollama
@@ -148,8 +153,11 @@ services:
     profiles: ["ollama"]
     ports:
       - "127.0.0.1:11434:11434"
+    environment:
+      # Keep a model loaded for 30 minutes after its last request instead of the default 5.
+      OLLAMA_KEEP_ALIVE: "30m"
     volumes:
-      - ollama:/root/.ollama
+      - ./ollama-models:/root/.ollama
     healthcheck:
       # The ollama image ships no curl; the CLI queries the local API instead.
       test: ["CMD", "ollama", "list"]
@@ -158,6 +166,21 @@ services:
       retries: 2
       start_period: 20s
     restart: unless-stopped
+
+  # Pulls the default models into ./ollama-models once (gemma3:4b about 3.3 GB, qwen3-vl:8b about 6.1 GB,
+  # gpt-oss:20b about 13 GB). Models already present are verified and skipped without downloading again.
+  # Re-run with: docker compose --profile ollama run --rm keyframe-ollama-init
+  keyframe-ollama-init:
+    container_name: keyframe-ollama-init
+    image: ollama/ollama:0.12.6
+    profiles: ["ollama"]
+    environment:
+      OLLAMA_HOST: "http://ollama:11434"
+    entrypoint: ["/bin/sh", "-c", "for m in gemma3:4b qwen3-vl:8b gpt-oss:20b; do ollama pull $$m || exit 1; done"]
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: "no"
 
   # ------------------------------------------------------------------
   # Observability
@@ -275,7 +298,6 @@ volumes:
   temp:
   logs:
   whisper-models:
-  ollama:
   prometheus:
   tempo:
   loki:

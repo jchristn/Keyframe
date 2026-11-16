@@ -1,9 +1,10 @@
 #!/bin/bash
 # Factory reset for the Keyframe Docker stack. DESTRUCTIVE.
 #
-# Stops the stack, deletes its named volumes (database, media temp, logs, Prometheus, Tempo, Loki, Grafana,
-# Whisper and Ollama models), removes any local data directories, restores keyframe.json from the factory copy (Ollama
-# and Whisper endpoints, default keys), and brings the stack back up.
+# Stops the stack, deletes its state volumes (database, media temp, logs, Prometheus, Tempo, Loki, Grafana),
+# removes any local data directories, restores keyframe.json from the factory copy (Ollama and Whisper endpoints,
+# default keys), and brings the stack back up. Downloaded models are kept: the Whisper model volume
+# (keyframe_whisper-models) and the Ollama models in docker/ollama-models. Delete those by hand to reclaim space.
 #
 # Usage: ./reset.sh [-y]    (-y skips the confirmation prompt)
 
@@ -32,10 +33,16 @@ if [ "${1:-}" != "-y" ]; then
 fi
 
 echo ""
-echo "Stopping containers and deleting volumes..."
-if ! docker compose -f "${compose_file}" --profile ollama down -v --remove-orphans; then
+echo "Stopping containers..."
+if ! docker compose -f "${compose_file}" --profile ollama down --remove-orphans; then
     echo "Warning: docker compose down failed; continuing with the local reset."
 fi
+
+echo ""
+echo "Deleting state volumes (model caches are kept)..."
+for v in data temp logs prometheus tempo loki grafana; do
+    docker volume rm "keyframe_${v}" > /dev/null 2>&1 && echo "  removed keyframe_${v}" || true
+done
 
 echo ""
 echo "Removing local data directories..."
