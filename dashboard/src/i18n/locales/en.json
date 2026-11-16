@@ -59,7 +59,9 @@
       "operate": "Operate",
       "observability": "Observability",
       "system": "System"
-    }
+    },
+    "audio": "Audio",
+    "analytics": "Analytics"
   },
   "roles": {
     "admin": "Admin",
@@ -127,7 +129,7 @@
     "notFound": "Not found.",
     "conflict": "The request conflicts with the current state.",
     "unprocessable": "The media could not be downloaded or decoded.",
-    "tooManyRequests": "Too many requests.",
+    "tooManyRequests": "Wait a moment and retry. For video and audio jobs, the queue may be full; cancel or let running jobs finish.",
     "badGateway": "The model endpoint is unreachable.",
     "timeout": "The request timed out.",
     "server": "The server hit an internal error (HTTP {{status}}).",
@@ -215,7 +217,11 @@
       "duration": "Duration {{value}}",
       "model": "{{endpoint}} {{model}}",
       "tokens": "Tokens {{value}}",
-      "attempts": "Attempts {{value}}"
+      "attempts": "Attempts {{value}}",
+      "queue": "Queued {{value}}",
+      "ttft": "First token after {{value}}",
+      "generation": "Generation {{value}}",
+      "tokensPerSecond": "{{value}} tokens per second"
     },
     "columns": {
       "purpose": "Purpose",
@@ -228,8 +234,18 @@
       "completionTokens": "Completion tokens",
       "totalTokens": "Total tokens",
       "finishReason": "Finish reason",
-      "status": "Status"
-    }
+      "status": "Status",
+      "queue": "Queue",
+      "ttft": "First token",
+      "generation": "Generation",
+      "tokensPerSecond": "Tokens/s",
+      "cachedTokens": "Cached tokens",
+      "reasoningTokens": "Reasoning tokens"
+    },
+    "avgTtft": "Avg time to first token",
+    "avgTokensPerSecond": "Avg tokens per second",
+    "cachedTokens": "Cached tokens",
+    "reasoningTokens": "Reasoning tokens"
   },
   "fieldBuilder": {
     "title": "Fields",
@@ -308,7 +324,10 @@
     "errors": {
       "fileRequired": "Choose a file to analyze.",
       "urlInvalid": "Enter an absolute http or https URL."
-    }
+    },
+    "dropAudio": "Drop an audio or video file here or choose a file.",
+    "audioUrl": "Audio or video URL",
+    "audioUploadHint": "MP3, WAV, FLAC, M4A, OGG, Opus, and WebM audio work. For a video file only the audio track is used. Uploads are sent as base64, which adds about a third to the size."
   },
   "model": {
     "endpoint": "Endpoint",
@@ -317,7 +336,8 @@
     "useDefault": "Server default",
     "name": "Model override",
     "namePlaceholder": "Endpoint default model",
-    "textHelp": "The text endpoint handles text-only steps such as the whole-video summary. It defaults to Inference.DefaultText, then to the vision endpoint."
+    "textHelp": "The text endpoint handles text-only steps such as the whole-video summary. It defaults to Inference.DefaultText, then to the vision endpoint.",
+    "transcriptionEndpoint": "Transcription endpoint"
   },
   "summarize": {
     "enable": "Summarize",
@@ -463,7 +483,8 @@
     },
     "toast": {
       "submitted": "Job {{id}} accepted."
-    }
+    },
+    "languagePlaceholder": "en"
   },
   "samples": {
     "image": {
@@ -477,11 +498,14 @@
     "video": {
       "topics": "List the main topics covered.",
       "showsText": "Is prominent on-screen text visible?"
+    },
+    "audio": {
+      "speakerCount": "How many distinct speakers are there?"
     }
   },
   "home": {
     "title": "Home",
-    "summary": "What Keyframe is doing right now: server health, request traffic, video jobs, and model endpoints.",
+    "summary": "What Keyframe is doing right now: server health, request traffic, analysis jobs, and model endpoints.",
     "ctaLabel": "Common workflows",
     "cta": {
       "image": "Analyze an image",
@@ -489,7 +513,9 @@
       "video": "Analyze a video",
       "videoSub": "Scenes, transcript, and fields as a job",
       "explorer": "Open API Explorer",
-      "explorerSub": "Call any route from the browser"
+      "explorerSub": "Call any route from the browser",
+      "audio": "Analyze audio",
+      "audioSub": "Transcript, summary, and fields as a job"
     },
     "kpiLabel": "Key indicators",
     "kpi": {
@@ -514,8 +540,8 @@
       "ffmpegMissing": "ffmpeg is not available on the server. Video analysis and image normalization will fail until it is installed.",
       "endpointUnhealthy": "Endpoint {{name}} is unhealthy. {{message}}",
       "noActiveEndpoints": "No model endpoints are active. Add or enable one in Settings.",
-      "failedJobs_one": "{{count}} video job has failed.",
-      "failedJobs_other": "{{count}} video jobs have failed.",
+      "failedJobs_one": "{{count}} job has failed.",
+      "failedJobs_other": "{{count}} jobs have failed.",
       "failedRequests_one": "{{count}} request failed in this range.",
       "failedRequests_other": "{{count}} requests failed in this range.",
       "authDisabled": "Authentication is turned off. Anyone who can reach the server can use it."
@@ -527,7 +553,7 @@
     },
     "recentJobs": "Recent jobs",
     "viewAllJobs": "View all jobs",
-    "noJobs": "No video jobs yet."
+    "noJobs": "No jobs yet."
   },
   "externalServices": {
     "title": "External services",
@@ -537,14 +563,23 @@
     "copyUrl": "Copy URL",
     "note": "These are local development defaults. Change the Grafana password before exposing the stack, and keep Prometheus and Tempo off public interfaces. A service that is not part of this deployment will not load.",
     "services": {
-      "grafana": { "name": "Grafana", "purpose": "Dashboards for traffic, pipeline stages, and model calls" },
-      "prometheus": { "name": "Prometheus", "purpose": "Metrics store and query UI" },
-      "tempo": { "name": "Tempo", "purpose": "Trace store (readiness endpoint)" }
+      "grafana": {
+        "name": "Grafana",
+        "purpose": "Dashboards for traffic, pipeline stages, and model calls"
+      },
+      "prometheus": {
+        "name": "Prometheus",
+        "purpose": "Metrics store and query UI"
+      },
+      "tempo": {
+        "name": "Tempo",
+        "purpose": "Trace store (readiness endpoint)"
+      }
     }
   },
   "jobs": {
     "title": "Jobs",
-    "summary": "Video analysis jobs with live progress. Open one to see scenes, transcript, and telemetry; cancel running jobs or delete finished ones.",
+    "summary": "Video and audio analysis jobs with live progress. Open one to see scenes, transcript, and telemetry; cancel running jobs or delete finished ones.",
     "newJob": "New video job",
     "upload": "Uploaded data",
     "columns": {
@@ -589,7 +624,7 @@
   },
   "jobDetail": {
     "title": "Job",
-    "summary": "Status, progress, and results for one video analysis job.",
+    "summary": "Status, progress, and results for one analysis job.",
     "back": "All jobs",
     "jobJson": "Job JSON",
     "download": "Download result",
@@ -776,7 +811,7 @@
     "search": "Search method, path, or summary",
     "noMatches": "No operations match.",
     "operations": "Operations",
-    "pickOperation": "Pick an operation on the left.",
+    "pickOperation": "Choose an operation from the list above.",
     "resolvedUrl": "Resolved URL",
     "copyUrl": "Copy URL",
     "pathParams": "Path parameters",
@@ -814,7 +849,14 @@
     "noHistory": "Requests you execute are listed here. Keys are never stored.",
     "load": "Load",
     "confirmTitle": "Run a destructive request?",
-    "confirmMessage": "{{method}} {{path}} changes or deletes data on the server. Continue?"
+    "confirmMessage": "{{method}} {{path}} changes or deletes data on the server. Continue?",
+    "pickerLabel": "Choose an API operation",
+    "operationCount_one": "{{count}} operation",
+    "operationCount_other": "{{count}} operations",
+    "binaryTitle": "Binary response",
+    "binaryMessage": "{{type}}, {{size}}. Download it to open.",
+    "binaryFilename": "response.bin",
+    "downloadBody": "Download"
   },
   "settings": {
     "title": "Settings",
@@ -900,20 +942,57 @@
       "7": "7 Highest"
     },
     "addItem": {
-      "Auth": { "AccessKeys": "Add access key" },
-      "Inference": { "Endpoints": "Add endpoint" },
-      "Logging": { "Servers": "Add syslog server" }
+      "Auth": {
+        "AccessKeys": "Add access key"
+      },
+      "Inference": {
+        "Endpoints": "Add endpoint"
+      },
+      "Logging": {
+        "Servers": "Add syslog server"
+      }
     },
     "groups": {
-      "rest": { "title": "REST server", "help": "Listener address and request size limit." },
-      "auth": { "title": "Authentication", "help": "The admin key and the named access keys callers use. Keys are masked; change one only when you mean to." },
-      "database": { "title": "Database", "help": "Where jobs, results, and request history are stored." },
-      "inference": { "title": "Inference", "help": "Model endpoints, defaults, retries, and timeouts." },
-      "media": { "title": "Media", "help": "ffmpeg, download limits, and image sizing." },
-      "jobs": { "title": "Jobs", "help": "Video job concurrency, queue size, and retention." },
-      "requestHistory": { "title": "Request history", "help": "Capture of requests and bodies for the Request History page." },
-      "logging": { "title": "Logging", "help": "Console, file, and syslog output." },
-      "telemetry": { "title": "Telemetry", "help": "OpenTelemetry export, Prometheus scrape endpoint, and Loki logs." }
+      "rest": {
+        "title": "REST server",
+        "help": "Listener address and request size limit."
+      },
+      "auth": {
+        "title": "Authentication",
+        "help": "The admin key and the named access keys callers use. Keys are masked; change one only when you mean to."
+      },
+      "database": {
+        "title": "Database",
+        "help": "Where jobs, results, and request history are stored."
+      },
+      "inference": {
+        "title": "Inference",
+        "help": "Model endpoints, defaults, retries, and timeouts."
+      },
+      "media": {
+        "title": "Media",
+        "help": "ffmpeg, download limits, and image sizing."
+      },
+      "jobs": {
+        "title": "Jobs",
+        "help": "Video and audio job concurrency, queue size, and retention."
+      },
+      "requestHistory": {
+        "title": "Request history",
+        "help": "Capture of requests and bodies for the Request History page."
+      },
+      "logging": {
+        "title": "Logging",
+        "help": "Console, file, and syslog output."
+      },
+      "telemetry": {
+        "title": "Telemetry",
+        "help": "OpenTelemetry export, Prometheus scrape endpoint, and Loki logs."
+      },
+      "analytics": {
+        "title": "Analytics",
+        "help": "Per-analysis performance records shown on the Analytics page, and how long they are kept."
+      }
     },
     "fields": {
       "Rest": {
@@ -981,7 +1060,8 @@
         "MaxParallelFfmpeg": "Max parallel ffmpeg",
         "FfmpegTimeoutMs": "ffmpeg timeout (ms)",
         "MaxVideoDurationMs": "Max video duration (ms)",
-        "TranscriptionChunkSeconds": "Transcription chunk (seconds)"
+        "TranscriptionChunkSeconds": "Transcription chunk (seconds)",
+        "MaxSegmentMs": "Max segment length (ms)"
       },
       "Jobs": {
         "MaxConcurrentJobs": "Max concurrent jobs",
@@ -1022,6 +1102,10 @@
         "ExportLogs": "Export logs",
         "MetricExportIntervalMs": "Metric export interval (ms)",
         "TraceSamplingRatio": "Trace sampling ratio"
+      },
+      "Analytics": {
+        "Enabled": "Record analytics",
+        "RetentionDays": "Retention (days)"
       }
     }
   },
@@ -1104,7 +1188,7 @@
       "Transcription": "Transcription"
     },
     "provider": {
-      "Mock": "Mock",
+      "Mock": "Mock (tests only)",
       "Ollama": "Ollama",
       "OllamaCloud": "Ollama Cloud",
       "OpenAi": "OpenAI",
@@ -1154,6 +1238,315 @@
     "health": {
       "Healthy": "Healthy",
       "Degraded": "Degraded"
+    }
+  },
+  "units": {
+    "tokensPerSecond": "{{value}} tok/s",
+    "realtimeFactor": "{{value}}x"
+  },
+  "appearance": {
+    "title": "Appearance",
+    "open": "Appearance: palette and light or dark mode",
+    "mode": "Mode",
+    "palette": "Palette",
+    "modes": {
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
+    "help": "Saved in this browser. System follows your operating system's light or dark setting.",
+    "palettes": {
+      "slate": "Slate",
+      "indigoNight": "Indigo Night",
+      "fjord": "Fjord",
+      "nocturne": "Nocturne",
+      "solstice": "Solstice",
+      "cocoa": "Cocoa",
+      "duskRose": "Dusk Rose",
+      "metroNight": "Metro Night",
+      "forest": "Forest",
+      "ocean": "Ocean",
+      "amber": "Amber",
+      "graphite": "Graphite",
+      "lavender": "Lavender",
+      "mint": "Mint",
+      "sandstone": "Sandstone",
+      "terracotta": "Terracotta"
+    }
+  },
+  "analyzeAudio": {
+    "title": "Analyze audio",
+    "summary": "Transcribe an audio file (or the audio track of a video), then summarize it and extract typed fields from the transcript. Runs as a job; progress and the transcript appear below.",
+    "modelHelp": "The transcription endpoint turns speech into text (default Inference.DefaultTranscription). The text endpoint writes the summary and fields from the transcript (default Inference.DefaultText).",
+    "languageHelp": "Optional ISO-639 code. Leave empty to let the model detect the language.",
+    "transcribeRequired": "Transcription is required: the summary and fields are produced from the transcript.",
+    "summaryHelp": "Written by the text endpoint from the transcript.",
+    "submit": "Submit audio job",
+    "jobTitle": "Job",
+    "openJob": "Open job",
+    "polling": "Checking progress every few seconds. You can leave this page; the job keeps running.",
+    "emptyTitle": "No audio job yet",
+    "emptyMessage": "Choose a file or URL above and submit. Progress, the transcript, and results appear here.",
+    "toast": {
+      "submitted": "Audio job {{id}} queued.",
+      "cancelFailed": "Could not cancel the job: {{message}}"
+    },
+    "errors": {
+      "notSupported": "This server does not support audio analysis (POST /v1.0/audio was not found)."
+    }
+  },
+  "segments": {
+    "uploadedTitle": "The source media was uploaded",
+    "uploadedMessage": "Keyframe does not keep uploaded media, so clips, audio, and frames need the original file again. Choose it from disk to enable the download buttons.",
+    "usingFile": "Using {{name}} ({{size}}) as the source for downloads.",
+    "chooseFile": "Choose original file",
+    "chooseOther": "Choose a different file",
+    "clearFile": "Clear",
+    "reading": "Reading...",
+    "needSource": "Choose the original file first",
+    "download": {
+      "Video": "Download clip",
+      "Audio": "Download audio",
+      "Frame": "Download frame"
+    },
+    "hint": {
+      "Video": "Cut this range as an MP4 clip",
+      "Audio": "Cut this range as MP3 audio",
+      "Frame": "Save the frame at the start of this scene as a JPEG"
+    },
+    "toast": {
+      "downloaded": "Saved {{name}}.",
+      "failed": "Download failed: {{message}}"
+    }
+  },
+  "analytics": {
+    "title": "Analytics",
+    "summary": "Performance over time for image, video, and audio analysis: volume, success rate, latency percentiles, model timing, tokens, and per-analysis detail.",
+    "loading": "Loading analytics...",
+    "notAdminTitle": "Analytics require the admin key",
+    "notAdminMessage": "Sign in with the admin key to see performance and telemetry across all analyses.",
+    "unavailableTitle": "Analytics are not available on this server",
+    "unavailableMessage": "GET /v1.0/analytics/summary was not found. Upgrade the server to a version with analytics, and check that Analytics.Enabled is on in Settings.",
+    "emptyTitle": "No analyses in this range",
+    "emptyMessage": "Run an analysis or widen the time range. Every finished image, video, and audio analysis is recorded here.",
+    "windowNote": "Showing {{from}} to {{to}}, grouped by {{bucket}}.",
+    "ranges": {
+      "1h": "1 hour",
+      "24h": "24 hours",
+      "7d": "7 days",
+      "30d": "30 days",
+      "custom": "Custom"
+    },
+    "buckets": {
+      "minute": "minute",
+      "hour": "hour",
+      "day": "day"
+    },
+    "filters": {
+      "label": "Analytics filters",
+      "range": "Time range",
+      "mediaKind": "Media",
+      "endpoint": "Endpoint",
+      "model": "Model",
+      "modelPlaceholder": "Any model"
+    },
+    "kpi": {
+      "label": "Analytics indicators",
+      "analyses": "Analyses",
+      "analysesSub": "{{ok}} succeeded, {{failed}} failed",
+      "successRate": "Success rate",
+      "analysisP50": "Analysis time (p50)",
+      "queueP95": "Queue wait (p95)",
+      "ttftP50": "Time to first token (p50)",
+      "tokensPerSecond": "Tokens per second (p50)",
+      "modelCalls": "Model calls",
+      "modelCallsSub": "{{failed}} failed, {{retries}} retries",
+      "totalTokens": "Total tokens",
+      "perAnalysis": "{{value}} per analysis on average",
+      "p95": "p95 {{value}}",
+      "avg": "Average {{value}}",
+      "generationP50": "Generation p50 {{value}}"
+    },
+    "byKind": {
+      "label": "By media kind",
+      "count_one": "{{value}} analysis",
+      "count_other": "{{value}} analyses",
+      "none": "No analyses of this kind in range.",
+      "analysisP50": "Analysis p50",
+      "analysisP95": "Analysis p95",
+      "realtimeP50": "Realtime factor p50",
+      "imagesIn": "Images in",
+      "mediaSizeP50": "Size p50",
+      "mediaDurationP50": "Duration p50",
+      "tokens": "Tokens"
+    },
+    "charts": {
+      "volume": "Analyses over time",
+      "volumeHint": "Click a bar to list its analyses below.",
+      "volumeAria_one": "Analyses over time, {{count}} analysis in range",
+      "volumeAria_other": "Analyses over time, {{count}} analyses in range",
+      "latency": "Timing over time",
+      "metric": "Metric",
+      "latencyAria": "{{metric}} percentiles over time",
+      "noSamples": "No samples for this metric in range.",
+      "tokens": "Tokens over time",
+      "successRate": "Success rate over time"
+    },
+    "series": {
+      "succeeded": "Succeeded",
+      "failed": "Failed",
+      "promptTokens": "Prompt tokens",
+      "completionTokens": "Completion tokens",
+      "successRate": "Success rate"
+    },
+    "stats": {
+      "avg": "Average",
+      "p50": "p50",
+      "p90": "p90",
+      "p95": "p95",
+      "p99": "p99",
+      "max": "Max"
+    },
+    "metrics": {
+      "AnalysisMs": "Analysis time",
+      "QueueWaitMs": "Queue wait",
+      "ModelCallMs": "Model call time",
+      "TimeToFirstTokenMs": "Time to first token",
+      "GenerationMs": "Generation time",
+      "TokensPerSecond": "Tokens per second",
+      "TokensPerAnalysis": "Tokens per analysis",
+      "RealtimeFactor": "Realtime factor",
+      "MediaDurationMs": "Media duration",
+      "MediaBytes": "Media size"
+    },
+    "columns": {
+      "metric": "Metric",
+      "samples": "Samples"
+    },
+    "distributions": {
+      "title": "Distributions",
+      "help": "Model call metrics are measured per call; the others per analysis. Realtime factor is analysis time divided by media duration (video and audio only); below 1 is faster than realtime."
+    },
+    "totals": {
+      "title": "Tokens and inputs",
+      "promptTokens": "Prompt tokens",
+      "completionTokens": "Completion tokens",
+      "cachedTokens": "Cached tokens",
+      "reasoningTokens": "Reasoning tokens",
+      "totalTokens": "Total tokens",
+      "tokensPerAnalysisP50": "Tokens per analysis (p50)",
+      "tokensPerAnalysisP95": "Tokens per analysis (p95)",
+      "modelCalls": "Model calls",
+      "failedModelCalls": "Failed model calls",
+      "retries": "Retries",
+      "repairAttempts": "Repair attempts",
+      "inputImages": "Input images",
+      "inputImageBytes": "Image bytes sent",
+      "inputAudioBytes": "Audio bytes sent",
+      "scenes": "Scenes",
+      "transcriptCharacters": "Transcript characters"
+    },
+    "byModel": {
+      "title": "By model",
+      "empty": "No model calls in range.",
+      "endpoint": "Endpoint",
+      "provider": "Provider",
+      "model": "Model",
+      "calls": "Calls",
+      "failed": "Failed",
+      "durationP50": "Duration p50",
+      "durationP95": "Duration p95",
+      "ttftP50": "First token p50",
+      "ttftP95": "First token p95",
+      "generationP50": "Generation p50",
+      "tokensPerSecondP50": "Tokens/s p50",
+      "promptTokens": "Prompt tokens",
+      "completionTokens": "Completion tokens"
+    },
+    "byStage": {
+      "title": "By stage",
+      "empty": "No stage timings in range.",
+      "stage": "Stage",
+      "share": "Relative p50"
+    },
+    "byPurpose": {
+      "title": "By purpose",
+      "empty": "No model calls in range.",
+      "purpose": "Purpose",
+      "calls": "Calls",
+      "failed": "Failed",
+      "durationP50": "Duration p50",
+      "durationP95": "Duration p95",
+      "ttftP50": "First token p50"
+    },
+    "list": {
+      "title": "Recent analyses",
+      "empty": "No analyses match",
+      "emptyMessage": "Widen the time range or clear the filters.",
+      "filterNote": "Uses the time range and media filter above. Endpoint and model filters apply to the charts only.",
+      "statusFilter": "Status",
+      "started": "Started",
+      "kind": "Kind",
+      "status": "Status",
+      "analysisTime": "Analysis time",
+      "queueWait": "Queue wait",
+      "mediaDuration": "Media duration",
+      "mediaSize": "Media size",
+      "realtimeFactor": "Realtime",
+      "model": "Model",
+      "calls": "Calls",
+      "tokens": "Tokens",
+      "principal": "Principal",
+      "id": "ID",
+      "bucketTitle": "Filtered to one chart bucket",
+      "bucketMessage": "Analyses from {{from}} to {{to}}.",
+      "bucketClear": "Show the whole range"
+    },
+    "detail": {
+      "title": "Analysis detail",
+      "subtitle": "{{kind}} analysis, {{time}}",
+      "notFound": "This analysis record no longer exists.",
+      "error": "Error",
+      "timeline": "Timeline",
+      "timelineHelp": "Stages, then every model call attempt. Call bars show queue wait (lightest), waiting for the first token, and generation.",
+      "calls": "Model calls",
+      "jsonTitle": "Analysis record",
+      "openJob": "Open job",
+      "deleteTitle": "Delete analysis record",
+      "deleteMessage": "Delete analytics record {{id}}? The job and its result are not affected.",
+      "callsValue": "{{calls}} ({{failed}} failed)",
+      "retriesValue": "{{retries}} retries, {{repairs}} repairs",
+      "imagesValue": "{{count}} ({{size}})",
+      "fieldsValue": "{{count}} ({{invalid}} invalid)",
+      "fields": {
+        "kind": "Media kind",
+        "principal": "Principal",
+        "started": "Started",
+        "completed": "Completed",
+        "analysisTime": "Analysis time",
+        "queueWait": "Queue wait",
+        "mediaDuration": "Media duration",
+        "mediaSize": "Media size",
+        "realtimeFactor": "Realtime factor",
+        "visionModel": "Vision model",
+        "textModel": "Text model",
+        "transcriptionModel": "Transcription model",
+        "modelCalls": "Model calls",
+        "retries": "Retries and repairs",
+        "promptTokens": "Prompt tokens",
+        "completionTokens": "Completion tokens",
+        "cachedTokens": "Cached tokens",
+        "reasoningTokens": "Reasoning tokens",
+        "totalTokens": "Total tokens",
+        "inputImages": "Input images",
+        "inputAudio": "Audio sent",
+        "scenes": "Scenes",
+        "transcriptCharacters": "Transcript characters",
+        "fields": "Fields"
+      }
+    },
+    "toast": {
+      "deleted": "Analysis record {{id}} deleted."
     }
   }
 }

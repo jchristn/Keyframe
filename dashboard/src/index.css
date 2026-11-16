@@ -1,5 +1,5 @@
-/* Keyframe dashboard design tokens and base styles. Light theme by default; dark theme via
-   [data-theme="dark"] on <html>. Accent is the teal from the Keyframe mark. */
+/* Keyframe dashboard design tokens and base styles. Color tokens are defined per palette and
+   mode in src/theme and selected by data-palette and data-theme on <html>. */
 
 :root {
   --font-ui: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Noto Sans CJK SC', 'Noto Sans JP',
@@ -34,94 +34,8 @@
   --sidebar-w-collapsed: 60px;
   --topbar-h: 56px;
 
-  /* Light palette */
-  --bg: #f4f6f8;
-  --surface: #ffffff;
-  --surface-alt: #f8fafb;
-  --surface-sunken: #eef1f4;
-  --border: #dde3e8;
-  --border-strong: #c5cdd5;
-  --text: #17212b;
-  --text-muted: #5b6875;
-  --text-faint: #7d8893;
-  --accent: #0f7a70;
-  --accent-hover: #0b665d;
-  --accent-soft: #e2f3f1;
-  --accent-text: #0b6158;
-  --on-accent: #ffffff;
-  --success: #1c8a4a;
-  --success-soft: #e3f4ea;
-  --warning: #a66300;
-  --warning-soft: #fdf1dc;
-  --danger: #c4372f;
-  --danger-soft: #fbe7e5;
-  --info: #2364aa;
-  --info-soft: #e5eef9;
-  --neutral-soft: #edf0f3;
-  --focus: #2b8fd6;
-  --shadow-sm: 0 1px 2px rgba(16, 24, 32, 0.06);
-  --shadow-lg: 0 18px 50px rgba(16, 24, 32, 0.22);
-  --scrim: rgba(12, 18, 24, 0.45);
-
-  --chart-success: #2a9d5c;
-  --chart-failure: #d4483e;
-  --chart-stage: #0f7a70;
-  --chart-call: #5b7fc7;
-  --chart-grid: #e6eaee;
-
-  --code-bg: #f6f8fa;
-  --json-key: #0b6158;
-  --json-string: #a33a1c;
-  --json-number: #2364aa;
-  --json-bool: #7b3fb0;
-  --json-null: #7d8893;
-
-  color-scheme: light;
-}
-
-[data-theme='dark'] {
-  --bg: #0f1418;
-  --surface: #161d22;
-  --surface-alt: #1b232a;
-  --surface-sunken: #11171c;
-  --border: #29333c;
-  --border-strong: #3a4651;
-  --text: #e6ecf0;
-  --text-muted: #9eabb7;
-  --text-faint: #7e8b97;
-  --accent: #2bb3a3;
-  --accent-hover: #3cc6b6;
-  --accent-soft: #123430;
-  --accent-text: #5fd3c5;
-  --on-accent: #06221f;
-  --success: #49c27b;
-  --success-soft: #143222;
-  --warning: #e3a33f;
-  --warning-soft: #352712;
-  --danger: #f06a60;
-  --danger-soft: #3a1a18;
-  --info: #6aa8ec;
-  --info-soft: #152a42;
-  --neutral-soft: #222b33;
-  --focus: #5bb3f0;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 18px 50px rgba(0, 0, 0, 0.6);
-  --scrim: rgba(0, 0, 0, 0.6);
-
-  --chart-success: #3fb871;
-  --chart-failure: #ec5f55;
-  --chart-stage: #2bb3a3;
-  --chart-call: #7b9be0;
-  --chart-grid: #26313a;
-
-  --code-bg: #10161b;
-  --json-key: #5fd3c5;
-  --json-string: #f0a27a;
-  --json-number: #8cbcf3;
-  --json-bool: #c79bf0;
-  --json-null: #7e8b97;
-
-  color-scheme: dark;
+  /* Colors come from the active palette (src/theme): every palette and mode is injected as
+     :root[data-palette][data-theme] token blocks before the first render. */
 }
 
 *,
@@ -138,7 +52,7 @@ body,
 
 body {
   margin: 0;
-  font-family: var(--font-ui);
+  font-family: var(--locale-font, var(--font-ui));
   font-size: var(--fs-base);
   line-height: var(--lh-base);
   color: var(--text);
@@ -166,7 +80,7 @@ ol {
 }
 
 a {
-  color: var(--accent-text);
+  color: var(--primary-text);
   text-decoration: none;
 }
 
@@ -187,7 +101,7 @@ pre,
 }
 
 ::selection {
-  background: var(--accent-soft);
+  background: var(--primary-soft);
 }
 
 .sr-only {
@@ -212,11 +126,48 @@ textarea {
   background: var(--surface);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
-  padding: 6px 10px;
-  min-height: var(--control-h);
+  padding: 0 10px;
   width: 100%;
   min-width: 0;
   transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+/* Every single-line control shares one height token so inputs, selects, and buttons that
+   sit side by side line up exactly. Compact controls use --control-h-sm. */
+/* :where() keeps this at element specificity so compact variants can override it. */
+input:where(:not([type='checkbox'], [type='radio'], [type='range'], [type='file'])),
+select {
+  height: var(--control-h);
+  line-height: calc(var(--control-h) - 2px);
+}
+
+textarea {
+  padding: 6px 10px;
+}
+
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-inline-end: 28px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--text-muted) 50%), linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+  background-position: calc(100% - 15px) 50%, calc(100% - 10px) 50%;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+  text-overflow: ellipsis;
+}
+
+[dir='rtl'] select {
+  background-position: 10px 50%, 15px 50%;
+}
+
+select[multiple] {
+  height: auto;
+  background-image: none;
+  padding-inline-end: 10px;
+}
+
+input[type='number'] {
+  font-variant-numeric: tabular-nums;
 }
 
 input.mono,
@@ -236,7 +187,7 @@ input[type='radio'] {
   height: 16px;
   min-height: 0;
   padding: 0;
-  accent-color: var(--accent);
+  accent-color: var(--primary);
   flex: none;
 }
 
@@ -244,8 +195,8 @@ input:focus,
 select:focus,
 textarea:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 input[aria-invalid='true'],
@@ -267,20 +218,25 @@ input:-webkit-autofill {
   -webkit-box-shadow: 0 0 0 40px var(--surface) inset;
 }
 
-.select-compact {
+.select-compact,
+select.select-compact {
   width: auto;
   min-width: 72px;
   max-width: 220px;
-  min-height: var(--control-h-sm);
-  padding: 3px 8px;
+  height: var(--control-h-sm);
+  line-height: calc(var(--control-h-sm) - 2px);
+  padding-block: 0;
+  padding-inline-start: 8px;
   font-size: var(--fs-sm);
 }
 
-.input-compact {
+.input-compact,
+input.input-compact {
   width: 220px;
   max-width: 100%;
-  min-height: var(--control-h-sm);
-  padding: 3px 8px;
+  height: var(--control-h-sm);
+  line-height: calc(var(--control-h-sm) - 2px);
+  padding: 0 8px;
   font-size: var(--fs-sm);
 }
 
@@ -290,8 +246,8 @@ input:-webkit-autofill {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: var(--control-h);
-  padding: 6px 14px;
+  height: var(--control-h);
+  padding: 0 14px;
   border: 1px solid transparent;
   border-radius: var(--radius-md);
   font: inherit;
@@ -314,8 +270,8 @@ input:-webkit-autofill {
 }
 
 .button-sm {
-  min-height: var(--control-h-sm);
-  padding: 3px 10px;
+  height: var(--control-h-sm);
+  padding: 0 10px;
   font-size: var(--fs-sm);
 }
 
@@ -324,12 +280,12 @@ input:-webkit-autofill {
 }
 
 .button-primary {
-  background: var(--accent);
-  color: var(--on-accent);
+  background: var(--primary);
+  color: var(--primary-contrast);
 }
 
 .button-primary:hover:not(:disabled) {
-  background: var(--accent-hover);
+  background: var(--primary-hover);
 }
 
 .button-secondary {
@@ -344,17 +300,17 @@ input:-webkit-autofill {
 }
 
 .button-danger {
-  background: var(--danger);
-  color: #fff;
+  background: var(--danger-solid);
+  color: var(--danger-contrast);
 }
 
 .button-danger:hover:not(:disabled) {
-  filter: brightness(1.08);
+  filter: brightness(1.06);
 }
 
 .button-link {
   background: transparent;
-  color: var(--accent-text);
+  color: var(--primary-text);
   padding-inline: 4px;
 }
 
@@ -371,8 +327,8 @@ input:-webkit-autofill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: var(--control-h);
+  height: var(--control-h);
   flex: none;
   padding: 0;
   border: 1px solid transparent;
@@ -393,6 +349,14 @@ input:-webkit-autofill {
   cursor: not-allowed;
 }
 
+.icon-button-sm,
+.panel-actions .icon-button,
+.table-toolbar .icon-button,
+.pagination .icon-button {
+  width: var(--control-h-sm);
+  height: var(--control-h-sm);
+}
+
 .copy-button {
   width: 26px;
   height: 26px;
@@ -411,7 +375,7 @@ input:-webkit-autofill {
   width: 18px;
   height: 18px;
   border: 2px solid var(--border-strong);
-  border-top-color: var(--accent);
+  border-top-color: var(--primary);
   border-radius: 50%;
   animation: spin 0.9s linear infinite;
 }
@@ -479,4 +443,24 @@ input:-webkit-autofill {
 
 [dir='rtl'] .chevron-flip {
   transform: scaleX(-1);
+}
+
+/* Code, IDs, URLs, and paths read left to right inside right-to-left text. */
+[dir='rtl'] .mono:not(td):not(th):not(dd),
+[dir='rtl'] code,
+[dir='rtl'] pre,
+[dir='rtl'] input[type='url'] {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+[dir='rtl'] textarea.mono,
+[dir='rtl'] input.mono {
+  text-align: left;
+}
+
+/* Placeholders are prose, so they use the interface font even in monospace inputs. */
+input.mono::placeholder,
+textarea.mono::placeholder {
+  font-family: var(--locale-font, var(--font-ui));
 }

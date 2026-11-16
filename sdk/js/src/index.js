@@ -125,7 +125,8 @@ export function guessMediaType(name) {
   const types = {
     jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp', bmp: 'image/bmp',
     tif: 'image/tiff', tiff: 'image/tiff', mp4: 'video/mp4', m4v: 'video/mp4', mov: 'video/quicktime',
-    webm: 'video/webm', mkv: 'video/x-matroska', avi: 'video/x-msvideo'
+    webm: 'video/webm', mkv: 'video/x-matroska', avi: 'video/x-msvideo', mp3: 'audio/mpeg', wav: 'audio/wav',
+    flac: 'audio/flac', m4a: 'audio/mp4', aac: 'audio/aac', ogg: 'audio/ogg', oga: 'audio/ogg', opus: 'audio/ogg'
   };
   return types[match[1].toLowerCase()];
 }
@@ -201,6 +202,46 @@ function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
 
+function headerNumber(headers, name) {
+  const value = headers.get(name);
+  if (value === null || value === '') return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function parseFilename(disposition) {
+  if (!disposition) return null;
+  const extended = /filename\*\s*=\s*([^']*)'[^']*'([^;]+)/i.exec(disposition);
+  if (extended) {
+    try {
+      return decodeURIComponent(extended[2].trim());
+    } catch {
+      return extended[2].trim();
+    }
+  }
+  const quoted = /filename\s*=\s*"([^"]*)"/i.exec(disposition);
+  if (quoted) return quoted[1];
+  const bare = /filename\s*=\s*([^;]+)/i.exec(disposition);
+  return bare ? bare[1].trim() : null;
+}
+
+async function submitJob(client, path, request, options) {
+  if (!request || typeof request !== 'object') throw new TypeError('request is required.');
+  const raw = await client._checked('POST', path, request, options);
+  const body = JSON.parse(raw.body);
+  if (raw.statusCode === 202 || typeof body.Status === 'string') {
+    return { statusCode: raw.statusCode, jobId: body.Id, job: body, result: null };
+  }
+  return { statusCode: raw.statusCode, jobId: raw.headers.get('x-keyframe-job-id') || '', job: null, result: body };
+}
+
+async function waitForJobResult(client, submitted, options) {
+  if (submitted.result) return submitted.result;
+  const job = isTerminalStatus(submitted.job.Status) ? submitted.job : await client.jobs.wait(submitted.jobId, options);
+  if (job.Status !== 'Succeeded') throw new KeyframeJobError(job);
+  return client.jobs.getResult(job.Id, options);
+}
+
 /**
  * Client for the Keyframe REST API.
  */
@@ -235,11 +276,14 @@ export class KeyframeClient {
     this.whoami = new WhoAmIClient(this);
     this.image = new ImageClient(this);
     this.video = new VideoClient(this);
+    this.audio = new AudioClient(this);
+    this.segments = new SegmentsClient(this);
     this.probe = new ProbeClient(this);
     this.jobs = new JobsClient(this);
     this.endpoints = new EndpointsClient(this);
     this.requestHistory = new RequestHistoryClient(this);
     this.settings = new SettingsClient(this);
+    this.analytics = new AnalyticsClient(this);
   }
 
   /** Whether an API key is configured. The key itself is not readable. */
@@ -275,9 +319,27 @@ export class KeyframeClient {
    * @param {{signal?: AbortSignal}} [options]
    * @returns {Promise<{statusCode: number, body: string, headers: Headers, requestId: string|null}>}
    */
-  async sendRaw(method, path, body, options = {}) {
+  sendRaw(method, path, body, options = {}) {
+    return this._send(method, path, body, options, false);
+  }
+
+  /**
+   * Like sendRaw, but reads the response body as bytes. Use it for binary routes such as POST /v1.0/segment.
+   * @param {string} method
+   * @param {string} path Path relative to the base URL, optionally with a query string.
+   * @param {object} [body] Serialized as JSON.
+   * @param {{signal?: AbortSignal}} [options]
+   * @returns {Promise<{statusCode: number, body: Uint8Array, headers: Headers, requestId: string|null}>}
+   */
+  sendRawBytes(method, path, body, options = {}) {
+    return this._send(method, path, body, options, true);
+  }
+
+  /** @internal */
+  async _send(method, path, body, options = {}, binary = false) {
+    options = options || {};
     const url = this.baseUrl + (path.startsWith('/') ? path : '/' + path);
-    const headers = { Accept: 'application/json' };
+    const headers = { Accept: binary ? '*/*' : 'application/json' };
     if (this.#apiKey) {
       if (this.authHeader === 'x-api-key') headers['x-api-key'] = this.#apiKey;
       else headers.Authorization = 'Bearer ' + this.#apiKey;
@@ -299,30 +361,31 @@ export class KeyframeClient {
       throw new KeyframeConnectionError(`${method} ${path} failed: unable to reach ${this.baseUrl}.`, err);
     }
 
-    let text;
+    let content;
     try {
-      text = await response.text();
+      content = binary ? new Uint8Array(await response.arrayBuffer()) : await response.text();
     } catch (err) {
       if (options.signal && options.signal.aborted) throw err;
       if (timeout.aborted) throw new KeyframeTimeoutError(`${method} ${path} did not complete within ${this.timeoutMs}ms.`);
       throw new KeyframeConnectionError(`${method} ${path} failed while reading the response.`, err);
     }
-    return { statusCode: response.status, body: text, headers: response.headers, requestId: response.headers.get('x-request-id') };
+    return { statusCode: response.status, body: content, headers: response.headers, requestId: response.headers.get('x-request-id') };
   }
 
   /** @internal */
-  async _checked(method, path, body, options) {
-    const raw = await this.sendRaw(method, path, body, options);
+  async _checked(method, path, body, options, binary = false) {
+    const raw = await this._send(method, path, body, options, binary);
     if (raw.statusCode < 200 || raw.statusCode > 299) {
+      const text = binary ? new TextDecoder().decode(raw.body) : raw.body;
       let apiError = null;
-      if (raw.body) {
+      if (text) {
         try {
-          apiError = JSON.parse(raw.body);
+          apiError = JSON.parse(text);
         } catch {
           apiError = null;
         }
       }
-      throw new KeyframeApiError(method, path, raw.statusCode, apiError, raw.body, raw.requestId);
+      throw new KeyframeApiError(method, path, raw.statusCode, apiError, text, raw.requestId);
     }
     return raw;
   }
@@ -408,14 +471,8 @@ class VideoClient {
   /**
    * POST /v1.0/video. Resolves {statusCode, jobId, job, result}: exactly one of job or result is set.
    */
-  async analyze(request, options) {
-    if (!request || typeof request !== 'object') throw new TypeError('request is required.');
-    const raw = await this._c._checked('POST', '/v1.0/video', request, options);
-    const body = JSON.parse(raw.body);
-    if (raw.statusCode === 202 || typeof body.Status === 'string') {
-      return { statusCode: raw.statusCode, jobId: body.Id, job: body, result: null };
-    }
-    return { statusCode: raw.statusCode, jobId: raw.headers.get('x-keyframe-job-id') || '', job: null, result: body };
+  analyze(request, options) {
+    return submitJob(this._c, '/v1.0/video', request, options);
   }
 
   /**
@@ -424,11 +481,63 @@ class VideoClient {
    * @param {{pollIntervalMs?: number, timeoutMs?: number, signal?: AbortSignal}} [options]
    */
   async analyzeAndWait(request, options = {}) {
-    const submitted = await this.analyze(request, options);
-    if (submitted.result) return submitted.result;
-    const job = isTerminalStatus(submitted.job.Status) ? submitted.job : await this._c.jobs.wait(submitted.jobId, options);
-    if (job.Status !== 'Succeeded') throw new KeyframeJobError(job);
-    return this._c.jobs.getResult(job.Id, options);
+    return waitForJobResult(this._c, await this.analyze(request, options), options);
+  }
+}
+
+class AudioClient {
+  constructor(client) { this._c = client; }
+
+  /**
+   * POST /v1.0/audio. Resolves {statusCode, jobId, job, result}: exactly one of job or result is set.
+   * 202 returns the queued job; with Wait, 200 returns the AudioAnalysisResponse, or the job when it finished without succeeding.
+   */
+  analyze(request, options) {
+    return submitJob(this._c, '/v1.0/audio', request, options);
+  }
+
+  /**
+   * Submit, poll until terminal, then fetch the result. Rejects with KeyframeJobError when the job does not succeed.
+   * @param {object} request
+   * @param {{pollIntervalMs?: number, timeoutMs?: number, signal?: AbortSignal}} [options]
+   */
+  async analyzeAndWait(request, options = {}) {
+    return waitForJobResult(this._c, await this.analyze(request, options), options);
+  }
+}
+
+class SegmentsClient {
+  constructor(client) { this._c = client; }
+
+  /**
+   * POST /v1.0/segment with ResponseFormat Binary. Resolves
+   * {data, mediaType, filename, startMs, endMs, durationMs, sizeBytes, requestId}; data holds the media bytes.
+   * @param {object} request SegmentRequest (Source, StartMs, EndMs, Output, Format, MaxEdge).
+   * @param {{signal?: AbortSignal}} [options]
+   */
+  async get(request, options) {
+    if (!request || typeof request !== 'object') throw new TypeError('request is required.');
+    const raw = await this._c._checked('POST', '/v1.0/segment', { ...request, ResponseFormat: 'Binary' }, options, true);
+    return {
+      data: raw.body,
+      mediaType: raw.headers.get('content-type'),
+      filename: parseFilename(raw.headers.get('content-disposition')),
+      startMs: headerNumber(raw.headers, 'x-keyframe-segment-start-ms'),
+      endMs: headerNumber(raw.headers, 'x-keyframe-segment-end-ms'),
+      durationMs: headerNumber(raw.headers, 'x-keyframe-segment-duration-ms'),
+      sizeBytes: raw.body.byteLength,
+      requestId: raw.requestId
+    };
+  }
+
+  /**
+   * POST /v1.0/segment with ResponseFormat Json. Resolves a SegmentResponse with the media as base64 in Data.
+   * @param {object} request SegmentRequest.
+   * @param {{signal?: AbortSignal}} [options]
+   */
+  getJson(request, options) {
+    if (!request || typeof request !== 'object') throw new TypeError('request is required.');
+    return this._c._json('POST', '/v1.0/segment', { ...request, ResponseFormat: 'Json' }, options);
   }
 }
 
@@ -455,7 +564,7 @@ class JobsClient {
     return this._c._json('GET', '/v1.0/jobs/' + segment(id, 'id'), undefined, options);
   }
 
-  /** GET /v1.0/jobs/{id}/result. 409 until the job succeeded. */
+  /** GET /v1.0/jobs/{id}/result. 409 until the job succeeded. Video and audio jobs return their analysis response. */
   getResult(id, options) {
     return this._c._json('GET', '/v1.0/jobs/' + segment(id, 'id') + '/result', undefined, options);
   }
@@ -560,6 +669,45 @@ class SettingsClient {
   /** POST /v1.0/restart (admin). */
   restart(options) {
     return this._c._json('POST', '/v1.0/restart', undefined, options);
+  }
+}
+
+const ANALYTICS = '/v1.0/analytics';
+
+class AnalyticsClient {
+  constructor(client) { this._c = client; }
+
+  /** GET /v1.0/analytics/summary (admin) with optional {fromUtc, toUtc, bucket, mediaKind, endpoint, model}. */
+  summary(filter = {}, options) {
+    const query = buildQuery({
+      fromUtc: filter.fromUtc, toUtc: filter.toUtc, bucket: filter.bucket, mediaKind: filter.mediaKind,
+      endpoint: filter.endpoint, model: filter.model
+    });
+    return this._c._json('GET', ANALYTICS + '/summary' + query, undefined, options);
+  }
+
+  /** GET /v1.0/analytics/analyses (admin) with optional {mediaKind, success, fromUtc, toUtc, maxResults, skip}. Calls is null on listed records. */
+  listAnalyses(filter = {}, options) {
+    const query = buildQuery({
+      mediaKind: filter.mediaKind, success: filter.success, fromUtc: filter.fromUtc, toUtc: filter.toUtc,
+      maxResults: filter.maxResults, skip: filter.skip
+    });
+    return this._c._json('GET', ANALYTICS + '/analyses' + query, undefined, options);
+  }
+
+  /** GET /v1.0/analytics/analyses/{id} (admin). Includes every model call attempt in Calls. */
+  getAnalysis(id, options) {
+    return this._c._json('GET', ANALYTICS + '/analyses/' + segment(id, 'id'), undefined, options);
+  }
+
+  /** DELETE /v1.0/analytics/analyses/{id} (admin). Resolves {DeletedCount: 1}. */
+  deleteAnalysis(id, options) {
+    return this._c._json('DELETE', ANALYTICS + '/analyses/' + segment(id, 'id'), undefined, options);
+  }
+
+  /** DELETE /v1.0/analytics/analyses (admin) with optional {olderThanUtc}. Without a cutoff, deletes every analysis. */
+  deleteAnalyses(filter = {}, options) {
+    return this._c._json('DELETE', ANALYTICS + '/analyses' + buildQuery({ olderThanUtc: filter.olderThanUtc }), undefined, options);
   }
 }
 

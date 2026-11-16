@@ -84,6 +84,7 @@ namespace Keyframe.Server
         private EndpointHealthService? _EndpointHealth = null;
         private RequestHistoryCaptureService? _Capture = null;
         private MaintenanceService? _Maintenance = null;
+        private AnalyticsService? _Analytics = null;
         private ServerContext? _Context = null;
         private Webserver? _Server = null;
         private RouteRegistrar? _Routes = null;
@@ -131,8 +132,10 @@ namespace Keyframe.Server
             _EndpointHealth = new EndpointHealthService(_Analysis, live, _Logging);
             _Capture = new RequestHistoryCaptureService(_Database, live, _Logging);
             _Maintenance = new MaintenanceService(_Database, live, _Auth, _Logging);
+            _Analytics = new AnalyticsService(_Database, live, _Logging);
+            _Analysis.Completed = _Analytics.Record;
 
-            _Context = new ServerContext(_SettingsManager, _Database, _Analysis, _Auth, _Jobs, _EndpointHealth, _Capture, _Logging);
+            _Context = new ServerContext(_SettingsManager, _Database, _Analysis, _Auth, _Jobs, _EndpointHealth, _Capture, _Analytics, _Logging);
             _Context.RequestRestart = () => RestartRequested?.Invoke(this, EventArgs.Empty);
 
             try
@@ -150,6 +153,7 @@ namespace Keyframe.Server
             if (!settings.Auth.RequireAuthentication) _Logging.Warn(Header + "authentication is DISABLED (Auth.RequireAuthentication = false); use this only for local development");
             if (settings.Auth.AdminApiKey == "keyframeadmin") _Logging.Warn(Header + "the admin key is the default; change Auth.AdminApiKey or set " + SettingsManager.AdminKeyVariable + " before sharing this server");
 
+            _Analytics.Start();
             await _Jobs.StartAsync(token).ConfigureAwait(false);
             _Capture.Start();
             _EndpointHealth.Start();
@@ -163,6 +167,7 @@ namespace Keyframe.Server
             new EndpointRoutes(_Context).Register(_Routes);
             new SettingsRoutes(_Context).Register(_Routes);
             new RequestHistoryRoutes(_Context).Register(_Routes);
+            new AnalyticsRoutes(_Context).Register(_Routes);
 
             _Server.Start(token);
             _Logging.Info(Header + "listening on " + BaseUrl + " (" + _Routes.Registered.Count + " routes)");
@@ -188,6 +193,7 @@ namespace Keyframe.Server
             _EndpointHealth?.Stop();
             if (_Jobs != null) await _Jobs.StopAsync(token).ConfigureAwait(false);
             if (_Capture != null) await _Capture.StopAsync(token).ConfigureAwait(false);
+            if (_Analytics != null) await _Analytics.StopAsync(token).ConfigureAwait(false);
             if (_Database != null) await _Database.CloseAsync(token).ConfigureAwait(false);
             _Logging.Info(Header + "stopped");
         }
@@ -219,6 +225,7 @@ namespace Keyframe.Server
                 _EndpointHealth?.Dispose();
                 _Jobs?.Dispose();
                 _Capture?.Dispose();
+                _Analytics?.Dispose();
                 _Analysis?.Dispose();
                 _Database?.Dispose();
             }
@@ -264,11 +271,13 @@ namespace Keyframe.Server
                 openApi.EnableOpenApi = true;
                 openApi.EnableSwaggerUi = true;
                 openApi.Tags.Add(new OpenApiTag { Name = "System", Description = "Health, home page, and identity." });
-                openApi.Tags.Add(new OpenApiTag { Name = "Analysis", Description = "Image and video analysis and media probing." });
-                openApi.Tags.Add(new OpenApiTag { Name = "Jobs", Description = "Background video jobs." });
+                openApi.Tags.Add(new OpenApiTag { Name = "Analysis", Description = "Image, video, and audio analysis and media probing." });
+                openApi.Tags.Add(new OpenApiTag { Name = "Segments", Description = "Cut a video clip, audio clip, or frame out of a source." });
+                openApi.Tags.Add(new OpenApiTag { Name = "Jobs", Description = "Background video and audio jobs." });
                 openApi.Tags.Add(new OpenApiTag { Name = "Endpoints", Description = "Configured model endpoints." });
                 openApi.Tags.Add(new OpenApiTag { Name = "Settings", Description = "Server settings and restart (admin)." });
                 openApi.Tags.Add(new OpenApiTag { Name = "Request History", Description = "Captured HTTP requests." });
+                openApi.Tags.Add(new OpenApiTag { Name = "Analytics", Description = "Stored analysis and model call statistics (admin)." });
             });
 
             return server;
@@ -355,7 +364,7 @@ namespace Keyframe.Server
             context.Response.Headers["Access-Control-Allow-Origin"] = "*";
             context.Response.Headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, HEAD";
             context.Response.Headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, x-api-key, x-request-id, traceparent, tracestate";
-            context.Response.Headers["Access-Control-Expose-Headers"] = "x-request-id, Location, Retry-After, x-keyframe-job-id";
+            context.Response.Headers["Access-Control-Expose-Headers"] = "x-request-id, Location, Retry-After, x-keyframe-job-id, Content-Disposition, x-keyframe-segment-start-ms, x-keyframe-segment-end-ms, x-keyframe-segment-duration-ms";
         }
 
         #endregion

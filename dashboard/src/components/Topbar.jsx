@@ -2,13 +2,14 @@ import { useTranslation } from 'react-i18next';
 import Icon from './Icon';
 import CopyButton from './CopyButton';
 import LanguageSelector from './LanguageSelector';
+import AppearanceMenu from './AppearancePicker';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { REPOSITORY_URL } from '../routes';
 
 /**
  * Topbar: navigation toggle, server and identity context, live health, and utilities
- * (language, repository, theme, logout).
+ * (language, repository, appearance, light/dark, logout).
  */
 function Topbar({ onToggleSidebar, health, healthError }) {
   const { t } = useTranslation();
@@ -51,6 +52,7 @@ function Topbar({ onToggleSidebar, health, healthError }) {
         <a className="icon-button" href={REPOSITORY_URL} target="_blank" rel="noreferrer" aria-label={t('topbar.repository')} title={t('topbar.repository')}>
           <Icon name="github" size={18} />
         </a>
+        <AppearanceMenu />
         <button
           type="button"
           className="icon-button"

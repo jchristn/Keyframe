@@ -15,6 +15,11 @@ namespace Keyframe.Sdk.Responses
         public string Id { get; set; } = string.Empty;
 
         /// <summary>
+        /// Identifier of the HTTP request that submitted the analysis (the x-request-id of the submitting request), when known.
+        /// </summary>
+        public string? RequestId { get; set; } = null;
+
+        /// <summary>
         /// Whether every enabled function produced a result. Partial field failures keep this true.
         /// </summary>
         public bool Success { get; set; } = false;

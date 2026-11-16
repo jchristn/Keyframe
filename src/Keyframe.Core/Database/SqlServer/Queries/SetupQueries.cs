@@ -43,6 +43,33 @@ namespace Keyframe.Core.Database.SqlServer.Queries
                     "IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'idx_jobs_createdutc') CREATE INDEX idx_jobs_createdutc ON dbo.jobs (createdutc)",
                     "IF OBJECT_ID(N'dbo.jobresults', N'U') IS NULL CREATE TABLE dbo.jobresults ("
                     + "jobid NVARCHAR(64) PRIMARY KEY, resultjson NVARCHAR(MAX) NOT NULL, resultbytes BIGINT NOT NULL DEFAULT 0, createdutc DATETIME2(7) NOT NULL)"
+                }),
+                new Migration(2, "Analytics: analyses and model call attempts", new List<string>
+                {
+                    "IF OBJECT_ID(N'dbo.analyses', N'U') IS NULL CREATE TABLE dbo.analyses (id NVARCHAR(64) PRIMARY KEY, requestid NVARCHAR(64) NULL, "
+                    + "jobid NVARCHAR(64) NULL, mediakind NVARCHAR(16) NOT NULL, principalname NVARCHAR(256) NULL, success BIT NOT NULL DEFAULT 0, error NVARCHAR(MAX) NULL, "
+                    + "startedutc DATETIME2(7) NOT NULL, completedutc DATETIME2(7) NOT NULL, analysisms FLOAT NOT NULL DEFAULT 0, queuewaitms FLOAT NOT NULL DEFAULT 0, "
+                    + "mediadurationms BIGINT NULL, mediabytes BIGINT NOT NULL DEFAULT 0, realtimefactor FLOAT NULL, visionendpoint NVARCHAR(64) NULL, "
+                    + "visionmodel NVARCHAR(256) NULL, textendpoint NVARCHAR(64) NULL, textmodel NVARCHAR(256) NULL, transcriptionendpoint NVARCHAR(64) NULL, "
+                    + "transcriptionmodel NVARCHAR(256) NULL, modelcalls INT NOT NULL DEFAULT 0, failedmodelcalls INT NOT NULL DEFAULT 0, retries INT NOT NULL DEFAULT 0, "
+                    + "repairattempts INT NOT NULL DEFAULT 0, prompttokens BIGINT NOT NULL DEFAULT 0, completiontokens BIGINT NOT NULL DEFAULT 0, "
+                    + "totaltokens BIGINT NOT NULL DEFAULT 0, cachedtokens BIGINT NOT NULL DEFAULT 0, reasoningtokens BIGINT NOT NULL DEFAULT 0, "
+                    + "inputimages INT NOT NULL DEFAULT 0, inputimagebytes BIGINT NOT NULL DEFAULT 0, inputaudiobytes BIGINT NOT NULL DEFAULT 0, "
+                    + "scenes INT NOT NULL DEFAULT 0, transcriptcharacters BIGINT NOT NULL DEFAULT 0, fieldcount INT NOT NULL DEFAULT 0, invalidfields INT NOT NULL DEFAULT 0, "
+                    + "stagesjson NVARCHAR(MAX) NULL)",
+                    "IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'idx_analyses_completedutc') CREATE INDEX idx_analyses_completedutc ON dbo.analyses (completedutc)",
+                    "IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'idx_analyses_mediakind_completedutc') CREATE INDEX idx_analyses_mediakind_completedutc ON dbo.analyses (mediakind, completedutc)",
+                    "IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'idx_analyses_jobid') CREATE INDEX idx_analyses_jobid ON dbo.analyses (jobid)",
+                    "IF OBJECT_ID(N'dbo.modelcalls', N'U') IS NULL CREATE TABLE dbo.modelcalls (id NVARCHAR(64) PRIMARY KEY, analysisid NVARCHAR(64) NOT NULL, "
+                    + "purpose NVARCHAR(64) NOT NULL, target NVARCHAR(256) NULL, endpoint NVARCHAR(64) NOT NULL, provider NVARCHAR(64) NOT NULL, model NVARCHAR(256) NULL, "
+                    + "attempt INT NOT NULL DEFAULT 1, startutc DATETIME2(7) NOT NULL, success BIT NOT NULL DEFAULT 0, error NVARCHAR(MAX) NULL, statuscode INT NULL, "
+                    + "durationms FLOAT NOT NULL DEFAULT 0, queuems FLOAT NOT NULL DEFAULT 0, ttftms FLOAT NULL, generationms FLOAT NULL, tokenspersecond FLOAT NULL, "
+                    + "prompttokens BIGINT NULL, completiontokens BIGINT NULL, totaltokens BIGINT NULL, cachedtokens BIGINT NULL, reasoningtokens BIGINT NULL, "
+                    + "inputimages INT NOT NULL DEFAULT 0, inputimagebytes BIGINT NOT NULL DEFAULT 0, inputaudiobytes BIGINT NOT NULL DEFAULT 0, "
+                    + "finishreason NVARCHAR(64) NULL)",
+                    "IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'idx_modelcalls_analysisid') CREATE INDEX idx_modelcalls_analysisid ON dbo.modelcalls (analysisid)",
+                    "IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'idx_modelcalls_startutc') CREATE INDEX idx_modelcalls_startutc ON dbo.modelcalls (startutc)",
+                    "IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'idx_modelcalls_endpoint_model') CREATE INDEX idx_modelcalls_endpoint_model ON dbo.modelcalls (endpoint, model)"
                 })
             };
         }

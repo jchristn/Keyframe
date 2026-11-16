@@ -8,7 +8,7 @@ import PageHeader from '../components/PageHeader';
 import DataTable from '../components/DataTable';
 import Pagination from '../components/Pagination';
 import StatusBadge, { MethodBadge } from '../components/StatusBadge';
-import ActivityChart from '../components/ActivityChart';
+import ActivityChart, { DEFAULT_CHART_HEIGHT } from '../components/ActivityChart';
 import ConfirmModal from '../components/ConfirmModal';
 import RequestDetailsModal from '../components/RequestDetailsModal';
 import { JsonViewerModal } from '../components/JsonViewer';
@@ -20,6 +20,9 @@ import usePersistedState from '../hooks/usePersistedState';
 import { STORAGE_KEYS } from '../utils/storage';
 import { getRange, isoToLocalInput, localInputToIso, normalizeBuckets, rangeToParams } from '../utils/ranges';
 import { describeError } from '../utils/errors';
+
+// The request history chart is twice the default height so dense ranges stay readable.
+export const REQUEST_HISTORY_CHART_HEIGHT = DEFAULT_CHART_HEIGHT * 2;
 
 const METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD'];
 const FILTER_KEYS = ['method', 'statusCode', 'pathContains', 'principalName', 'fromUtc', 'toUtc'];
@@ -266,6 +269,7 @@ function RequestHistoryView() {
         loading={summary.loading}
         loadedAt={summary.loadedAt}
         onBucketClick={(b) => setFilter({ fromUtc: b.startUtc, toUtc: b.endUtc })}
+        height={REQUEST_HISTORY_CHART_HEIGHT}
       />
       <DataTable
         tableId="requestHistory"

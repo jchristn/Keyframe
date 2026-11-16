@@ -19,7 +19,7 @@ namespace Keyframe.Server.Services
     using SyslogLogging;
 
     /// <summary>
-    /// Accepts video jobs, runs them on a bounded number of workers, persists status and progress, and stores
+    /// Accepts video and audio jobs, runs them on a bounded number of workers, persists status and progress, and stores
     /// results. Jobs that were queued or running when the process stopped are marked Interrupted at startup.
     /// Concurrency and queue limits are read live from settings.
     /// Thread safety: safe for concurrent use.
@@ -117,26 +117,44 @@ namespace Keyframe.Server.Services
         /// <returns>The queued job.</returns>
         /// <exception cref="ArgumentNullException">Thrown when request is null.</exception>
         /// <exception cref="QueueFullException">Thrown when the queue is at capacity.</exception>
-        public async Task<Job> SubmitAsync(VideoAnalysisRequest request, string? principalName, CancellationToken token = default)
+        public Task<Job> SubmitAsync(VideoAnalysisRequest request, string? principalName, CancellationToken token = default)
+        {
+            return SubmitAsync(request, principalName, null, token);
+        }
+
+        /// <summary>
+        /// Accept a video job. The request must already be validated.
+        /// </summary>
+        /// <param name="request">Request.</param>
+        /// <param name="principalName">Submitting principal.</param>
+        /// <param name="requestId">HTTP request identifier, recorded in the result and analytics.</param>
+        /// <param name="token">Cancellation token.</param>
+        /// <returns>The queued job.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when request is null.</exception>
+        /// <exception cref="QueueFullException">Thrown when the queue is at capacity.</exception>
+        public async Task<Job> SubmitAsync(VideoAnalysisRequest request, string? principalName, string? requestId, CancellationToken token = default)
         {
             if (request == null) throw new ArgumentNullException(nameof(request));
-            if (_Queue.Count >= _Settings().Jobs.MaxQueuedJobs)
-                throw new QueueFullException("The job queue is full (" + _Settings().Jobs.MaxQueuedJobs + " queued). Retry later.");
+            Job job = NewJob(MediaKindEnum.Video, principalName, request.Video?.Url);
+            await EnqueueAsync(new JobWork(job, request, requestId), token).ConfigureAwait(false);
+            return job;
+        }
 
-            Job job = new Job
-            {
-                MediaKind = MediaKindEnum.Video,
-                Status = JobStatusEnum.Queued,
-                PrincipalName = principalName,
-                SourceUrl = request.Video?.Url,
-                ProgressStage = "Queued"
-            };
-
-            await _Database.Jobs.CreateAsync(job, token).ConfigureAwait(false);
-            JobWork work = new JobWork(job, request);
-            _All[job.Id] = work;
-            _Queue.Enqueue(work);
-            _Signal.Release();
+        /// <summary>
+        /// Accept an audio job. The request must already be validated.
+        /// </summary>
+        /// <param name="request">Request.</param>
+        /// <param name="principalName">Submitting principal.</param>
+        /// <param name="requestId">HTTP request identifier, recorded in the result and analytics.</param>
+        /// <param name="token">Cancellation token.</param>
+        /// <returns>The queued job.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when request is null.</exception>
+        /// <exception cref="QueueFullException">Thrown when the queue is at capacity.</exception>
+        public async Task<Job> SubmitAsync(AudioAnalysisRequest request, string? principalName, string? requestId, CancellationToken token = default)
+        {
+            if (request == null) throw new ArgumentNullException(nameof(request));
+            Job job = NewJob(MediaKindEnum.Audio, principalName, request.Audio?.Url);
+            await EnqueueAsync(new JobWork(job, request, requestId), token).ConfigureAwait(false);
             return job;
         }
 
@@ -249,6 +267,29 @@ namespace Keyframe.Server.Services
 
         #region Private-Methods
 
+        private Job NewJob(MediaKindEnum kind, string? principalName, string? sourceUrl)
+        {
+            if (_Queue.Count >= _Settings().Jobs.MaxQueuedJobs)
+                throw new QueueFullException("The job queue is full (" + _Settings().Jobs.MaxQueuedJobs + " queued). Retry later.");
+
+            return new Job
+            {
+                MediaKind = kind,
+                Status = JobStatusEnum.Queued,
+                PrincipalName = principalName,
+                SourceUrl = sourceUrl,
+                ProgressStage = "Queued"
+            };
+        }
+
+        private async Task EnqueueAsync(JobWork work, CancellationToken token)
+        {
+            await _Database.Jobs.CreateAsync(work.Job, token).ConfigureAwait(false);
+            _All[work.Job.Id] = work;
+            _Queue.Enqueue(work);
+            _Signal.Release();
+        }
+
         private async Task DispatchLoopAsync(CancellationToken token)
         {
             while (!token.IsCancellationRequested)
@@ -282,8 +323,9 @@ namespace Keyframe.Server.Services
         {
             Job job = work.Job;
             Stopwatch sw = Stopwatch.StartNew();
+            string kindLabel = job.MediaKind.ToString().ToLowerInvariant();
             using (CancellationTokenSource linked = CancellationTokenSource.CreateLinkedTokenSource(work.Cancellation.Token, stopping))
-            using (Activity? activity = KeyframeTelemetry.Source.StartActivity("job video", ActivityKind.Internal))
+            using (Activity? activity = KeyframeTelemetry.Source.StartActivity("job " + kindLabel, ActivityKind.Internal))
             {
                 activity?.SetTag("keyframe.job_id", job.Id);
                 try
@@ -293,8 +335,21 @@ namespace Keyframe.Server.Services
                     job.ProgressStage = "Starting";
                     await _Database.Jobs.UpdateAsync(job, CancellationToken.None).ConfigureAwait(false);
 
-                    VideoAnalyzer analyzer = new VideoAnalyzer(_Services);
-                    VideoAnalysisResponse response = await analyzer.AnalyzeAsync(work.Request, p => OnProgress(work, p), linked.Token).ConfigureAwait(false);
+                    double queueWaitMs = Math.Max(0, (job.StartedUtc.Value - job.CreatedUtc).TotalMilliseconds);
+                    KeyframeMetrics.RecordJobQueue(kindLabel, queueWaitMs / 1000.0);
+                    AnalysisOrigin origin = new AnalysisOrigin
+                    {
+                        RequestId = work.RequestId,
+                        JobId = job.Id,
+                        PrincipalName = job.PrincipalName,
+                        QueueWaitMs = queueWaitMs
+                    };
+
+                    AnalysisResponse response;
+                    if (work.Audio != null)
+                        response = await new AudioAnalyzer(_Services).AnalyzeAsync(work.Audio, p => OnProgress(work, p), origin, linked.Token).ConfigureAwait(false);
+                    else
+                        response = await new VideoAnalyzer(_Services).AnalyzeAsync(work.Video!, p => OnProgress(work, p), origin, linked.Token).ConfigureAwait(false);
 
                     if (response.Properties != null)
                     {

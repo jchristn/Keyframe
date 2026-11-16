@@ -1,5 +1,8 @@
 namespace Keyframe.Core.Requests
 {
+    using System;
+    using System.Text.Json.Serialization;
+
     /// <summary>
     /// Selects a configured endpoint and optionally overrides its model.
     /// </summary>
@@ -14,5 +17,22 @@ namespace Keyframe.Core.Requests
         /// Model name override. Null uses the endpoint's configured model.
         /// </summary>
         public string? Name { get; set; } = null;
+
+        /// <summary>
+        /// Alias of <see cref="Name"/> accepted on input, so { "Endpoint": ..., "Model": ... } also works. Always null
+        /// on output; read <see cref="Name"/>.
+        /// </summary>
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? Model
+        {
+            get
+            {
+                return null;
+            }
+            set
+            {
+                if (!String.IsNullOrWhiteSpace(value)) Name = value;
+            }
+        }
     }
 }

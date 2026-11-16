@@ -13,7 +13,8 @@ namespace Test.Shared
 
     /// <summary>
     /// A minimal OpenAI-compatible server on 127.0.0.1 for provider adapter tests. Answers
-    /// <c>/chat/completions</c> and <c>/audio/transcriptions</c> and records every request.
+    /// <c>/chat/completions</c> (as server-sent events when the request sets "stream": true, otherwise as one JSON
+    /// body) and <c>/audio/transcriptions</c>, and records every request.
     /// </summary>
     public sealed class StubProviderServer : IDisposable
     {
@@ -33,6 +34,11 @@ namespace Test.Shared
         /// Chat reply text chosen from the request body. Default returns "Stub reply.".
         /// </summary>
         public Func<string, string> ChatReply { get; set; } = body => "Stub reply.";
+
+        /// <summary>
+        /// Delay between streamed chat chunks in milliseconds. Default 15.
+        /// </summary>
+        public int StreamChunkDelayMs { get; set; } = 15;
 
         /// <summary>
         /// Recorded requests, in arrival order.
@@ -143,9 +149,16 @@ namespace Test.Shared
             }
             else if (path.EndsWith("/audio/transcriptions", StringComparison.Ordinal))
             {
-                reply = "{\"text\":\"hello world\",\"language\":\"english\",\"duration\":2.0,\"segments\":["
-                    + "{\"id\":0,\"start\":0.0,\"end\":1.25,\"text\":\" hello\"},"
-                    + "{\"id\":1,\"start\":1.25,\"end\":2.0,\"text\":\" world\"}]}";
+                // The third segment imitates Whisper inventing "You" over silence; the client must drop it.
+                reply = "{\"text\":\"hello world You\",\"language\":\"english\",\"duration\":3.0,\"segments\":["
+                    + "{\"id\":0,\"start\":0.0,\"end\":1.25,\"text\":\" hello\",\"no_speech_prob\":0.01,\"avg_logprob\":-0.2},"
+                    + "{\"id\":1,\"start\":1.25,\"end\":2.0,\"text\":\" world\",\"no_speech_prob\":0.02,\"avg_logprob\":-0.3},"
+                    + "{\"id\":2,\"start\":2.0,\"end\":3.0,\"text\":\" You\",\"no_speech_prob\":0.82,\"avg_logprob\":-0.95}]}";
+            }
+            else if (path.EndsWith("/chat/completions", StringComparison.Ordinal) && IsStreaming(body))
+            {
+                await StreamChatAsync(ctx, ChatReply(body)).ConfigureAwait(false);
+                return;
             }
             else if (path.EndsWith("/chat/completions", StringComparison.Ordinal))
             {
@@ -166,6 +179,72 @@ namespace Test.Shared
             ctx.Response.ContentLength64 = bytes.Length;
             await ctx.Response.OutputStream.WriteAsync(bytes, 0, bytes.Length).ConfigureAwait(false);
             ctx.Response.Close();
+        }
+
+        private static bool IsStreaming(string body)
+        {
+            try
+            {
+                using (System.Text.Json.JsonDocument doc = System.Text.Json.JsonDocument.Parse(body))
+                {
+                    return doc.RootElement.TryGetProperty("stream", out System.Text.Json.JsonElement stream)
+                        && stream.ValueKind == System.Text.Json.JsonValueKind.True;
+                }
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        private async Task StreamChatAsync(HttpListenerContext ctx, string reply)
+        {
+            ctx.Response.StatusCode = 200;
+            ctx.Response.ContentType = "text/event-stream";
+            ctx.Response.SendChunked = true;
+
+            List<string> pieces = Split(reply, 3);
+            List<string> events = new List<string>
+            {
+                "{\"id\":\"chatcmpl-stub\",\"object\":\"chat.completion.chunk\",\"model\":\"stub-model\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"finish_reason\":null}]}"
+            };
+
+            foreach (string piece in pieces)
+            {
+                events.Add("{\"id\":\"chatcmpl-stub\",\"object\":\"chat.completion.chunk\",\"model\":\"stub-model\",\"choices\":[{\"index\":0,\"delta\":{\"content\":"
+                    + System.Text.Json.JsonSerializer.Serialize(piece) + "},\"finish_reason\":null}]}");
+            }
+
+            events.Add("{\"id\":\"chatcmpl-stub\",\"object\":\"chat.completion.chunk\",\"model\":\"stub-model\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}],"
+                + "\"usage\":{\"prompt_tokens\":11,\"completion_tokens\":3,\"total_tokens\":14}}");
+
+            Stream output = ctx.Response.OutputStream;
+            for (int i = 0; i < events.Count; i++)
+            {
+                if (i > 0 && StreamChunkDelayMs > 0) await Task.Delay(StreamChunkDelayMs).ConfigureAwait(false);
+                byte[] bytes = Encoding.UTF8.GetBytes("data: " + events[i] + "\n\n");
+                await output.WriteAsync(bytes, 0, bytes.Length).ConfigureAwait(false);
+                await output.FlushAsync().ConfigureAwait(false);
+            }
+
+            byte[] done = Encoding.UTF8.GetBytes("data: [DONE]\n\n");
+            await output.WriteAsync(done, 0, done.Length).ConfigureAwait(false);
+            await output.FlushAsync().ConfigureAwait(false);
+            ctx.Response.Close();
+        }
+
+        private static List<string> Split(string text, int parts)
+        {
+            List<string> pieces = new List<string>();
+            if (text.Length <= parts)
+            {
+                pieces.Add(text);
+                return pieces;
+            }
+
+            int size = (int)Math.Ceiling(text.Length / (double)parts);
+            for (int i = 0; i < text.Length; i += size) pieces.Add(text.Substring(i, Math.Min(size, text.Length - i)));
+            return pieces;
         }
 
         #endregion

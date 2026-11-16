@@ -36,6 +36,51 @@ namespace Keyframe.Core.Analysis
         /// </summary>
         public Action<JobProgress>? Progress { get; set; } = null;
 
+        /// <summary>
+        /// Where the analysis came from. Null when the host supplied nothing.
+        /// </summary>
+        public AnalysisOrigin? Origin { get; set; } = null;
+
+        /// <summary>
+        /// Media size in bytes, set once the media is resolved.
+        /// </summary>
+        public long MediaBytes { get; set; } = 0;
+
+        /// <summary>
+        /// Media duration in milliseconds, set once video or audio is probed.
+        /// </summary>
+        public long? MediaDurationMs { get; set; } = null;
+
+        /// <summary>
+        /// Vision endpoint name, when used.
+        /// </summary>
+        public string? VisionEndpoint { get; set; } = null;
+
+        /// <summary>
+        /// Vision model, when used.
+        /// </summary>
+        public string? VisionModel { get; set; } = null;
+
+        /// <summary>
+        /// Text endpoint name, when used.
+        /// </summary>
+        public string? TextEndpoint { get; set; } = null;
+
+        /// <summary>
+        /// Text model, when used.
+        /// </summary>
+        public string? TextModel { get; set; } = null;
+
+        /// <summary>
+        /// Transcription endpoint name, when used.
+        /// </summary>
+        public string? TranscriptionEndpoint { get; set; } = null;
+
+        /// <summary>
+        /// Transcription model, when used.
+        /// </summary>
+        public string? TranscriptionModel { get; set; } = null;
+
         #endregion
 
         #region Private-Members
@@ -181,11 +226,50 @@ namespace Keyframe.Core.Analysis
 
                 totals.ModelMs = Math.Round(totals.ModelMs, 2);
                 _Telemetry.Totals = totals;
+                if (Origin != null)
+                {
+                    _Telemetry.QueueWaitMs = Math.Round(Origin.QueueWaitMs, 2);
+                    if (Origin.JobId != null) _Telemetry.QueuedMs = _Telemetry.QueueWaitMs;
+                    if (response.RequestId == null) response.RequestId = Origin.RequestId;
+                }
 
                 response.Telemetry = _Telemetry;
                 response.Warnings.AddRange(_Warnings);
                 response.Errors.AddRange(_Errors);
             }
+        }
+
+        /// <summary>
+        /// Build the completion record handed to the host. Call after <see cref="CompleteInto"/>.
+        /// </summary>
+        /// <param name="response">Completed response.</param>
+        /// <param name="exception">Message of the exception that ended the analysis, or null.</param>
+        /// <param name="canceled">Whether the analysis was canceled.</param>
+        /// <param name="scenes">Scenes in the result.</param>
+        /// <param name="transcript">Transcript, when transcription ran.</param>
+        /// <returns>Completion.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when response is null.</exception>
+        public AnalysisCompletion BuildCompletion(AnalysisResponse response, string? exception, bool canceled, int scenes, TranscriptResult? transcript)
+        {
+            ArgumentNullException.ThrowIfNull(response);
+            return new AnalysisCompletion
+            {
+                Response = response,
+                MediaKind = MediaKind,
+                Origin = Origin,
+                Exception = exception,
+                Canceled = canceled,
+                MediaBytes = MediaBytes,
+                MediaDurationMs = MediaDurationMs,
+                VisionEndpoint = VisionEndpoint,
+                VisionModel = VisionModel,
+                TextEndpoint = TextEndpoint,
+                TextModel = TextModel,
+                TranscriptionEndpoint = TranscriptionEndpoint,
+                TranscriptionModel = TranscriptionModel,
+                Scenes = scenes,
+                TranscriptCharacters = transcript?.Text?.Length ?? 0
+            };
         }
 
         #endregion

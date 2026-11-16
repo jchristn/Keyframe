@@ -6,7 +6,7 @@
     <RootNamespace>Keyframe.McpServer</RootNamespace>
     <AssemblyName>Keyframe.McpServer</AssemblyName>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <Description>Keyframe MCP server: exposes Keyframe image and video analysis to agents over MCP (Voltaic).</Description>
+    <Description>Keyframe MCP server: exposes Keyframe image, video, and audio analysis to agents over MCP (Voltaic).</Description>
   </PropertyGroup>
 
   <ItemGroup>

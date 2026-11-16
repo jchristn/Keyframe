@@ -171,9 +171,9 @@ jobs:
         run: npm test
 
   sdk:
-    # Each SDK harness runs against a live server started with the mock provider
-    # (src/Keyframe.Server/keyframe.json: endpoints "mock" and "mock-stt", access key "default", admin key
-    # "keyframeadmin"). Each harness provides sdk/<language>/run-tests.sh and reads KEYFRAME_URL,
+    # Each SDK harness runs against a live server started with the mock provider: the step below copies
+    # src/Keyframe.Server/keyframe.json (access key "default", admin key "keyframeadmin") and replaces its
+    # Ollama and Whisper endpoints with "mock" and "mock-stt", because the shipped defaults have no mock. Each harness provides sdk/<language>/run-tests.sh and reads KEYFRAME_URL,
     # KEYFRAME_ADMIN_KEY, and KEYFRAME_ACCESS_KEY.
     name: SDK harness (${{ matrix.sdk }})
     runs-on: ubuntu-latest
@@ -218,7 +218,11 @@ jobs:
       - name: Start server (mock provider)
         run: |
           mkdir -p "$RUNNER_TEMP/keyframe"
-          cp src/Keyframe.Server/keyframe.json "$RUNNER_TEMP/keyframe/keyframe.json"
+          jq '.Inference.DefaultVision = "mock" | .Inference.DefaultText = null | .Inference.DefaultTranscription = "mock-stt"
+              | .Inference.Endpoints = [
+                  { "Name": "mock", "Provider": "Mock", "Kind": "Completion", "Model": "mock-vision", "MaxConcurrentRequests": 4, "Active": true },
+                  { "Name": "mock-stt", "Provider": "Mock", "Kind": "Transcription", "Model": "mock-whisper", "MaxConcurrentRequests": 4, "Active": true } ]' \
+            src/Keyframe.Server/keyframe.json > "$RUNNER_TEMP/keyframe/keyframe.json"
           cd "$RUNNER_TEMP/keyframe"
           nohup dotnet "$GITHUB_WORKSPACE/src/Keyframe.Server/bin/Release/net10.0/Keyframe.Server.dll" \
             --settings "$RUNNER_TEMP/keyframe/keyframe.json" > "$RUNNER_TEMP/keyframe/server.log" 2>&1 &

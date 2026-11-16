@@ -51,6 +51,15 @@ namespace Keyframe.Core.Helpers
             return _Generator.GenerateKSortable(Constants.RequestIdPrefix, _IdLength);
         }
 
+        /// <summary>
+        /// Generate an analytics model call identifier (prefix "kfc_").
+        /// </summary>
+        /// <returns>Identifier.</returns>
+        public static string GenerateModelCallId()
+        {
+            return _Generator.GenerateKSortable(Constants.ModelCallIdPrefix, _IdLength);
+        }
+
         #endregion
     }
 }

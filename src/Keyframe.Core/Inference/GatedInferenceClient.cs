@@ -1,12 +1,13 @@
 namespace Keyframe.Core.Inference
 {
     using System;
+    using System.Diagnostics;
     using System.Threading;
     using System.Threading.Tasks;
     using Keyframe.Core.Enums;
 
     /// <summary>
-    /// Wraps a completion client with a concurrency limit and a per-call timeout. A timeout is reported as a
+    /// Wraps a completion client with a concurrency limit and a per-call timeout, and reports the time spent waiting for the limit as QueueMs. A timeout is reported as a
     /// retryable failure; caller cancellation still throws.
     /// Thread safety: safe for concurrent use.
     /// </summary>
@@ -86,7 +87,10 @@ namespace Keyframe.Core.Inference
         /// <inheritdoc />
         public async Task<InferenceResponse> CompleteAsync(InferenceRequest request, CancellationToken token = default)
         {
+            Stopwatch queue = Stopwatch.StartNew();
             await _Gate.WaitAsync(token).ConfigureAwait(false);
+            queue.Stop();
+            double queueMs = Math.Round(queue.Elapsed.TotalMilliseconds, 3);
             try
             {
                 using (CancellationTokenSource timeout = new CancellationTokenSource(_TimeoutMs))
@@ -94,7 +98,9 @@ namespace Keyframe.Core.Inference
                 {
                     try
                     {
-                        return await _Inner.CompleteAsync(request, linked.Token).ConfigureAwait(false);
+                        InferenceResponse response = await _Inner.CompleteAsync(request, linked.Token).ConfigureAwait(false);
+                        response.QueueMs = queueMs;
+                        return response;
                     }
                     catch (OperationCanceledException) when (!token.IsCancellationRequested)
                     {
@@ -106,7 +112,8 @@ namespace Keyframe.Core.Inference
                             Provider = _Inner.Provider,
                             Model = request.Model ?? _Inner.Model,
                             Error = "Endpoint '" + _Inner.EndpointName + "' timed out after " + _TimeoutMs + "ms.",
-                            DurationMs = _TimeoutMs
+                            DurationMs = _TimeoutMs,
+                            QueueMs = queueMs
                         };
                     }
                 }

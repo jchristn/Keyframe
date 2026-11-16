@@ -1,33 +1,45 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { STORAGE_KEYS } from '../utils/storage';
+import { applyAppearance, readAppearance, resolveMode } from '../theme';
 
-const ThemeContext = createContext({ theme: 'light', toggleTheme: () => {}, setTheme: () => {} });
+const ThemeContext = createContext({
+  palette: 'slate',
+  mode: 'system',
+  theme: 'light',
+  setPalette: () => {},
+  setMode: () => {},
+  toggleTheme: () => {}
+});
 
-function initialTheme() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEYS.theme);
-    if (saved === 'light' || saved === 'dark') return saved;
-  } catch {
-    // Fall through to the system preference.
-  }
-  if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark';
-  return 'light';
-}
-
+/**
+ * Appearance state: palette id, mode (light, dark, or system), and the resolved theme.
+ * Changes apply immediately to <html data-palette data-theme> and persist per browser.
+ * In system mode the resolved theme follows the operating system preference live.
+ */
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState(initialTheme);
+  const [appearance, setAppearance] = useState(readAppearance);
+  const [systemTick, setSystemTick] = useState(0);
+  const theme = useMemo(() => resolveMode(appearance.mode), [appearance.mode, systemTick]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    try {
-      localStorage.setItem(STORAGE_KEYS.theme, theme);
-    } catch {
-      // Ignore.
-    }
-  }, [theme]);
+    applyAppearance(appearance);
+  }, [appearance, systemTick]);
 
-  const toggleTheme = useCallback(() => setTheme((t) => (t === 'dark' ? 'light' : 'dark')), []);
-  const value = useMemo(() => ({ theme, setTheme, toggleTheme }), [theme, toggleTheme]);
+  useEffect(() => {
+    if (appearance.mode !== 'system' || typeof window === 'undefined' || !window.matchMedia) return undefined;
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = () => setSystemTick((n) => n + 1);
+    if (mq.addEventListener) mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener && mq.removeEventListener('change', onChange);
+  }, [appearance.mode]);
+
+  const setPalette = useCallback((palette) => setAppearance((a) => ({ ...a, palette })), []);
+  const setMode = useCallback((mode) => setAppearance((a) => ({ ...a, mode })), []);
+  const toggleTheme = useCallback(() => setAppearance((a) => ({ ...a, mode: resolveMode(a.mode) === 'dark' ? 'light' : 'dark' })), []);
+
+  const value = useMemo(
+    () => ({ palette: appearance.palette, mode: appearance.mode, theme, setPalette, setMode, toggleTheme }),
+    [appearance, theme, setPalette, setMode, toggleTheme]
+  );
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 

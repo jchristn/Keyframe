@@ -11,13 +11,66 @@ JSON property names are PascalCase. Enum values travel as strings (`"Boolean"`, 
 - [Authentication](#authentication)
 - [Errors](#errors)
 - [Common headers](#common-headers)
-- [System](#system): `HEAD /`, `GET /`, `GET /favicon.ico`, `GET /v1.0/health`, `GET /v1.0/whoami`
-- [Analysis](#analysis): `POST /v1.0/image`, `POST /v1.0/video`, `POST /v1.0/probe`
-- [Jobs](#jobs): list, get, result, cancel, delete
-- [Endpoints](#endpoints): list, test
-- [Settings](#settings): get, update, restart
-- [Request history](#request-history): list, summary, get, delete one, bulk delete
+- [System](#system)
+  - [`HEAD /`](#head-)
+  - [`GET /`](#get-)
+  - [`GET /favicon.ico`](#get-faviconico)
+  - [`GET /v1.0/health`](#get-v10health)
+  - [`GET /v1.0/whoami`](#get-v10whoami)
+- [Analysis](#analysis)
+  - [`POST /v1.0/image`](#post-v10image)
+  - [`POST /v1.0/video`](#post-v10video)
+  - [`POST /v1.0/audio`](#post-v10audio)
+  - [`POST /v1.0/probe`](#post-v10probe)
+- [Segments](#segments)
+  - [`POST /v1.0/segment`](#post-v10segment)
+- [Jobs](#jobs)
+  - [`GET /v1.0/jobs`](#get-v10jobs)
+  - [`GET /v1.0/jobs/{id}`](#get-v10jobsid)
+  - [`GET /v1.0/jobs/{id}/result`](#get-v10jobsidresult)
+  - [`POST /v1.0/jobs/{id}/cancel`](#post-v10jobsidcancel)
+  - [`DELETE /v1.0/jobs/{id}`](#delete-v10jobsid)
+- [Endpoints](#endpoints)
+  - [Default endpoints](#default-endpoints)
+  - [`GET /v1.0/endpoints`](#get-v10endpoints)
+  - [`POST /v1.0/endpoints/{name}/test`](#post-v10endpointsnametest)
+- [Analytics](#analytics)
+  - [`GET /v1.0/analytics/summary`](#get-v10analyticssummary)
+  - [`GET /v1.0/analytics/analyses`](#get-v10analyticsanalyses)
+  - [`GET /v1.0/analytics/analyses/{id}`](#get-v10analyticsanalysesid)
+  - [`DELETE /v1.0/analytics/analyses/{id}`](#delete-v10analyticsanalysesid)
+  - [`DELETE /v1.0/analytics/analyses`](#delete-v10analyticsanalyses)
+- [Settings](#settings)
+  - [`GET /v1.0/settings`](#get-v10settings)
+  - [`PUT /v1.0/settings`](#put-v10settings)
+  - [`POST /v1.0/restart`](#post-v10restart)
+- [Request history](#request-history)
+  - [`GET /v1.0/api/request-history`](#get-v10apirequest-history)
+  - [`GET /v1.0/api/request-history/summary`](#get-v10apirequest-historysummary)
+  - [`GET /v1.0/api/request-history/{id}`](#get-v10apirequest-historyid)
+  - [`DELETE /v1.0/api/request-history/{id}`](#delete-v10apirequest-historyid)
+  - [`DELETE /v1.0/api/request-history`](#delete-v10apirequest-history)
 - [Shared types](#shared-types)
+  - [MediaSource](#mediasource)
+  - [Context](#context)
+  - [ModelSelection](#modelselection)
+  - [ImageAnalysisRequest](#imageanalysisrequest)
+  - [VideoAnalysisRequest](#videoanalysisrequest)
+  - [AudioAnalysisRequest](#audioanalysisrequest)
+  - [SegmentRequest](#segmentrequest)
+  - [SegmentResponse](#segmentresponse)
+  - [SummarizeSpec](#summarizespec)
+  - [ExtractSpec and FieldSpec](#extractspec-and-fieldspec)
+  - [ScenesSpec, SceneDetectionSpec, TranscribeSpec](#scenesspec-scenedetectionspec-transcribespec)
+  - [AnalysisResponse](#analysisresponse)
+  - [MediaProperties](#mediaproperties)
+  - [JobResponse](#jobresponse)
+  - [EndpointResponse](#endpointresponse)
+  - [RequestHistoryEntry](#requesthistoryentry)
+  - [AnalyticsSummary](#analyticssummary)
+  - [AnalysisRecord](#analysisrecord)
+  - [ModelCallRecord](#modelcallrecord)
+  - [EnumerationResult](#enumerationresult)
 
 ## Authentication
 
@@ -110,7 +163,7 @@ curl http://127.0.0.1:8700/v1.0/health
   "Database": "Sqlite",
   "ActiveJobs": 0,
   "QueuedJobs": 0,
-  "Endpoints": { "mock": true, "mock-stt": true }
+  "Endpoints": { "ollama-gemma3-4b": true, "ollama-qwen3-vl-8b": true, "ollama-gpt-oss-20b": true, "whisper": true }
 }
 ```
 
@@ -168,6 +221,7 @@ Response `200`: [`ImageAnalysisResponse`](#analysisresponse).
 ```json
 {
   "Id": "kfa_mwilm0a1_3sK1QW9a7x0bQpVdL2c",
+  "RequestId": "rqi_mwilm0a0_W2b8yS0TfQk1rVnXe4p",
   "Success": true,
   "MediaKind": "Image",
   "Properties": { "MediaKind": "Image", "ContentType": "image/jpeg", "Format": "image2", "SizeBytes": 2231840, "Sha256": "9f2c...", "Width": 4032, "Height": 3024, "VideoCodec": "mjpeg", "HasAudio": false, "Tags": { "Make": "Apple" } },
@@ -182,6 +236,7 @@ Response `200`: [`ImageAnalysisResponse`](#analysisresponse).
     "EndUtc": "2026-11-15T18:01:05.402Z",
     "TotalMs": 3288.4,
     "QueuedMs": null,
+    "QueueWaitMs": 0,
     "Stages": [
       { "Name": "Resolve", "StartUtc": "2026-11-15T18:01:02.114Z", "DurationMs": 412.0, "Success": true },
       { "Name": "Probe", "StartUtc": "2026-11-15T18:01:02.526Z", "DurationMs": 38.2, "Success": true },
@@ -190,7 +245,7 @@ Response `200`: [`ImageAnalysisResponse`](#analysisresponse).
       { "Name": "Extract", "StartUtc": "2026-11-15T18:01:02.627Z", "DurationMs": 1049.1, "Success": true }
     ],
     "ModelCalls": [
-      { "Purpose": "Summarize", "Target": null, "Endpoint": "mock", "Provider": "Mock", "Model": "mock-vision", "DurationMs": 1720.3, "Attempts": 1, "RepairAttempts": 0, "Success": true, "InputImages": 1, "InputImageBytes": 184211, "PromptTokens": 812, "CompletionTokens": 71, "TotalTokens": 883, "FinishReason": "stop" }
+      { "Purpose": "Summarize", "Target": null, "Endpoint": "ollama-gemma3-4b", "Provider": "Ollama", "Model": "gemma3:4b", "DurationMs": 1720.3, "QueueMs": 0.0, "TimeToFirstTokenMs": 545.8, "GenerationMs": 1171.6, "TokensPerSecond": 60.6, "Attempts": 1, "RepairAttempts": 0, "Success": true, "InputImages": 1, "InputImageBytes": 184211, "PromptTokens": 812, "CompletionTokens": 71, "TotalTokens": 883, "FinishReason": "stop" }
     ],
     "Totals": { "ModelCalls": 2, "FailedModelCalls": 0, "ModelMs": 2769.4, "PromptTokens": 1611, "CompletionTokens": 118, "TotalTokens": 1729, "CachedTokens": 0, "ReasoningTokens": 0, "InputImages": 2, "InputImageBytes": 368422 }
   },
@@ -255,6 +310,63 @@ Responses:
 
 Scene boundaries come from ffmpeg scene-change detection, then are merged and split by `MinSceneMs`, `MaxSceneMs`, and `MaxScenes`. Models describe scenes; they never decide where a cut is. When scenes are disabled, whole-video functions run on `SampleFrames` frames sampled evenly across the video. When `TextModel` is set, the whole-video summary and fields are produced from the scene results and transcript with a text-only model instead of from frames.
 
+### POST /v1.0/audio
+
+Key. Queues an audio analysis job: the audio track is extracted with ffmpeg (16 kHz mono FLAC, split into `Media.TranscriptionChunkSeconds` chunks), every chunk is transcribed in parallel through the transcription endpoint, and the transcript is then summarized and fields are extracted from it with the text model (`TextModel`, else `Inference.DefaultText`, else `Inference.DefaultVision`). Accepts audio files (mp3, wav, flac, m4a or aac, ogg or opus, webm audio) and video files; for a video only the audio track is used, no frames are extracted, and the response carries a warning.
+
+Defaults: `Transcribe` and `Summarize` are on and `Extract` is off, so `{ "Audio": { "Url": "..." } }` alone returns a transcript and a summary. `Summarize` and `Extract` need `Transcribe`, because they run on the transcript. When the transcript is empty (silence), they are skipped with a warning.
+
+Request body: [`AudioAnalysisRequest`](#audioanalysisrequest).
+
+```bash
+curl -X POST http://127.0.0.1:8700/v1.0/audio \
+  -H "x-api-key: default" -H "Content-Type: application/json" \
+  -d '{
+    "Audio": { "Url": "https://example.com/standup.mp3" },
+    "Context": [ "Daily standup of the platform team." ],
+    "TranscriptionModel": { "Endpoint": "whisper" },
+    "TextModel": { "Endpoint": "ollama-gpt-oss-20b" },
+    "Functions": {
+      "Transcribe": { "Enable": true, "Language": "en" },
+      "Summarize": { "Enable": true, "Style": "Bullets", "MaxWords": 120 },
+      "Extract": { "Enable": true, "Fields": [
+        { "Key": "speakerNames", "Type": "StringList", "Prompt": "Names of the people who speak or are mentioned." },
+        { "Key": "blockers", "Type": "Boolean", "Prompt": "Does anyone report a blocker?" }
+      ] }
+    }
+  }'
+```
+
+Responses are the same as `POST /v1.0/video`: `202` with a [`JobResponse`](#jobresponse) (`MediaKind: "Audio"`) and `Location`; `200` with the full [`AudioAnalysisResponse`](#analysisresponse) when `Wait` is true and the job succeeds in time, or `200` with the job when it finished without succeeding; `400` for validation or an unknown endpoint (checked before queueing); `429` when the queue is full. A source with no audio stream, an image, or audio longer than `Media.MaxAudioDurationMs` (default 4 hours) fails the job with a `422`-class error in `Error`.
+
+```json
+{
+  "Id": "kfa_mwirp8ky_8pV0Qe1yHn3cTt5KJwq",
+  "RequestId": "rqi_mwirp8kt_Yd1vT0aQ2ZdE8wq2b0h",
+  "Success": true,
+  "MediaKind": "Audio",
+  "Properties": { "MediaKind": "Audio", "ContentType": "audio/mpeg", "Format": "mp3", "SizeBytes": 52284, "DurationMs": 6432, "BitRate": 65028, "HasAudio": true, "AudioCodec": "mp3", "AudioChannels": 1, "AudioSampleRate": 22050, "Tags": {} },
+  "Transcript": {
+    "Language": "en",
+    "Text": "Welcome to the quarterly planning meeting. Today, Alice and Bob will review the budget and the hiring plan.",
+    "Segments": [ { "StartMs": 0, "EndMs": 6200, "Text": "Welcome to the quarterly planning meeting. Today, Alice and Bob will review the budget and the hiring plan." } ]
+  },
+  "Results": { "Summary": "The speaker opens a quarterly planning meeting where Alice and Bob will review the budget and hiring plan.", "speakerNames": [ "Alice", "Bob" ] },
+  "Fields": [ { "Key": "speakerNames", "Type": "StringList", "Value": [ "Alice", "Bob" ], "Valid": true, "RawValue": "[\"Alice\",\"Bob\"]", "Error": null, "Warnings": [] } ],
+  "Telemetry": {
+    "TotalMs": 5112.4, "QueueWaitMs": 1.82, "QueuedMs": 1.82,
+    "Stages": [ { "Name": "Resolve", "DurationMs": 3.1, "Success": true }, { "Name": "Probe", "DurationMs": 41.0, "Success": true }, { "Name": "AudioExtraction", "DurationMs": 60.2, "Success": true }, { "Name": "Transcribe", "DurationMs": 1330.9, "Success": true }, { "Name": "Summarize", "DurationMs": 1905.0, "Success": true }, { "Name": "Extract", "DurationMs": 3681.2, "Success": true } ],
+    "ModelCalls": [
+      { "Purpose": "Transcribe", "Target": "chunk:0", "Endpoint": "whisper", "Provider": "OpenAiCompatible", "Model": "Systran/faster-whisper-small", "DurationMs": 1328.63, "QueueMs": 0.01, "TimeToFirstTokenMs": null, "GenerationMs": null, "TokensPerSecond": null, "Attempts": 1, "Success": true, "InputAudioBytes": 98412 },
+      { "Purpose": "Summarize", "Endpoint": "ollama-gpt-oss-20b", "Provider": "Ollama", "Model": "gpt-oss:20b", "DurationMs": 1903.36, "QueueMs": 0.0, "TimeToFirstTokenMs": 162.58, "GenerationMs": 1731.55, "TokensPerSecond": 117.81, "Attempts": 1, "Success": true, "PromptTokens": 238, "CompletionTokens": 204 }
+    ],
+    "Totals": { "ModelCalls": 3, "FailedModelCalls": 0, "ModelMs": 6911.4, "PromptTokens": 486, "CompletionTokens": 400, "TotalTokens": 886 }
+  },
+  "Warnings": [],
+  "Errors": []
+}
+```
+
 ### POST /v1.0/probe
 
 Key. Deterministic media properties from magic-byte detection and ffprobe. No model calls.
@@ -268,9 +380,44 @@ Response `200`: [`MediaProperties`](#mediaproperties). `422` when the media cann
 
 ---
 
+## Segments
+
+### POST /v1.0/segment
+
+Key. Cuts a time range out of a video or audio source and returns it, so you can fetch the media behind a scene (`Scenes[i].StartMs`/`EndMs`) or a transcript segment (`Transcript.Segments[i].StartMs`/`EndMs`) from an analysis result. Stateless: Keyframe does not keep uploaded media, so send the same `Source` (URL or base64) you analyzed. URL sources go through the same download limits and private-address guard as analysis.
+
+Request body: [`SegmentRequest`](#segmentrequest).
+
+| `Output` | `Format` (default first) | Result |
+|---|---|---|
+| `Video` (default) | `mp4`, `webm` | Re-encoded clip of `[StartMs, EndMs)` for frame-accurate cuts: H.264 and AAC in mp4, VP9 and Opus in webm. The audio track is kept when the source has one. |
+| `Audio` | `mp3`, `wav`, `flac`, `m4a`, `ogg` | Audio clip of `[StartMs, EndMs)`. Works on video and audio sources. |
+| `Frame` | `jpg` (or `jpeg`), `png` | One still frame at `StartMs`. `EndMs` is ignored. |
+
+`MaxEdge` (16 to 4096) caps the long edge of video and frame output; smaller media is not enlarged.
+
+Validation (`400`, every problem listed in `Details`): `Source` required with exactly one of `Url` or `Data`; `StartMs` at least 0; `EndMs` required and greater than `StartMs` for `Video` and `Audio`; `EndMs - StartMs` at most `Media.MaxSegmentMs` (default 600000, range 1000 to 14400000); `Format` valid for the `Output`; `MaxEdge` in range. Media errors (`422`): the source cannot be resolved, it is an image, `Audio` output from a source without an audio track, `Video` or `Frame` output from an audio-only source (cover art in an mp3 does not count as video), or `StartMs` at or past the end. An `EndMs` past the end of the media is clamped to the duration, and the clamped value is reported.
+
+Binary (default) response: `200` with the media as the body, the matching `Content-Type` (`video/mp4`, `video/webm`, `audio/mpeg`, `audio/wav`, `audio/flac`, `audio/mp4`, `audio/ogg`, `image/jpeg`, `image/png`), `Content-Disposition: attachment; filename="segment-12000-18500.mp4"` (frames: `segment-12000.jpg`), and the headers `x-keyframe-segment-start-ms`, `x-keyframe-segment-end-ms`, and `x-keyframe-segment-duration-ms` (exposed to browsers through CORS).
+
+```bash
+curl -X POST http://127.0.0.1:8700/v1.0/segment \
+  -H "x-api-key: default" -H "Content-Type: application/json" \
+  -d '{ "Source": { "Url": "https://example.com/talk.mp4" }, "StartMs": 12000, "EndMs": 18500, "Output": "Video", "MaxEdge": 720 }' \
+  -o scene-3.mp4
+```
+
+With `"ResponseFormat": "Json"` the response is a [`SegmentResponse`](#segmentresponse):
+
+```json
+{ "MediaType": "image/jpeg", "Filename": "segment-12000.jpg", "StartMs": 12000, "EndMs": 12000, "DurationMs": 0, "SizeBytes": 48211, "Data": "/9j/4AAQSkZJRgABAQAAAQABAAD..." }
+```
+
+---
+
 ## Jobs
 
-Jobs are durable: their status, progress, and result survive in the database. A job that was queued or running when the server stopped is marked `Interrupted` at the next start. Finished jobs and results are pruned after `Jobs.RetentionDays` (default 7).
+Video (`POST /v1.0/video`) and audio (`POST /v1.0/audio`) analyses run as jobs. Jobs are durable: their status, progress, and result survive in the database. A job that was queued or running when the server stopped is marked `Interrupted` at the next start. Finished jobs and results are pruned after `Jobs.RetentionDays` (default 7).
 
 Statuses: `Queued`, `Running`, `Succeeded`, `Failed`, `Canceled`, `Interrupted`. A `Succeeded` job always has a result; read `Success` and `Errors` inside the result to see whether every function produced output.
 
@@ -281,7 +428,7 @@ Key. Newest first.
 | Query | Type | Notes |
 |---|---|---|
 | `status` | string | One of the statuses above; anything else is `400` |
-| `mediaKind` | string | `Image` or `Video` |
+| `mediaKind` | string | `Video` or `Audio` (jobs are never images) |
 | `principalName` | string | Submitting key name |
 | `fromUtc`, `toUtc` | ISO 8601 | Inclusive lower and exclusive upper bound on `CreatedUtc` |
 | `pageNumber` | integer | From 1, default 1 |
@@ -299,7 +446,7 @@ Key. Response `200`: [`JobResponse`](#jobresponse). `404` when unknown. Progress
 
 ### GET /v1.0/jobs/{id}/result
 
-Key. Response `200`: the stored [`VideoAnalysisResponse`](#analysisresponse). `409` while the job is not `Succeeded` (the message includes the job's error, if any). `404` when the job is unknown or its result was pruned.
+Key. Response `200`: the stored [`VideoAnalysisResponse`](#analysisresponse) for a video job or [`AudioAnalysisResponse`](#analysisresponse) for an audio job. `409` while the job is not `Succeeded` (the message includes the job's error, if any). `404` when the job is unknown or its result was pruned.
 
 ### POST /v1.0/jobs/{id}/cancel
 
@@ -315,6 +462,19 @@ Key. Deletes a finished job and its result. Response `204`. `409` for a queued o
 
 Model endpoints are configured in settings (`Inference.Endpoints`). These routes report them; edit them through `PUT /v1.0/settings`.
 
+### Default endpoints
+
+A new settings file (and the shipped `keyframe.json` files) contain these endpoints. There is no mock endpoint by default; add one with `"Provider": "Mock"` for offline demos and tests. Nothing is contacted until it is used or health-checked, and an unreachable endpoint only shows as unhealthy; the server still starts.
+
+| Name | Provider | Kind | Endpoint (local / Docker) | Model | MaxOutputTokens | TimeoutMs |
+|---|---|---|---|---|---|---|
+| `ollama-gemma3-4b` | `Ollama` | Completion (vision) | `http://127.0.0.1:11434` / `http://host.docker.internal:11434` | `gemma3:4b` | 4096 | 300000 |
+| `ollama-qwen3-vl-8b` | `Ollama` | Completion (vision) | same | `qwen3-vl:8b` | 4096 | 300000 |
+| `ollama-gpt-oss-20b` | `Ollama` | Completion (text) | same | `gpt-oss:20b` | 4096 | 300000 |
+| `whisper` | `OpenAiCompatible` | Transcription | `http://127.0.0.1:8000/v1` / `http://keyframe-whisper:8000/v1` | `Systran/faster-whisper-small` | 2048 | 120000 |
+
+`Inference.DefaultVision` is `ollama-gemma3-4b`, `DefaultText` is `ollama-gpt-oss-20b`, and `DefaultTranscription` is `whisper`. The Docker stack runs Whisper as the `keyframe-whisper` service (speaches) and reaches the host's Ollama through `host.docker.internal`; pull the models with `ollama pull gemma3:4b qwen3-vl:8b gpt-oss:20b`.
+
 ### GET /v1.0/endpoints
 
 Key. Response `200`: array of [`EndpointResponse`](#endpointresponse). API keys are never returned; `ApiKeySet` and `ApiKeyLast4` say whether one is configured.
@@ -322,10 +482,10 @@ Key. Response `200`: array of [`EndpointResponse`](#endpointresponse). API keys 
 ```json
 [
   {
-    "Name": "mock", "Provider": "Mock", "Kind": "Completion", "Endpoint": null,
-    "ApiKeySet": false, "ApiKeyLast4": null, "Model": "mock-vision",
-    "MaxConcurrentRequests": 4, "TimeoutMs": 120000, "Active": true, "IsDefault": true,
-    "ProviderAvailable": true, "SupportsImages": true, "SupportsStructuredOutput": true, "SupportsTranscription": true, "Healthy": true, "HealthMessage": "OK", "LastCheckedUtc": "2026-11-16T01:41:50.002Z"
+    "Name": "ollama-gemma3-4b", "Provider": "Ollama", "Kind": "Completion", "Endpoint": "http://127.0.0.1:11434",
+    "ApiKeySet": false, "ApiKeyLast4": null, "Model": "gemma3:4b",
+    "MaxConcurrentRequests": 2, "TimeoutMs": 300000, "Active": true, "IsDefault": true,
+    "ProviderAvailable": true, "SupportsImages": true, "SupportsStructuredOutput": false, "SupportsTranscription": false, "Healthy": true, "HealthMessage": "OK", "LastCheckedUtc": "2026-11-16T01:41:50.002Z"
   }
 ]
 ```
@@ -337,10 +497,87 @@ Key. Response `200`: array of [`EndpointResponse`](#endpointresponse). API keys 
 Admin. Sends a short prompt to a completion endpoint (transcription endpoints are checked for a client that builds) and records the outcome as the endpoint's health. Any 2xx reply counts as healthy, including an empty reply from a reasoning model that spent the small token budget thinking. A missing `ApiKey` or `Endpoint` URL is reported in `Error`.
 
 ```json
-{ "Name": "mock", "Success": true, "DurationMs": 0.03, "Model": "mock-vision", "Error": null }
+{ "Name": "ollama-gemma3-4b", "Success": true, "DurationMs": 412.7, "Model": "gemma3:4b", "Error": null }
 ```
 
 `404` when no endpoint has that name.
+
+---
+
+## Analytics
+
+Every finished image, video, and audio analysis (success or failure, including cancellation after it started) is stored as one analysis row plus one row per model call attempt, written in the background after the response. These routes read and delete them; all need the **admin** key. `Analytics.Enabled` (default `true`) and `Analytics.RetentionDays` (default 90, 1 to 3650) apply live. How each number is computed is described in [TELEMETRY.md](TELEMETRY.md#analytics-api-and-computation).
+
+### GET /v1.0/analytics/summary
+
+Admin. Statistics over the analyses that completed in `[fromUtc, toUtc)`.
+
+| Query | Type | Notes |
+|---|---|---|
+| `fromUtc`, `toUtc` | ISO 8601 | Default: the last 24 hours. `fromUtc` is aligned down to the bucket width |
+| `bucket` | string | `minute`, `hour`, or `day`. Default by range: minute up to 2 hours, hour up to 7 days, otherwise day. More than 10000 buckets is `400` |
+| `mediaKind` | string | `Image`, `Video`, or `Audio` |
+| `endpoint` | string | Analyses that used this endpoint (vision, text, or transcription); model call statistics only for calls to it |
+| `model` | string | The same, by model name |
+
+Response `200`: [`AnalyticsSummary`](#analyticssummary). Every bucket in the range is present, gap-filled with zero counts and `null` distributions.
+
+```bash
+curl -H "x-api-key: keyframeadmin" "http://127.0.0.1:8700/v1.0/analytics/summary?bucket=hour&mediaKind=Audio"
+```
+
+```json
+{
+  "FromUtc": "2026-11-15T04:00:00Z", "ToUtc": "2026-11-16T04:32:58.309Z", "Bucket": "hour", "MediaKind": null, "Endpoint": null, "Model": null,
+  "Totals": {
+    "Count": 2, "Succeeded": 2, "Failed": 0, "SuccessRate": 1,
+    "AnalysisMs": { "Count": 2, "Min": 1910.2, "Max": 5112.4, "Avg": 3511.3, "P50": 3511.3, "P90": 4792.18, "P95": 4952.29, "P99": 5080.38, "StdDev": 1601.1, "Sum": 7022.6 },
+    "QueueWaitMs": { "Count": 2, "...": "..." },
+    "MediaDurationMs": { "Count": 1, "...": "..." },
+    "RealtimeFactor": { "Count": 1, "Min": 0.795, "Max": 0.795, "Avg": 0.795, "P50": 0.795, "P90": 0.795, "P95": 0.795, "P99": 0.795, "StdDev": 0, "Sum": 0.795 },
+    "MediaBytes": { "Count": 2, "...": "..." },
+    "ModelCalls": 5, "FailedModelCalls": 0, "Retries": 0, "RepairAttempts": 0,
+    "ModelCallMs": { "Count": 5, "...": "..." },
+    "TimeToFirstTokenMs": { "Count": 4, "Min": 162.584, "Max": 1997.08, "Avg": 1097.935, "P50": 1116.038, "P90": 1903.834, "P95": 1950.457, "P99": 1987.755, "StdDev": 763.922, "Sum": 4391.74 },
+    "GenerationMs": { "Count": 4, "...": "..." },
+    "TokensPerSecond": { "Count": 4, "Min": 117.171, "Max": 159.062, "Avg": 136.114, "P50": 134.111, "P90": 156.466, "P95": 157.764, "P99": 158.802, "StdDev": 18.873, "Sum": 544.455 },
+    "PromptTokens": 1322, "CompletionTokens": 622, "TotalTokens": 1944, "CachedTokens": 0, "ReasoningTokens": 0,
+    "TokensPerAnalysis": { "Count": 2, "...": "..." },
+    "InputImages": 2, "InputImageBytes": 61830, "InputAudioBytes": 98412, "Scenes": 0, "TranscriptCharacters": 106
+  },
+  "ByMediaKind": { "Image": { "Count": 1, "...": "..." }, "Video": { "Count": 0, "...": "..." }, "Audio": { "Count": 1, "...": "..." } },
+  "Buckets": [ { "StartUtc": "2026-11-15T04:00:00Z", "Stats": { "Count": 0, "AnalysisMs": null, "...": "..." } } ],
+  "ByModel": [ { "Endpoint": "ollama-gemma3-4b", "Provider": "Ollama", "Model": "gemma3:4b", "Calls": 2, "Failed": 0, "DurationMs": { "...": "..." }, "TimeToFirstTokenMs": { "...": "..." }, "GenerationMs": { "...": "..." }, "TokensPerSecond": { "...": "..." }, "PromptTokens": 1084, "CompletionTokens": 222 } ],
+  "ByStage": [ { "Stage": "Resolve", "DurationMs": { "...": "..." } }, { "Stage": "Transcribe", "DurationMs": { "...": "..." } } ],
+  "ByPurpose": [ { "Purpose": "Summarize", "Calls": 2, "Failed": 0, "DurationMs": { "...": "..." }, "TimeToFirstTokenMs": { "...": "..." } } ]
+}
+```
+
+### GET /v1.0/analytics/analyses
+
+Admin. Stored analyses, newest first by completion time, without their model calls (`Calls` is `null`).
+
+| Query | Type | Notes |
+|---|---|---|
+| `mediaKind` | string | `Image`, `Video`, or `Audio` |
+| `success` | boolean | `true` or `false` |
+| `fromUtc`, `toUtc` | ISO 8601 | Inclusive lower and exclusive upper bound on completion time |
+| `maxResults` | integer | 1 to 1000, default 50 (`pageSize` is accepted too) |
+| `skip` | integer | Rows to skip, default 0 (or `pageNumber`, from 1) |
+
+Response `200`: `EnumerationResult<AnalysisRecord>` (the same envelope as jobs and request history; `PageNumber` is derived from `skip`).
+
+### GET /v1.0/analytics/analyses/{id}
+
+Admin. One [`AnalysisRecord`](#analysisrecord) with `Calls`: every model call attempt as a [`ModelCallRecord`](#modelcallrecord). The id is the analysis `Id` (`kfa_`) from the analysis response. `404` when unknown or pruned.
+
+### DELETE /v1.0/analytics/analyses/{id}
+
+Admin. Deletes one analysis and its model calls. Response `200`: `{ "DeletedCount": 1 }`. `404` when unknown.
+
+### DELETE /v1.0/analytics/analyses
+
+Admin. Deletes analyses (and their model calls) that completed before `olderThanUtc` (ISO 8601). Without `olderThanUtc`, deletes all of them. Response `200`: `{ "DeletedCount": 42 }`.
 
 ---
 
@@ -382,7 +619,7 @@ Admin. Responds `202`, then the process exits cleanly. Under Docker Compose (`re
 
 ## Request history
 
-Every request except `OPTIONS` and the favicon is captured after the response is sent, written in the background so capture never slows a response. Headers named `Authorization`, `Proxy-Authorization`, `Cookie`, `Set-Cookie`, or containing `api-key`, `token`, `secret`, or `password` are stored as `[redacted]`. Bodies are truncated to `RequestHistory.MaxRequestBodyBytes` and `MaxResponseBodyBytes` (default 64 KB each) with the original length kept. Settings request bodies are redacted, and response bodies of settings and request history routes are not stored. Entries are pruned after `RequestHistory.RetentionDays` (default 30). With `RequestHistory.Enabled` set to `false`, nothing is captured and the read routes return empty results.
+Every request except `OPTIONS` and the favicon is captured after the response is sent, written in the background so capture never slows a response. Headers named `Authorization`, `Proxy-Authorization`, `Cookie`, `Set-Cookie`, or containing `api-key`, `token`, `secret`, or `password` are stored as `[redacted]`. Bodies are truncated to `RequestHistory.MaxRequestBodyBytes` and `MaxResponseBodyBytes` (default 64 KB each) with the original length kept. Settings request bodies are redacted, and response bodies of settings and request history routes, and binary responses (video, audio, and image media such as segments), are not stored; their byte counts are. Entries are pruned after `RequestHistory.RetentionDays` (default 30). With `RequestHistory.Enabled` set to `false`, nothing is captured and the read routes return empty results.
 
 Shared filter parameters:
 
@@ -455,6 +692,7 @@ Each item has an optional `Label` (up to 128 characters) and a required `Text`. 
 |---|---|---|
 | `Endpoint` | string | Endpoint name from settings. Null uses the default for the call type (`Inference.DefaultVision`, `DefaultText`, `DefaultTranscription`). |
 | `Name` | string | Model override; null uses the endpoint's configured model |
+| `Model` | string | Input-only alias of `Name`, so `{ "Endpoint": "whisper", "Model": "..." }` also works. Never returned |
 
 ### ImageAnalysisRequest
 
@@ -480,6 +718,37 @@ Each item has an optional `Label` (up to 128 characters) and a required `Text`. 
 | `SampleFrames` | integer | 8 | 1 to 64. Frames for whole-video functions when scenes are disabled |
 | `IncludeKeyframeData` | boolean | false | Return base64 JPEG thumbnails (long edge `Media.ThumbnailMaxEdge`) in `Scenes[].Keyframes[].Data` |
 | `IncludeProperties` | boolean | true | |
+
+### AudioAnalysisRequest
+
+| Property | Type | Default | Notes |
+|---|---|---|---|
+| `Audio` | MediaSource | | Required. Audio file, or a video file (audio track only) |
+| `Context` | Context | `[]` | Included in the summary and every field prompt |
+| `TranscriptionModel` | ModelSelection | null | Transcription endpoint and model; takes precedence over `Functions.Transcribe.Endpoint` and `Model`. Null uses `Inference.DefaultTranscription` |
+| `TextModel` | ModelSelection | null | Endpoint for Summarize and Extract on the transcript. Null uses `Inference.DefaultText`, then `DefaultVision` |
+| `Functions` | AudioFunctionsSpec | | `Transcribe` (a [TranscribeSpec](#scenesspec-scenedetectionspec-transcribespec), on by default), `Summarize` (on by default), `Extract` (off by default). At least one must be enabled, and Summarize or Extract need Transcribe |
+| `Wait` | boolean | false | See `POST /v1.0/audio` |
+| `WaitTimeoutMs` | integer | 120000 | 1000 to 3600000, also capped by `Jobs.MaxWaitTimeoutMs` |
+| `IncludeProperties` | boolean | true | |
+
+When you send a `Functions` object, the sub-objects you include replace the defaults, so send `"Enable": true` on each function you want.
+
+### SegmentRequest
+
+| Property | Type | Default | Notes |
+|---|---|---|---|
+| `Source` | MediaSource | | Required. The video or audio to cut |
+| `StartMs` | integer | 0 | Start of the range, or the frame time for `Frame` |
+| `EndMs` | integer | | Exclusive end. Required for `Video` and `Audio`; clamped to the media duration |
+| `Output` | string | `Video` | `Video`, `Audio`, or `Frame` |
+| `Format` | string | per output | `mp4`/`webm`, `mp3`/`wav`/`flac`/`m4a`/`ogg`, `jpg`/`png` |
+| `MaxEdge` | integer | null | 16 to 4096; long-edge cap for video and frames |
+| `ResponseFormat` | string | `Binary` | `Binary` or `Json` |
+
+### SegmentResponse
+
+`MediaType`, `Filename`, `StartMs`, `EndMs` (after clamping; equal to `StartMs` for frames), `DurationMs` (0 for frames), `SizeBytes`, and `Data` (base64).
 
 ### SummarizeSpec
 
@@ -524,7 +793,7 @@ Coercion: `Boolean` accepts true/false, yes/no, 1/0. `Integer` accepts numeric s
 
 | TranscribeSpec | Notes |
 |---|---|
-| `Enable` | Default false. Audio is extracted, chunked, and sent to the transcription endpoint |
+| `Enable` | Default false for video, true for audio. Audio is extracted, chunked, and sent to the transcription endpoint |
 | `Endpoint`, `Model` | Null uses `Inference.DefaultTranscription` and its model |
 | `Language` | ISO 639-1 code; null lets the model detect |
 | `Prompt` | Spelling hints for names and terms |
@@ -533,22 +802,23 @@ A video without an audio track skips transcription with a warning rather than fa
 
 ### AnalysisResponse
 
-`ImageAnalysisResponse` and `VideoAnalysisResponse` share these properties:
+`ImageAnalysisResponse`, `VideoAnalysisResponse`, and `AudioAnalysisResponse` share these properties:
 
 | Property | Type | Notes |
 |---|---|---|
-| `Id` | string | `kfa_` prefix |
+| `Id` | string | `kfa_` prefix. Also the id of the stored analytics record |
+| `RequestId` | string | Id of the HTTP request that submitted the analysis (the `x-request-id` response header) |
 | `Success` | boolean | See the image route |
-| `MediaKind` | string | `Image` or `Video` |
+| `MediaKind` | string | `Image`, `Video`, or `Audio` |
 | `Properties` | MediaProperties | When `IncludeProperties` |
 | `Results` | object | Caller-keyed map: the summary key plus every field key. The one schemaless value in the contract |
 | `Fields` | FieldResult[] | `Key`, `Type`, `Value`, `Valid`, `RawValue`, `Error`, `Warnings[]` |
-| `Telemetry` | AnalysisTelemetry | `StartUtc`, `EndUtc`, `TotalMs`, `QueuedMs`, `Stages[]` (`Name`, `StartUtc`, `DurationMs`, `Success`), `ModelCalls[]`, `Totals` |
+| `Telemetry` | AnalysisTelemetry | `StartUtc`, `EndUtc`, `TotalMs`, `QueueWaitMs` (job queued to started; 0 for images), `QueuedMs` (the same for jobs, null for images), `Stages[]` (`Name`, `StartUtc`, `DurationMs`, `Success`), `ModelCalls[]`, `Totals` |
 | `Warnings`, `Errors` | string[] | |
 
-`VideoAnalysisResponse` adds `Transcript` (`Language`, `Text`, `Segments[]` with `StartMs`, `EndMs`, `Text`) and `Scenes[]` (`Index`, `StartMs`, `EndMs`, `DurationMs`, `Keyframes[]` with `TimestampMs`, `Width`, `Height`, `Data`, then `TranscriptText`, `Results`, `Fields`, `Errors`).
+`AudioAnalysisResponse` adds `Transcript` (same shape as video). `VideoAnalysisResponse` adds `Transcript` (`Language`, `Text`, `Segments[]` with `StartMs`, `EndMs`, `Text`) and `Scenes[]` (`Index`, `StartMs`, `EndMs`, `DurationMs`, `Keyframes[]` with `TimestampMs`, `Width`, `Height`, `Data`, then `TranscriptText`, `Results`, `Fields`, `Errors`).
 
-Every `ModelCalls[]` entry records `Purpose` (`Summarize`, `Extract`, `SceneSummarize`, `SceneExtract`, `Transcribe`; repair attempts are counted in `RepairAttempts` on the call they repaired), `Target` (field key or scene index), `Endpoint`, `Provider`, `Model`, `StartUtc`, `DurationMs`, `TimeToFirstTokenMs`, `Attempts`, `RepairAttempts`, `Success`, `Error`, `StatusCode`, `InputImages`, `InputImageBytes`, `InputAudioBytes`, and token counts (`PromptTokens`, `CompletionTokens`, `TotalTokens`, `CachedTokens`, `ReasoningTokens`), plus `FinishReason`. Failed attempts are included. Video stages are `Resolve`, `Probe`, `SceneDetection`, `FrameExtraction`, `AudioExtraction`, `Transcribe`, `Scenes`, `Summarize`, and `Extract`.
+Every `ModelCalls[]` entry records `Purpose` (`Summarize`, `Extract`, `SceneSummarize`, `SceneExtract`, `Transcribe`; repair attempts are counted in `RepairAttempts` on the call they repaired), `Target` (field key or scene index), `Endpoint`, `Provider`, `Model`, `StartUtc`, `DurationMs` (request sent to last token, across every attempt including backoff and the endpoint gate), `QueueMs` (time waiting on the endpoint's concurrency gate, summed over attempts), `TimeToFirstTokenMs` (request sent to the first content or reasoning token; completion calls stream), `GenerationMs` (first token to last token), `TokensPerSecond` (`CompletionTokens / (GenerationMs / 1000)`, null when either is unknown), `Attempts`, `RepairAttempts`, `Success`, `Error`, `StatusCode`, `InputImages`, `InputImageBytes`, `InputAudioBytes`, and token counts (`PromptTokens`, `CompletionTokens`, `TotalTokens`, `CachedTokens`, `ReasoningTokens`), plus `FinishReason`. The timing fields come from the last attempt that reported them. Failed attempts are included. Audio stages are `Resolve`, `Probe`, `AudioExtraction`, `Transcribe`, `Summarize`, and `Extract`. Video stages are `Resolve`, `Probe`, `SceneDetection`, `FrameExtraction`, `AudioExtraction`, `Transcribe`, `Scenes`, `Summarize`, and `Extract`.
 
 ### MediaProperties
 
@@ -565,6 +835,24 @@ Every `ModelCalls[]` entry records `Purpose` (`Summarize`, `Extract`, `SceneSumm
 ### RequestHistoryEntry
 
 `Id` (`req_` prefix), `RequestId`, `PrincipalName`, `Method`, `Path`, `Url`, `StatusCode`, `Success` (status below 400), `DurationMs`, `SourceIp`, `RequestContentType`, `ResponseContentType`, `RequestHeaders`, `RequestBody`, `RequestBodyBytes`, `RequestBodyTruncated`, `ResponseHeaders`, `ResponseBody`, `ResponseBodyBytes`, `ResponseBodyTruncated`, `CreatedUtc`, `CompletedUtc`.
+
+### AnalyticsSummary
+
+`FromUtc`, `ToUtc`, `Bucket` (`minute`, `hour`, or `day`), `MediaKind`, `Endpoint`, `Model` (the filters, or null), `Totals` (StatBlock), `ByMediaKind` (map with `Image`, `Video`, and `Audio`, each a StatBlock), `Buckets[]` (`StartUtc`, `Stats`), `ByModel[]` (ModelStats), `ByStage[]` (`Stage`, `DurationMs`), `ByPurpose[]` (`Purpose`, `Calls`, `Failed`, `DurationMs`, `TimeToFirstTokenMs`).
+
+**StatBlock**: `Count`, `Succeeded`, `Failed`, `SuccessRate` (0 to 1), distributions `AnalysisMs`, `QueueWaitMs`, `MediaDurationMs`, `RealtimeFactor` (AnalysisMs divided by MediaDurationMs, video and audio), `MediaBytes` (over analyses), counts `ModelCalls`, `FailedModelCalls`, `Retries`, `RepairAttempts`, distributions `ModelCallMs`, `TimeToFirstTokenMs`, `GenerationMs`, `TokensPerSecond` (over model call attempts), token sums `PromptTokens`, `CompletionTokens`, `TotalTokens`, `CachedTokens`, `ReasoningTokens`, distribution `TokensPerAnalysis`, and sums `InputImages`, `InputImageBytes`, `InputAudioBytes`, `Scenes`, `TranscriptCharacters`.
+
+**Distribution** (null when there are no samples): `Count`, `Min`, `Max`, `Avg`, `P50`, `P90`, `P95`, `P99`, `StdDev`, `Sum`.
+
+**ModelStats**: `Endpoint`, `Provider`, `Model`, `Calls` (attempts), `Failed`, distributions `DurationMs`, `TimeToFirstTokenMs`, `GenerationMs`, `TokensPerSecond`, and sums `PromptTokens`, `CompletionTokens`.
+
+### AnalysisRecord
+
+`Id` (`kfa_`), `RequestId`, `JobId` (null for images), `MediaKind`, `PrincipalName`, `Success`, `Error`, `StartedUtc`, `CompletedUtc`, `AnalysisMs`, `QueueWaitMs`, `MediaDurationMs`, `MediaBytes`, `RealtimeFactor`, `VisionEndpoint`, `VisionModel`, `TextEndpoint`, `TextModel`, `TranscriptionEndpoint`, `TranscriptionModel`, `ModelCalls`, `FailedModelCalls`, `Retries`, `RepairAttempts`, `PromptTokens`, `CompletionTokens`, `TotalTokens`, `CachedTokens`, `ReasoningTokens`, `InputImages`, `InputImageBytes`, `InputAudioBytes`, `Scenes`, `TranscriptCharacters`, `FieldCount`, `InvalidFields`, `Stages[]` (StageTiming), and `Calls` (ModelCallRecord[] when reading one analysis, null in listings).
+
+### ModelCallRecord
+
+One row per attempt: `Id` (`kfc_`), `AnalysisId`, `Purpose`, `Target`, `Endpoint`, `Provider`, `Model`, `Attempt` (from 1), `StartUtc`, `Success`, `Error`, `StatusCode`, `DurationMs`, `QueueMs`, `TimeToFirstTokenMs`, `GenerationMs`, `TokensPerSecond`, `PromptTokens`, `CompletionTokens`, `TotalTokens`, `CachedTokens`, `ReasoningTokens`, `InputImages`, `InputImageBytes`, `InputAudioBytes`, `FinishReason`.
 
 ### EnumerationResult
 

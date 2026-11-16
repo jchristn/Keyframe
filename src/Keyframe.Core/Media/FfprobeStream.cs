@@ -79,5 +79,23 @@ namespace Keyframe.Core.Media
         /// </summary>
         [JsonPropertyName("tags")]
         public Dictionary<string, string>? Tags { get; set; } = null;
+
+        /// <summary>
+        /// Stream disposition flags.
+        /// </summary>
+        [JsonPropertyName("disposition")]
+        public FfprobeDisposition? Disposition { get; set; } = null;
+
+        /// <summary>
+        /// Whether this is a video stream that holds embedded cover art (an attached picture) rather than motion video.
+        /// </summary>
+        [JsonIgnore]
+        public bool IsAttachedPicture
+        {
+            get
+            {
+                return Disposition != null && Disposition.AttachedPic != 0;
+            }
+        }
     }
 }

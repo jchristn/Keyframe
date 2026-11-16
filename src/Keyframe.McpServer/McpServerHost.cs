@@ -37,7 +37,7 @@ namespace Keyframe.McpServer
 
         private readonly McpSettings _Settings;
         private readonly LoggingModule _Logging;
-        private readonly KeyframeClient _Client;
+        private readonly CallerClients _Clients;
         private readonly KeyframeTools _Tools;
         private readonly List<Task> _Running = new List<Task>();
         private McpHttpServer? _Http = null;
@@ -60,8 +60,8 @@ namespace Keyframe.McpServer
         {
             _Settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _Logging = logging ?? throw new ArgumentNullException(nameof(logging));
-            _Client = new KeyframeClient(settings.Keyframe.Endpoint, settings.Keyframe.AccessKey) { TimeoutMs = settings.Keyframe.TimeoutMs };
-            _Tools = new KeyframeTools(_Client, message => _Logging.Debug(message));
+            _Clients = new CallerClients(settings.Keyframe);
+            _Tools = new KeyframeTools(() => _Clients.Current(), message => _Logging.Debug(message));
         }
 
         #endregion
@@ -82,7 +82,7 @@ namespace Keyframe.McpServer
                 _Http = new McpHttpServer(_Settings.Http.Hostname, _Settings.Http.Port, "/rpc", "/events", false, "/mcp");
                 _Http.ServerName = "Keyframe";
                 _Http.ServerVersion = Version;
-                if (_Settings.RequireAuthentication) _Http.AuthenticationHandler = request => Task.FromResult(Authenticate(request));
+                if (_Settings.RequireAuthentication) _Http.AuthenticationHandler = request => AuthenticateAsync(request);
                 _Tools.RegisterAll((name, description, schema, handler) => _Http.RegisterTool(name, description, schema, handler));
                 _Running.Add(_Http.StartAsync(token));
                 _Logging.Info(Header + "HTTP      http://" + _Settings.Http.Hostname + ":" + _Settings.Http.Port + "/mcp (Streamable HTTP) and /rpc");
@@ -104,7 +104,7 @@ namespace Keyframe.McpServer
                 _WebSocket = new McpWebsocketsServer(_Settings.WebSocket.Hostname, _Settings.WebSocket.Port, "/mcp");
                 _WebSocket.ServerName = "Keyframe";
                 _WebSocket.ServerVersion = Version;
-                if (_Settings.RequireAuthentication) _WebSocket.AuthenticationHandler = request => Task.FromResult(Authenticate(request));
+                if (_Settings.RequireAuthentication) _WebSocket.AuthenticationHandler = request => AuthenticateAsync(request);
                 _Tools.RegisterAll((name, description, schema, handler) => _WebSocket.RegisterTool(name, description, schema, handler));
                 _Running.Add(_WebSocket.StartAsync(token));
                 _Logging.Info(Header + "WebSocket ws://" + _Settings.WebSocket.Hostname + ":" + _Settings.WebSocket.Port + "/mcp");
@@ -151,7 +151,7 @@ namespace Keyframe.McpServer
                 _Http?.Dispose();
                 _Tcp?.Dispose();
                 _WebSocket?.Dispose();
-                _Client.Dispose();
+                _Clients.Dispose();
                 try { _Telemetry?.Dispose(); } catch (Exception) { }
             }
 
@@ -162,25 +162,30 @@ namespace Keyframe.McpServer
 
         #region Private-Methods
 
-        private AuthenticationResult Authenticate(HttpListenerRequest request)
+        private async Task<AuthenticationResult> AuthenticateAsync(HttpListenerRequest request)
         {
             string? header = request.Headers["Authorization"];
             string? presented = null;
             if (!String.IsNullOrWhiteSpace(header) && header.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase)) presented = header.Substring(7).Trim();
             if (String.IsNullOrEmpty(presented)) presented = request.Headers["x-api-key"];
 
-            string expected = _Settings.Keyframe.AccessKey ?? String.Empty;
-            bool ok = !String.IsNullOrEmpty(presented) && expected.Length > 0
-                && CryptographicOperations.FixedTimeEquals(
-                    SHA256.HashData(Encoding.UTF8.GetBytes(presented)),
-                    SHA256.HashData(Encoding.UTF8.GetBytes(expected)));
+            // The key is checked by the Keyframe server itself, so any key that works on REST works here with the same rights.
+            string? principal = await _Clients.ValidateAsync(presented).ConfigureAwait(false);
+            if (principal != null)
+            {
+                return new AuthenticationResult
+                {
+                    IsAuthenticated = true,
+                    Principal = principal,
+                    Claims = new Dictionary<string, string> { { CallerClients.KeyClaim, presented! } }
+                };
+            }
 
-            if (ok) return new AuthenticationResult { IsAuthenticated = true, Principal = "mcp-client" };
             return new AuthenticationResult
             {
                 IsAuthenticated = false,
                 StatusCode = 401,
-                ErrorMessage = "Send the Keyframe access key as 'Authorization: Bearer <key>'."
+                ErrorMessage = "Send a Keyframe key (the same access or admin key used for the REST API) as 'Authorization: Bearer <key>'."
             };
         }
 

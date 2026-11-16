@@ -173,6 +173,48 @@ class ApiClient {
     return { status: result.status, data: result.data };
   }
 
+  /** POST /v1.0/audio. Returns { status, data }: 202 with a JobResponse, or 200 with a result when Wait is set. */
+  async analyzeAudio(request, signal) {
+    const result = await this.send('POST', '/v1.0/audio', { body: request, signal });
+    return { status: result.status, data: result.data };
+  }
+
+  /**
+   * POST /v1.0/segment with ResponseFormat Binary. Returns { blob, filename, headers }.
+   * Errors are normalized like every other call.
+   */
+  async downloadSegment(request, signal) {
+    const init = { method: 'POST', headers: this.headers({ Accept: '*/*' }, true), body: JSON.stringify({ ResponseFormat: 'Binary', ...request }), signal };
+    let response;
+    try {
+      response = await this.fetchImpl(this.url('/v1.0/segment'), init);
+    } catch (err) {
+      if (err && err.name === 'AbortError') throw err;
+      throw new ApiError({ network: true, message: (err && err.message) || 'Network error' });
+    }
+    if (!response.ok) {
+      if (response.status === 401 && typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('keyframe:unauthorized'));
+      const text = await response.text().catch(() => '');
+      let data = null;
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch {
+        data = text;
+      }
+      const err = data && typeof data === 'object' ? data : {};
+      throw new ApiError({
+        status: response.status,
+        code: err.Error || null,
+        message: err.Message || (typeof data === 'string' && data) || response.statusText || 'HTTP ' + response.status,
+        details: err.Details || [],
+        requestId: err.RequestId || response.headers.get('x-request-id'),
+        body: data
+      });
+    }
+    const blob = await response.blob();
+    return { blob, filename: response.headers.get('content-disposition'), headers: response.headers };
+  }
+
   probe(media) {
     return this.request('POST', '/v1.0/probe', { body: { Media: media } });
   }
@@ -239,6 +281,30 @@ class ApiClient {
 
   deleteRequestHistory(filter = {}) {
     return this.request('DELETE', '/v1.0/api/request-history', { query: filter });
+  }
+
+  // Analytics (admin)
+  getAnalyticsSummary(filter = {}, signal) {
+    return this.request('GET', '/v1.0/analytics/summary', { query: filter, signal });
+  }
+
+  /** Paged analysis records. Accepts pageNumber and pageSize and sends skip and maxResults. */
+  async listAnalyses({ pageNumber = 1, pageSize = 25, ...filter } = {}) {
+    const query = { ...filter, maxResults: pageSize, skip: (Math.max(1, pageNumber) - 1) * pageSize };
+    const page = normalizePage(await this.request('GET', '/v1.0/analytics/analyses', { query }));
+    return { ...page, pageNumber, pageSize };
+  }
+
+  getAnalysis(id) {
+    return this.request('GET', '/v1.0/analytics/analyses/' + encodeURIComponent(id));
+  }
+
+  deleteAnalysis(id) {
+    return this.request('DELETE', '/v1.0/analytics/analyses/' + encodeURIComponent(id));
+  }
+
+  deleteAnalysesOlderThan(olderThanUtc) {
+    return this.request('DELETE', '/v1.0/analytics/analyses', { query: { olderThanUtc } });
   }
 
   /**

@@ -95,6 +95,30 @@ namespace Test.Automated
             await runner.RunAsync("job list filters and paging", JobListAsync).ConfigureAwait(false);
             await runner.RunAsync("unknown job is 404", UnknownJobAsync).ConfigureAwait(false);
 
+            Console.WriteLine("Audio");
+            await runner.RunAsync("audio job lifecycle (202, poll, result, delete)", AudioLifecycleAsync).ConfigureAwait(false);
+            await runner.RunAsync("audio Wait returns the result with timing telemetry", AudioWaitAsync).ConfigureAwait(false);
+            await runner.RunAsync("audio AnalyzeAndWaitAsync with typed fields", AudioAnalyzeAndWaitAsync).ConfigureAwait(false);
+            await runner.RunAsync("audio without a source is 400", AudioValidationAsync).ConfigureAwait(false);
+
+            Console.WriteLine("Segments");
+            await runner.RunAsync("audio segment as binary with header metadata", SegmentAudioBinaryAsync).ConfigureAwait(false);
+            await runner.RunAsync("video segment as binary with MaxEdge", SegmentVideoBinaryAsync).ConfigureAwait(false);
+            await runner.RunAsync("frame segment as binary", SegmentFrameBinaryAsync).ConfigureAwait(false);
+            await runner.RunAsync("segment as JSON decodes to SizeBytes", SegmentJsonAsync).ConfigureAwait(false);
+            await runner.RunAsync("segment EndMs past the end is clamped", SegmentClampAsync).ConfigureAwait(false);
+            await runner.RunAsync("segment invalid range is 400, frame from audio is 422", SegmentInvalidAsync).ConfigureAwait(false);
+
+            Console.WriteLine("Analytics");
+            await runner.RunAsync("analytics summary totals, media kinds, and buckets", AnalyticsSummaryAsync).ConfigureAwait(false);
+            await runner.RunAsync("analytics summary filters", AnalyticsSummaryFilterAsync).ConfigureAwait(false);
+            await runner.RunAsync("analytics list filters and paging", AnalyticsListAsync).ConfigureAwait(false);
+            await runner.RunAsync("analytics read includes model call attempts", AnalyticsReadAsync).ConfigureAwait(false);
+            await runner.RunAsync("analytics delete one and 404 after", AnalyticsDeleteAsync).ConfigureAwait(false);
+            await runner.RunAsync("analytics bulk delete with an old cutoff", AnalyticsBulkDeleteAsync).ConfigureAwait(false);
+            await runner.RunAsync("analytics routes return 403 for an access key", AnalyticsForbiddenAsync).ConfigureAwait(false);
+            await runner.RunAsync("unknown analysis is 404", AnalyticsUnknownAsync).ConfigureAwait(false);
+
             Console.WriteLine("Endpoints");
             await runner.RunAsync("list endpoints", EndpointsAsync).ConfigureAwait(false);
             await runner.RunAsync("test endpoint (admin)", EndpointTestAsync).ConfigureAwait(false);
@@ -578,6 +602,325 @@ namespace Test.Automated
 
         #endregion
 
+        #region Audio
+
+        private async Task<AudioAnalysisRequest> AudioRequestAsync(bool wait, bool extract)
+        {
+            RequireFixtures();
+            AudioAnalysisRequest request = new AudioAnalysisRequest
+            {
+                Audio = await MediaSources.FromFileAsync(_Fixtures.AudioPath, null, _Token).ConfigureAwait(false),
+                Context = new List<ContextItem> { new ContextItem { Label = "Recording", Text = "Synthetic sine tone." } },
+                Wait = wait,
+                WaitTimeoutMs = 60000
+            };
+
+            request.Functions.Transcribe.Language = "en";
+            if (extract)
+            {
+                request.Functions.Extract = new ExtractSpec
+                {
+                    Enable = true,
+                    Fields = new List<FieldSpec> { new FieldSpec { Key = "speakerCount", Type = FieldTypeEnum.Integer, Prompt = "How many speakers?" } }
+                };
+            }
+
+            return request;
+        }
+
+        private static void CheckAudioResult(AudioAnalysisResponse result)
+        {
+            Check.True(result.Success, "Success false: " + String.Join("; ", result.Errors));
+            Check.Equal(MediaKindEnum.Audio, result.MediaKind, "MediaKind");
+            Check.True(result.Id.StartsWith("kfa_", StringComparison.Ordinal), "Id prefix: " + result.Id);
+            Check.True(result.Transcript != null && result.Transcript.Segments.Any() && !String.IsNullOrEmpty(result.Transcript.Text), "transcript missing");
+            Check.True(result.Results.ContainsKey("Summary"), "Summary missing");
+            Check.True(result.Properties != null && result.Properties.HasAudio && result.Properties.DurationMs > 0, "Properties missing");
+            Check.True(result.Telemetry.QueueWaitMs >= 0, "QueueWaitMs negative");
+            Check.True(result.Telemetry.ModelCalls.Any(c => c.Purpose == ModelCallPurposeEnum.Transcribe), "no Transcribe model call");
+            Check.True(result.Telemetry.ModelCalls.Any(c => c.Purpose == ModelCallPurposeEnum.Summarize), "no Summarize model call");
+            Check.True(result.Telemetry.ModelCalls.All(c => c.QueueMs >= 0), "QueueMs negative");
+        }
+
+        private async Task AudioLifecycleAsync()
+        {
+            AudioSubmitResult submitted = await _User.Audio.AnalyzeAsync(await AudioRequestAsync(false, false).ConfigureAwait(false), _Token).ConfigureAwait(false);
+            Check.Equal(202, submitted.StatusCode, "StatusCode");
+            Check.True(submitted.Job != null && !submitted.HasResult, "202 should carry a job");
+            Check.True(submitted.JobId.StartsWith("kfj_", StringComparison.Ordinal), "JobId prefix");
+            Check.Equal(MediaKindEnum.Audio, submitted.Job!.MediaKind, "Job.MediaKind");
+
+            JobResponse done = await _User.Jobs.WaitAsync(submitted.JobId, 200, 120000, _Token).ConfigureAwait(false);
+            Check.Equal(JobStatusEnum.Succeeded, done.Status, "terminal status");
+
+            AudioAnalysisResponse result = await _User.Jobs.GetAudioResultAsync(submitted.JobId, _Token).ConfigureAwait(false);
+            CheckAudioResult(result);
+
+            EnumerationResult<JobResponse> page = await _User.Jobs.ListAsync(new JobFilter { MediaKind = MediaKindEnum.Audio, PageSize = 100 }, _Token).ConfigureAwait(false);
+            Check.True(page.Items.Any(j => j.Id == submitted.JobId), "audio job not in list");
+            Check.True(page.Items.All(j => j.MediaKind == MediaKindEnum.Audio), "media kind filter ignored");
+
+            await _User.Jobs.DeleteAsync(submitted.JobId, _Token).ConfigureAwait(false);
+            await Check.ThrowsApiAsync(404, () => _User.Jobs.GetAsync(submitted.JobId, _Token)).ConfigureAwait(false);
+        }
+
+        private async Task AudioWaitAsync()
+        {
+            AudioSubmitResult submitted = await _User.Audio.AnalyzeAsync(await AudioRequestAsync(true, false).ConfigureAwait(false), _Token).ConfigureAwait(false);
+            Check.Equal(200, submitted.StatusCode, "StatusCode");
+            Check.True(submitted.HasResult && submitted.Job == null, "Wait should return the result");
+            Check.True(submitted.JobId.StartsWith("kfj_", StringComparison.Ordinal), "JobId from x-keyframe-job-id header: " + submitted.JobId);
+            AudioAnalysisResponse result = submitted.Result!;
+            CheckAudioResult(result);
+            Check.True(!String.IsNullOrEmpty(result.RequestId), "RequestId missing");
+            Check.True(result.Telemetry.QueuedMs.HasValue && Math.Abs(result.Telemetry.QueuedMs.Value - result.Telemetry.QueueWaitMs) < 0.001, "QueuedMs should equal QueueWaitMs for jobs");
+
+            ModelCallTelemetry summarize = result.Telemetry.ModelCalls.First(c => c.Purpose == ModelCallPurposeEnum.Summarize);
+            Check.True(summarize.TimeToFirstTokenMs.HasValue && summarize.TimeToFirstTokenMs.Value >= 0, "TimeToFirstTokenMs missing on a completion call");
+            Check.True(summarize.GenerationMs.HasValue && summarize.GenerationMs.Value >= 0, "GenerationMs missing on a completion call");
+            Check.True(summarize.TokensPerSecond.HasValue && summarize.TokensPerSecond.Value > 0, "TokensPerSecond missing on a completion call");
+            await _User.Jobs.DeleteAsync(submitted.JobId, _Token).ConfigureAwait(false);
+        }
+
+        private async Task AudioAnalyzeAndWaitAsync()
+        {
+            AudioAnalysisResponse result = await _User.Audio.AnalyzeAndWaitAsync(await AudioRequestAsync(false, true).ConfigureAwait(false), 200, 120000, _Token).ConfigureAwait(false);
+            CheckAudioResult(result);
+            Check.True(result.Fields.Any(f => f.Key == "speakerCount" && f.Valid), "speakerCount field missing or invalid");
+            Check.True(result.GetResult<int?>("speakerCount").HasValue, "speakerCount result missing");
+            Check.True(result.Telemetry.ModelCalls.Any(c => c.Purpose == ModelCallPurposeEnum.Extract), "no Extract model call");
+        }
+
+        private async Task AudioValidationAsync()
+        {
+            KeyframeApiException e = await Check.ThrowsApiAsync(400, () => _User.Audio.AnalyzeAsync(new AudioAnalysisRequest(), _Token)).ConfigureAwait(false);
+            Check.True(e.Error.HasValue, "Error code missing");
+        }
+
+        #endregion
+
+        #region Segments
+
+        private async Task<SegmentRequest> SegmentRequestAsync(string path, SegmentOutputEnum output, long startMs, long? endMs)
+        {
+            RequireFixtures();
+            return new SegmentRequest
+            {
+                Source = await MediaSources.FromFileAsync(path, null, _Token).ConfigureAwait(false),
+                StartMs = startMs,
+                EndMs = endMs,
+                Output = output
+            };
+        }
+
+        private async Task SegmentAudioBinaryAsync()
+        {
+            SegmentRequest request = await SegmentRequestAsync(_Fixtures.AudioPath, SegmentOutputEnum.Audio, 1000, 3000).ConfigureAwait(false);
+            request.Format = "wav";
+            SegmentMedia media = await _User.Segments.GetSegmentAsync(request, _Token).ConfigureAwait(false);
+            Check.True(media.MediaType.StartsWith("audio/", StringComparison.Ordinal), "MediaType " + media.MediaType);
+            Check.Equal("segment-1000-3000.wav", media.Filename, "Filename");
+            Check.Equal(1000L, media.StartMs, "StartMs");
+            Check.Equal(3000L, media.EndMs, "EndMs");
+            Check.Equal(2000L, media.DurationMs, "DurationMs");
+            Check.True(media.SizeBytes > 1000, "segment too small: " + media.SizeBytes);
+            Check.True(media.Data.Length >= 4 && media.Data[0] == (byte)'R' && media.Data[1] == (byte)'I' && media.Data[2] == (byte)'F' && media.Data[3] == (byte)'F', "not a RIFF wav");
+            Check.True(!String.IsNullOrEmpty(media.RequestId), "RequestId missing");
+            Check.Equal(SegmentResponseFormatEnum.Binary, request.ResponseFormat, "request was modified");
+        }
+
+        private async Task SegmentVideoBinaryAsync()
+        {
+            SegmentRequest request = await SegmentRequestAsync(_Fixtures.VideoPath, SegmentOutputEnum.Video, 0, 2000).ConfigureAwait(false);
+            request.MaxEdge = 160;
+            SegmentMedia media = await _User.Segments.GetSegmentAsync(request, _Token).ConfigureAwait(false);
+            Check.Equal("video/mp4", media.MediaType, "MediaType");
+            Check.True(media.Filename.EndsWith(".mp4", StringComparison.Ordinal), "Filename " + media.Filename);
+            Check.True(media.SizeBytes > 0, "empty clip");
+
+            MediaProperties props = await _User.Probe.ProbeAsync(new ProbeRequest { Media = MediaSources.FromBytes(media.Data, "video/mp4") }, _Token).ConfigureAwait(false);
+            Check.True(props.Width.HasValue && props.Height.HasValue && Math.Max(props.Width.Value, props.Height.Value) <= 160, "MaxEdge not applied");
+            Check.True(props.DurationMs.HasValue && props.DurationMs.Value >= 1500 && props.DurationMs.Value <= 2600, "clip duration " + props.DurationMs);
+        }
+
+        private async Task SegmentFrameBinaryAsync()
+        {
+            SegmentRequest request = await SegmentRequestAsync(_Fixtures.VideoPath, SegmentOutputEnum.Frame, 2500, null).ConfigureAwait(false);
+            request.Format = "png";
+            SegmentMedia media = await _User.Segments.GetSegmentAsync(request, _Token).ConfigureAwait(false);
+            Check.Equal("image/png", media.MediaType, "MediaType");
+            Check.Equal("segment-2500.png", media.Filename, "Filename");
+            Check.Equal(0L, media.DurationMs, "DurationMs");
+            Check.Equal(2500L, media.EndMs, "EndMs equals StartMs for frames");
+            Check.True(media.Data.Length > 8 && media.Data[1] == (byte)'P' && media.Data[2] == (byte)'N' && media.Data[3] == (byte)'G', "not a PNG");
+        }
+
+        private async Task SegmentJsonAsync()
+        {
+            SegmentRequest request = await SegmentRequestAsync(_Fixtures.AudioPath, SegmentOutputEnum.Audio, 0, 2000).ConfigureAwait(false);
+            SegmentResponse response = await _User.Segments.GetSegmentJsonAsync(request, _Token).ConfigureAwait(false);
+            Check.Equal("audio/mpeg", response.MediaType, "MediaType");
+            Check.Equal("segment-0-2000.mp3", response.Filename, "Filename");
+            Check.Equal(2000L, response.DurationMs, "DurationMs");
+            byte[] bytes = response.GetBytes();
+            Check.Equal(response.SizeBytes, (long)bytes.Length, "decoded length");
+            Check.True(bytes.Length > 0, "empty segment");
+            Check.Equal(SegmentResponseFormatEnum.Binary, request.ResponseFormat, "request was modified");
+        }
+
+        private async Task SegmentClampAsync()
+        {
+            SegmentRequest request = await SegmentRequestAsync(_Fixtures.AudioPath, SegmentOutputEnum.Audio, 6000, 60000).ConfigureAwait(false);
+            SegmentMedia media = await _User.Segments.GetSegmentAsync(request, _Token).ConfigureAwait(false);
+            Check.True(media.EndMs < 60000 && media.EndMs >= 7500, "EndMs not clamped: " + media.EndMs);
+            Check.Equal(media.EndMs - media.StartMs, media.DurationMs, "DurationMs after clamping");
+        }
+
+        private async Task SegmentInvalidAsync()
+        {
+            SegmentRequest backwards = await SegmentRequestAsync(_Fixtures.AudioPath, SegmentOutputEnum.Audio, 3000, 1000).ConfigureAwait(false);
+            await Check.ThrowsApiAsync(400, () => _User.Segments.GetSegmentAsync(backwards, _Token)).ConfigureAwait(false);
+            await Check.ThrowsApiAsync(400, () => _User.Segments.GetSegmentJsonAsync(backwards, _Token)).ConfigureAwait(false);
+
+            SegmentRequest badFormat = await SegmentRequestAsync(_Fixtures.AudioPath, SegmentOutputEnum.Audio, 0, 1000).ConfigureAwait(false);
+            badFormat.Format = "png";
+            await Check.ThrowsApiAsync(400, () => _User.Segments.GetSegmentAsync(badFormat, _Token)).ConfigureAwait(false);
+
+            SegmentRequest frameFromAudio = await SegmentRequestAsync(_Fixtures.AudioPath, SegmentOutputEnum.Frame, 0, null).ConfigureAwait(false);
+            await Check.ThrowsApiAsync(422, () => _User.Segments.GetSegmentAsync(frameFromAudio, _Token)).ConfigureAwait(false);
+
+            await Check.ThrowsApiAsync(400, () => _User.Segments.GetSegmentAsync(new SegmentRequest { EndMs = 1000 }, _Token)).ConfigureAwait(false);
+        }
+
+        #endregion
+
+        #region Analytics
+
+        private async Task<AudioAnalysisResponse> AnalyzedAudioAsync()
+        {
+            AudioSubmitResult submitted = await _User.Audio.AnalyzeAsync(await AudioRequestAsync(true, false).ConfigureAwait(false), _Token).ConfigureAwait(false);
+            Check.True(submitted.HasResult, "audio Wait did not return a result");
+            await WaitForAnalysisAsync(submitted.Result!.Id).ConfigureAwait(false);
+            return submitted.Result!;
+        }
+
+        private async Task<AnalysisRecord> WaitForAnalysisAsync(string id)
+        {
+            DateTime deadline = DateTime.UtcNow.AddSeconds(15);
+            while (true)
+            {
+                try
+                {
+                    return await _Admin.Analytics.GetAnalysisAsync(id, _Token).ConfigureAwait(false);
+                }
+                catch (KeyframeApiException e) when (e.StatusCode == 404 && DateTime.UtcNow < deadline)
+                {
+                    await Task.Delay(100, _Token).ConfigureAwait(false);
+                }
+            }
+        }
+
+        private async Task AnalyticsSummaryAsync()
+        {
+            await AnalyzedAudioAsync().ConfigureAwait(false);
+            AnalyticsSummary summary = await _Admin.Analytics.GetSummaryAsync(null, _Token).ConfigureAwait(false);
+            Check.True(summary.Totals.Count > 0, "Totals.Count is 0");
+            Check.True(summary.Totals.Succeeded > 0 && summary.Totals.SuccessRate > 0 && summary.Totals.SuccessRate <= 1, "success counts");
+            Check.True(summary.ByMediaKind.ContainsKey("Image") && summary.ByMediaKind.ContainsKey("Video") && summary.ByMediaKind.ContainsKey("Audio"), "ByMediaKind keys");
+            Check.True(summary.ByMediaKind["Audio"].Count > 0, "no audio analyses in ByMediaKind");
+            Check.Equal("hour", summary.Bucket, "default bucket for 24 hours");
+            Check.True(summary.Buckets.Count >= 24, "buckets not gap-filled: " + summary.Buckets.Count);
+            Check.True(summary.Totals.AnalysisMs != null && summary.Totals.AnalysisMs.Count > 0 && summary.Totals.AnalysisMs.P95 >= summary.Totals.AnalysisMs.P50, "AnalysisMs distribution");
+            Check.True(summary.ByModel.Any(m => m.Endpoint == "mock"), "ByModel missing mock");
+            Check.True(summary.ByStage.Any(), "ByStage empty");
+            Check.True(summary.ByPurpose.Any(p => p.Purpose == ModelCallPurposeEnum.Transcribe), "ByPurpose missing Transcribe");
+            Check.True(summary.ToUtc > summary.FromUtc, "range");
+        }
+
+        private async Task AnalyticsSummaryFilterAsync()
+        {
+            DateTime to = DateTime.UtcNow.AddMinutes(1);
+            AnalyticsSummary summary = await _Admin.Analytics.GetSummaryAsync(new AnalyticsSummaryFilter
+            {
+                FromUtc = to.AddHours(-1),
+                ToUtc = to,
+                Bucket = AnalyticsBucketEnum.Minute,
+                MediaKind = MediaKindEnum.Audio,
+                Endpoint = "mock-stt"
+            }, _Token).ConfigureAwait(false);
+            Check.Equal("minute", summary.Bucket, "Bucket");
+            Check.Equal<MediaKindEnum?>(MediaKindEnum.Audio, summary.MediaKind, "MediaKind");
+            Check.Equal("mock-stt", summary.Endpoint, "Endpoint");
+            Check.True(summary.Buckets.Count >= 59 && summary.Buckets.Count <= 62, "minute buckets: " + summary.Buckets.Count);
+            Check.True(summary.Totals.Count > 0, "no audio analyses in the last hour");
+            Check.Equal(0L, summary.ByMediaKind["Image"].Count, "Image count under an Audio filter");
+            Check.True(summary.ByModel.All(m => m.Endpoint == "mock-stt"), "endpoint filter ignored in ByModel");
+        }
+
+        private async Task AnalyticsListAsync()
+        {
+            AudioAnalysisResponse analyzed = await AnalyzedAudioAsync().ConfigureAwait(false);
+            EnumerationResult<AnalysisRecord> page = await _Admin.Analytics.ListAnalysesAsync(new AnalyticsFilter { MediaKind = MediaKindEnum.Audio, Success = true, MaxResults = 100 }, _Token).ConfigureAwait(false);
+            Check.True(page.Items.Any(r => r.Id == analyzed.Id), "analysis not in list");
+            Check.True(page.Items.All(r => r.MediaKind == MediaKindEnum.Audio && r.Success), "filters ignored");
+            Check.True(page.Items.All(r => r.Calls == null), "listed records should not carry Calls");
+
+            EnumerationResult<AnalysisRecord> one = await _Admin.Analytics.ListAnalysesAsync(new AnalyticsFilter { MaxResults = 1 }, _Token).ConfigureAwait(false);
+            Check.Equal(1, one.Items.Count, "MaxResults 1");
+            EnumerationResult<AnalysisRecord> next = await _Admin.Analytics.ListAnalysesAsync(new AnalyticsFilter { MaxResults = 1, Skip = 1 }, _Token).ConfigureAwait(false);
+            Check.True(next.Items.Count == 1 && next.Items[0].Id != one.Items[0].Id, "Skip ignored");
+        }
+
+        private async Task AnalyticsReadAsync()
+        {
+            AudioAnalysisResponse analyzed = await AnalyzedAudioAsync().ConfigureAwait(false);
+            AnalysisRecord record = await WaitForAnalysisAsync(analyzed.Id).ConfigureAwait(false);
+            Check.Equal(analyzed.Id, record.Id, "Id");
+            Check.Equal(MediaKindEnum.Audio, record.MediaKind, "MediaKind");
+            Check.True(record.JobId != null && record.JobId.StartsWith("kfj_", StringComparison.Ordinal), "JobId");
+            Check.Equal("mock-stt", record.TranscriptionEndpoint, "TranscriptionEndpoint");
+            Check.True(record.TranscriptCharacters > 0, "TranscriptCharacters");
+            Check.True(record.Stages.Any(), "Stages empty");
+            List<ModelCallRecord> calls = record.Calls ?? new List<ModelCallRecord>();
+            Check.True(calls.Any(), "Calls missing");
+            Check.True(calls.All(c => c.Id.StartsWith("kfc_", StringComparison.Ordinal) && c.AnalysisId == record.Id), "call ids");
+            Check.True(calls.Any(c => c.Purpose == ModelCallPurposeEnum.Transcribe && c.InputAudioBytes > 0), "Transcribe call");
+            Check.True(calls.Any(c => c.Purpose == ModelCallPurposeEnum.Summarize && c.TokensPerSecond.HasValue), "Summarize call timing");
+        }
+
+        private async Task AnalyticsDeleteAsync()
+        {
+            AudioAnalysisResponse analyzed = await AnalyzedAudioAsync().ConfigureAwait(false);
+            DeleteResult deleted = await _Admin.Analytics.DeleteAnalysisAsync(analyzed.Id, _Token).ConfigureAwait(false);
+            Check.Equal(1, deleted.DeletedCount, "DeletedCount");
+            await Check.ThrowsApiAsync(404, () => _Admin.Analytics.GetAnalysisAsync(analyzed.Id, _Token)).ConfigureAwait(false);
+            await Check.ThrowsApiAsync(404, () => _Admin.Analytics.DeleteAnalysisAsync(analyzed.Id, _Token)).ConfigureAwait(false);
+        }
+
+        private async Task AnalyticsBulkDeleteAsync()
+        {
+            DeleteResult deleted = await _Admin.Analytics.DeleteAnalysesAsync(new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc), _Token).ConfigureAwait(false);
+            Check.Equal(0, deleted.DeletedCount, "DeletedCount for a cutoff in 2000");
+            EnumerationResult<AnalysisRecord> page = await _Admin.Analytics.ListAnalysesAsync(new AnalyticsFilter { MaxResults = 1 }, _Token).ConfigureAwait(false);
+            Check.True(page.Items.Any(), "old cutoff deleted recent analyses");
+        }
+
+        private async Task AnalyticsForbiddenAsync()
+        {
+            await Check.ThrowsApiAsync(403, () => _User.Analytics.GetSummaryAsync(null, _Token)).ConfigureAwait(false);
+            await Check.ThrowsApiAsync(403, () => _User.Analytics.ListAnalysesAsync(null, _Token)).ConfigureAwait(false);
+            await Check.ThrowsApiAsync(403, () => _User.Analytics.GetAnalysisAsync("kfa_doesnotexist", _Token)).ConfigureAwait(false);
+            await Check.ThrowsApiAsync(403, () => _User.Analytics.DeleteAnalysisAsync("kfa_doesnotexist", _Token)).ConfigureAwait(false);
+            await Check.ThrowsApiAsync(403, () => _User.Analytics.DeleteAnalysesAsync(new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc), _Token)).ConfigureAwait(false);
+        }
+
+        private async Task AnalyticsUnknownAsync()
+        {
+            await Check.ThrowsApiAsync(404, () => _Admin.Analytics.GetAnalysisAsync("kfa_doesnotexist", _Token)).ConfigureAwait(false);
+        }
+
+        #endregion
+
         #region Endpoints
 
         private async Task EndpointsAsync()
@@ -588,6 +931,8 @@ namespace Test.Automated
             Check.Equal(ProviderTypeEnum.Mock, mock!.Provider, "Provider");
             Check.True(mock.IsDefault, "mock should be the default vision endpoint");
             Check.True(endpoints.Any(e => e.Kind == EndpointKindEnum.Transcription), "no transcription endpoint");
+            Check.True(mock.SupportsImages && mock.SupportsStructuredOutput, "mock capability flags");
+            Check.True(endpoints.Any(e => e.Kind == EndpointKindEnum.Transcription && e.SupportsTranscription), "transcription endpoint without SupportsTranscription");
         }
 
         private async Task EndpointTestAsync()
@@ -616,6 +961,11 @@ namespace Test.Automated
             Check.True(s.Inference.Endpoints.All(e => e.ApiKey == null || e.ApiKey.StartsWith("****", StringComparison.Ordinal)), "endpoint key not masked");
             Check.True(response.Fields.Any(f => f.Path == "Auth.AdminApiKey" && f.Secret), "Secret metadata missing");
             Check.True(response.Fields.Any(f => f.ApplyMode == "Restart") && response.Fields.Any(f => f.ApplyMode == "Live"), "ApplyMode metadata missing");
+            Check.True(s.Analytics.RetentionDays >= 1 && s.Analytics.RetentionDays <= 3650, "Analytics.RetentionDays out of range");
+            Check.True(s.Media.MaxSegmentMs >= 1000 && s.Media.MaxSegmentMs <= 14400000, "Media.MaxSegmentMs out of range");
+            Check.True(s.Media.MaxAudioDurationMs >= 1000, "Media.MaxAudioDurationMs missing");
+            Check.True(response.Fields.Any(f => f.Path == "Analytics.Enabled"), "Analytics.Enabled metadata missing");
+            Check.True(response.Fields.Any(f => f.Path == "Media.MaxSegmentMs"), "Media.MaxSegmentMs metadata missing");
         }
 
         private async Task SettingsWriteAsync()

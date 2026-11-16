@@ -3,6 +3,7 @@ namespace Keyframe.Core.Inference.Providers
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
     using Keyframe.Core.Enums;
@@ -13,8 +14,8 @@ namespace Keyframe.Core.Inference.Providers
 
     /// <summary>
     /// Completion client backed by a PolyPrompt provider client. Translates an <see cref="InferenceRequest"/> into a
-    /// multimodal chat (system prompt, then the user prompt followed by each image and its label) and copies token
-    /// usage into the response. Failures, including PolyPrompt validation errors, are reported in the response.
+    /// multimodal chat (system prompt, then the user prompt followed by each image and its label), streams the reply,
+    /// and copies token usage and timing (time to first token, generation time, tokens per second) into the response. Failures, including PolyPrompt validation errors, are reported in the response.
     /// Thread safety: safe for concurrent use.
     /// </summary>
     public class PolyPromptInferenceClient : IInferenceClient, IDisposable
@@ -108,19 +109,42 @@ namespace Keyframe.Core.Inference.Providers
 
                 List<ChatMessage> messages = BuildMessages(request);
                 CompletionOptions options = BuildOptions(request, model);
-                ChatResponse response = await _Client.ChatAsync(messages, options, token).ConfigureAwait(false);
+                ChatStreamingResponse response = await _Client.ChatStreamingAsync(messages, options, token).ConfigureAwait(false);
 
-                result.Success = response.Success;
-                result.Text = response.Text;
+                double? firstTokenMs = null;
+                double? lastTokenMs = null;
+                StringBuilder streamed = new StringBuilder();
+                if (response.Success)
+                {
+                    await foreach (ChatStreamingChunk chunk in response.Chunks.ConfigureAwait(false))
+                    {
+                        bool hasText = !String.IsNullOrEmpty(chunk.Text);
+                        bool hasReasoning = !String.IsNullOrEmpty(chunk.ReasoningText);
+                        if (hasText) streamed.Append(chunk.Text);
+                        if (hasText || hasReasoning)
+                        {
+                            double now = sw.Elapsed.TotalMilliseconds;
+                            if (!firstTokenMs.HasValue) firstTokenMs = now;
+                            lastTokenMs = now;
+                        }
+                    }
+                }
+
+                string? text = !String.IsNullOrEmpty(response.Text) ? response.Text : (streamed.Length > 0 ? streamed.ToString() : null);
+                bool completed = response.Success && response.State == StreamingState.Completed;
+
+                result.Success = completed;
+                result.Text = text;
                 result.StatusCode = response.StatusCode;
                 result.FinishReason = response.FinishReason;
                 result.Model = String.IsNullOrEmpty(response.Model) ? model : response.Model;
-                if (!response.Success)
+                if (!completed)
                 {
-                    result.Error = String.IsNullOrEmpty(response.Error) ? "Provider returned an unsuccessful response." : response.Error;
-                    result.Retryable = PolyPromptClientBuilder.IsRetryable(response.StatusCode);
+                    string? error = response.Error ?? response.StreamError;
+                    result.Error = String.IsNullOrEmpty(error) ? "Provider returned an unsuccessful response." : error;
+                    result.Retryable = response.Success ? true : PolyPromptClientBuilder.IsRetryable(response.StatusCode);
                 }
-                else if (String.IsNullOrEmpty(response.Text))
+                else if (String.IsNullOrEmpty(text))
                 {
                     result.Success = false;
                     result.Error = "Provider returned an empty response" + (String.IsNullOrEmpty(response.FinishReason) ? "." : " (finish reason " + response.FinishReason + ").");
@@ -134,6 +158,14 @@ namespace Keyframe.Core.Inference.Providers
                     result.TotalTokens = response.Usage.TotalTokens ?? Sum(response.Usage.PromptTokens, response.Usage.CompletionTokens);
                     result.CachedTokens = response.Usage.CachedPromptTokens;
                     result.ReasoningTokens = response.Usage.ReasoningTokens;
+                }
+
+                if (firstTokenMs.HasValue && lastTokenMs.HasValue)
+                {
+                    result.TimeToFirstTokenMs = Math.Round(firstTokenMs.Value, 3);
+                    result.GenerationMs = Math.Round(lastTokenMs.Value - firstTokenMs.Value, 3);
+                    if (result.CompletionTokens.HasValue && result.CompletionTokens.Value > 0 && result.GenerationMs.Value > 0)
+                        result.TokensPerSecond = Math.Round(result.CompletionTokens.Value / (result.GenerationMs.Value / 1000.0), 3);
                 }
             }
             catch (OperationCanceledException)
@@ -226,7 +258,9 @@ namespace Keyframe.Core.Inference.Providers
             }
 
             options.Model = model;
-            options.MaxTokens = request.MaxOutputTokens ?? _Endpoint.MaxOutputTokens;
+            // A request's token budget is a floor, never below the endpoint's MaxOutputTokens: reasoning models spend
+            // output tokens thinking before they answer, and a tight budget derived from a word limit leaves them none.
+            options.MaxTokens = Math.Max(request.MaxOutputTokens ?? 0, _Endpoint.MaxOutputTokens);
             double? temperature = request.Temperature ?? _Endpoint.Temperature;
             if (temperature.HasValue) options.Temperature = temperature.Value;
             return options;

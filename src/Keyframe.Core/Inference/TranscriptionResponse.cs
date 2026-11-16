@@ -57,5 +57,10 @@ namespace Keyframe.Core.Inference
         /// Call duration in milliseconds.
         /// </summary>
         public double DurationMs { get; set; } = 0;
+
+        /// <summary>
+        /// Time spent waiting on the endpoint's concurrency gate in milliseconds. Set by the gated wrapper.
+        /// </summary>
+        public double QueueMs { get; set; } = 0;
     }
 }

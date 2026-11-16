@@ -174,10 +174,10 @@ function AnalyzeVideoView() {
   const disabled = submitting;
 
   return (
-    <div className="view">
+    <div className="view view-narrow">
       <PageHeader title={t('analyzeVideo.title')} summary={t('analyzeVideo.summary')} actions={<PresetBar storageKey={STORAGE_KEYS.videoPresets} current={presetConfig} onLoad={loadPreset} />} />
       <form
-        className="analyze-form analyze-form-wide"
+        className="analyze-form"
         onSubmit={(e) => {
           e.preventDefault();
           submit();
@@ -185,19 +185,17 @@ function AnalyzeVideoView() {
         noValidate
       >
         {error ? <ErrorBanner error={error} onRetry={submit} titleKey={error.status === 429 ? 'analyzeVideo.errors.queueFull' : null} /> : null}
-        <div className="two-col">
-          <section className="panel">
-            <h2 className="panel-title">{t('analyze.sections.media')}</h2>
-            <MediaInput kind="video" value={media} onChange={setMedia} error={showErrors ? base.media : null} disabled={disabled} />
-          </section>
-          <section className="panel">
-            <h2 className="panel-title">{t('analyze.sections.model')}</h2>
-            {endpoints.error ? <ErrorBanner error={endpoints.error} onRetry={endpoints.reload} /> : null}
-            <ModelPicker endpoints={endpoints.data} value={model} onChange={setModel} labelKey="model.visionEndpoint" disabled={disabled} />
-            <ModelPicker endpoints={endpoints.data} value={textModel} onChange={setTextModel} labelKey="model.textEndpoint" disabled={disabled} />
-            <p className="help-text">{t('model.textHelp')}</p>
-          </section>
-        </div>
+        <section className="panel">
+          <h2 className="panel-title">{t('analyze.sections.media')}</h2>
+          <MediaInput kind="video" value={media} onChange={setMedia} error={showErrors ? base.media : null} disabled={disabled} />
+        </section>
+        <section className="panel">
+          <h2 className="panel-title">{t('analyze.sections.model')}</h2>
+          {endpoints.error ? <ErrorBanner error={endpoints.error} onRetry={endpoints.reload} /> : null}
+          <ModelPicker endpoints={endpoints.data} value={model} onChange={setModel} labelKey="model.visionEndpoint" disabled={disabled} />
+          <ModelPicker endpoints={endpoints.data} value={textModel} onChange={setTextModel} labelKey="model.textEndpoint" disabled={disabled} />
+          <p className="help-text">{t('model.textHelp')}</p>
+        </section>
         <section className="panel">
           <h2 className="panel-title">{t('analyze.sections.context')}</h2>
           <ContextEditor rows={context} onChange={setContext} errors={showErrors ? base.context : []} disabled={disabled} />
@@ -284,7 +282,7 @@ function AnalyzeVideoView() {
                 <label htmlFor={idBase + 'tlang'} className="field-label">
                   {t('analyzeVideo.language')}
                 </label>
-                <input id={idBase + 'tlang'} className="mono" value={transcribe.Language} onChange={(e) => setTranscribe({ ...transcribe, Language: e.target.value })} disabled={disabled} placeholder="en" maxLength={12} aria-invalid={(showErrors && !!languageError) || undefined} />
+                <input id={idBase + 'tlang'} className="mono" value={transcribe.Language} onChange={(e) => setTranscribe({ ...transcribe, Language: e.target.value })} disabled={disabled} placeholder={t('analyzeVideo.languagePlaceholder')} maxLength={12} aria-invalid={(showErrors && !!languageError) || undefined} />
                 {showErrors && languageError ? <div className="field-error">{t(languageError)}</div> : null}
               </div>
               <div className="form-field field-grid-wide">

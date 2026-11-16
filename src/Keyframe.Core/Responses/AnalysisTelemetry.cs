@@ -24,9 +24,15 @@ namespace Keyframe.Core.Responses
         public double TotalMs { get; set; } = 0;
 
         /// <summary>
-        /// Time spent waiting in the job queue in milliseconds (video jobs).
+        /// Time spent waiting in the job queue in milliseconds (video and audio jobs). Null for synchronous image calls.
+        /// Kept for compatibility; <see cref="QueueWaitMs"/> carries the same value and is never null.
         /// </summary>
         public double? QueuedMs { get; set; } = null;
+
+        /// <summary>
+        /// Time from job queued to job started in milliseconds. 0 for synchronous image calls.
+        /// </summary>
+        public double QueueWaitMs { get; set; } = 0;
 
         /// <summary>
         /// Stage timings in order. Never null.

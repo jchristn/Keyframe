@@ -1,0 +1,1624 @@
+{
+  "app": {
+    "name": "Keyframe",
+    "documentTitle": "{{page}} | Keyframe",
+    "versionLabel": "v{{version}}",
+    "alpha": "ألفا"
+  },
+  "common": {
+    "actions": "الإجراءات",
+    "any": "الكل",
+    "cancel": "إلغاء",
+    "close": "إغلاق",
+    "confirm": "تأكيد",
+    "copied": "تم النسخ",
+    "copy": "نسخ",
+    "copyId": "نسخ المعرّف",
+    "delete": "حذف",
+    "disabled": "معطّل",
+    "dismiss": "تجاهل",
+    "download": "تنزيل JSON",
+    "empty": "لا يوجد ما يُعرض.",
+    "emptyList": "قائمة فارغة",
+    "enabled": "مفعّل",
+    "false": "غير صحيح",
+    "true": "صحيح",
+    "language": "اللغة",
+    "loading": "جارٍ التحميل...",
+    "never": "أبدًا",
+    "no": "لا",
+    "yes": "نعم",
+    "none": "لا شيء",
+    "notAvailable": "غير متاح",
+    "notYet": "ليس بعد",
+    "null": "null",
+    "refresh": "تحديث",
+    "retry": "إعادة المحاولة",
+    "save": "حفظ",
+    "saving": "جارٍ الحفظ...",
+    "unknown": "غير معروف",
+    "updatedAt": "آخر تحديث {{time}}",
+    "view": "عرض",
+    "viewJson": "عرض JSON",
+    "working": "جارٍ التنفيذ..."
+  },
+  "nav": {
+    "label": "التنقل الرئيسي",
+    "home": "الرئيسية",
+    "image": "صورة",
+    "video": "فيديو",
+    "jobs": "المهام",
+    "endpoints": "نقاط النهاية",
+    "requestHistory": "سجل الطلبات",
+    "apiExplorer": "مستكشف API",
+    "settings": "الإعدادات",
+    "server": "معلومات الخادم",
+    "adminOnly": "يتطلب مفتاح المسؤول",
+    "groups": {
+      "analyze": "التحليل",
+      "operate": "التشغيل",
+      "observability": "المراقبة",
+      "system": "النظام"
+    },
+    "audio": "صوت",
+    "analytics": "التحليلات"
+  },
+  "roles": {
+    "admin": "مسؤول",
+    "accessKey": "مفتاح وصول"
+  },
+  "status": {
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "available": "متاح",
+    "missing": "مفقود",
+    "checking": "جارٍ الفحص",
+    "failed": "فشل",
+    "succeeded": "نجح",
+    "partial": "جزئي",
+    "healthy": "سليم",
+    "unhealthy": "غير سليم",
+    "unreachable": "يتعذر الوصول",
+    "valid": "صالح",
+    "invalid": "غير صالح"
+  },
+  "topbar": {
+    "toggleNav": "إظهار التنقل أو إخفاؤه",
+    "copyServerUrl": "نسخ عنوان URL للخادم",
+    "health": "سلامة الخادم",
+    "principal": "المفتاح المستخدم لتسجيل الدخول",
+    "anonymous": "مجهول",
+    "repository": "Keyframe على GitHub",
+    "lightMode": "التبديل إلى السمة الفاتحة",
+    "darkMode": "التبديل إلى السمة الداكنة",
+    "logout": "تسجيل الخروج"
+  },
+  "login": {
+    "title": "الاتصال بخادم",
+    "tagline": "ملخصات وبيانات وصفية محددة النوع من الصور والفيديو.",
+    "serverUrl": "عنوان URL للخادم",
+    "serverUrlHelp": "خادم Keyframe REST، مثل http://127.0.0.1:8700. يُحفظ على هذا الجهاز.",
+    "apiKey": "مفتاح API",
+    "apiKeyPlaceholder": "مفتاح الوصول أو مفتاح المسؤول",
+    "showKey": "إظهار المفتاح",
+    "hideKey": "إخفاء المفتاح",
+    "remember": "تذكّر المفتاح على هذا الجهاز",
+    "rememberHelp": "عند إلغاء التحديد، يُحفظ المفتاح في الذاكرة فقط، وستحتاج إلى تسجيل الدخول مجددًا بعد إعادة تحميل الصفحة.",
+    "connect": "اتصال",
+    "connecting": "جارٍ الاتصال...",
+    "restoring": "جارٍ استعادة جلستك...",
+    "retrySaved": "إعادة محاولة الجلسة المحفوظة",
+    "localDefaults": "تستخدم التثبيتات المحلية الجديدة مفتاح الوصول \"default\" ومفتاح المسؤول \"keyframeadmin\". غيّر كليهما قبل مشاركة الخادم.",
+    "errors": {
+      "badUrl": "أدخل عنوان URL مطلقًا يبدأ بـ http أو https.",
+      "unreachable": "تعذر الوصول إلى {{url}}. تحقق من أن الخادم قيد التشغيل، وأن عنوان URL والمنفذ صحيحان، وأن المتصفح يستطيع الوصول إليه.",
+      "badKey": "رفض الخادم هذا المفتاح. تحقق من المفتاح وحاول مرة أخرى.",
+      "rateLimited": "محاولات فاشلة كثيرة جدًا من هذا العنوان. انتظر دقيقة ثم حاول مرة أخرى.",
+      "notKeyframe": "استجاب الخادم لكنه لا يبدو خادم Keyframe (لا يوجد /v1.0/whoami). تحقق من عنوان URL.",
+      "unexpected": "أعاد الخادم خطأً غير متوقع.",
+      "savedKeyRejected": "لم يعد {{url}} يقبل المفتاح المحفوظ. سجّل الدخول مجددًا.",
+      "restoreUnreachable": "تعذر الوصول إلى {{url}} لاستعادة جلستك.",
+      "sessionExpired": "رفض الخادم المفتاح. سجّل الدخول مجددًا."
+    }
+  },
+  "errors": {
+    "network": "تعذر الوصول إلى الخادم.",
+    "badRequest": "رفض الخادم الطلب لأنه غير صالح.",
+    "unauthorized": "المفتاح مفقود أو غير صالح.",
+    "forbidden": "يتطلب هذا الإجراء مفتاح المسؤول.",
+    "notFound": "غير موجود.",
+    "conflict": "يتعارض الطلب مع الحالة الحالية.",
+    "unprocessable": "تعذر تنزيل الوسائط أو فك ترميزها.",
+    "tooManyRequests": "انتظر قليلًا ثم أعد المحاولة. بالنسبة إلى مهام الفيديو والصوت، قد تكون قائمة الانتظار ممتلئة؛ ألغِ المهام قيد التشغيل أو انتظر انتهاءها.",
+    "badGateway": "يتعذر الوصول إلى نقطة نهاية النموذج.",
+    "timeout": "انتهت مهلة الطلب.",
+    "server": "واجه الخادم خطأً داخليًا (HTTP {{status}}).",
+    "unknown": "حدث خطأ ما (HTTP {{status}}).",
+    "requestId": "معرّف الطلب",
+    "hints": {
+      "network": "تحقق من أن الخادم قيد التشغيل ويمكن الوصول إليه من هذا المتصفح، ثم أعد المحاولة.",
+      "badRequest": "أصلح المشكلات المذكورة أعلاه ثم أرسل مرة أخرى.",
+      "forbidden": "سجّل الدخول بمفتاح المسؤول لتنفيذ هذا الإجراء.",
+      "unprocessable": "تحقق من أن الخادم يستطيع الوصول إلى عنوان URL وأنه يشير إلى صورة أو فيديو مدعوم، أو ارفع الملف بدلًا من ذلك.",
+      "tooManyRequests": "انتظر قليلًا ثم أعد المحاولة. بالنسبة إلى مهام الفيديو، قد تكون قائمة الانتظار ممتلئة؛ ألغِ المهام قيد التشغيل أو انتظر انتهاءها.",
+      "badGateway": "افتح صفحة نقاط النهاية لاختبار الاتصال، أو اختر نقطة نهاية أخرى وأعد المحاولة.",
+      "timeout": "أعد المحاولة، أو جرّب مدخلًا أصغر، أو ارفع المهلة في الإعدادات."
+    }
+  },
+  "pagination": {
+    "label": "ترقيم الصفحات",
+    "showing": "عرض {{from}}-{{to}} من {{total}}",
+    "pageOf": "الصفحة {{page}} من {{pages}}",
+    "first": "الصفحة الأولى",
+    "previous": "الصفحة السابقة",
+    "next": "الصفحة التالية",
+    "last": "الصفحة الأخيرة",
+    "jump": "الانتقال إلى الصفحة",
+    "pageSize": "لكل صفحة"
+  },
+  "table": {
+    "empty": "لا توجد سجلات",
+    "selectColumns": "تحديد الأعمدة",
+    "showAllColumns": "إظهار كل الأعمدة",
+    "sortBy": "الفرز حسب {{column}}",
+    "sortPage": "يُطبَّق الفرز على صفوف هذه الصفحة؛ يُعيد الخادم الأحدث أولًا.",
+    "sortLocal": "يُطبَّق الفرز على الصفوف المعروضة.",
+    "selectAll": "تحديد كل صفوف هذه الصفحة",
+    "selectRow": "تحديد الصف",
+    "selectedCount_zero": "{{count}} محدد",
+    "selectedCount_one": "{{count}} محدد",
+    "selectedCount_two": "{{count}} محددان",
+    "selectedCount_few": "{{count}} محددة",
+    "selectedCount_many": "{{count}} محددًا",
+    "selectedCount_other": "{{count}} محدد",
+    "clearSelection": "مسح التحديد",
+    "bulkActions": "إجراءات جماعية"
+  },
+  "filters": {
+    "from": "من",
+    "to": "إلى",
+    "apply": "تطبيق",
+    "clear": "مسح عوامل التصفية"
+  },
+  "chart": {
+    "title": "نشاط الطلبات",
+    "range": "النطاق الزمني",
+    "refresh": "تحديث المخطط",
+    "success": "نجاح",
+    "failure": "فشل",
+    "noData": "لا توجد طلبات في هذا النطاق بعد.",
+    "ariaSummary_zero": "مخطط نشاط الطلبات، {{count}} طلب في النطاق",
+    "ariaSummary_one": "مخطط نشاط الطلبات، {{count}} طلب في النطاق",
+    "ariaSummary_two": "مخطط نشاط الطلبات، {{count}} طلبان في النطاق",
+    "ariaSummary_few": "مخطط نشاط الطلبات، {{count}} طلبات في النطاق",
+    "ariaSummary_many": "مخطط نشاط الطلبات، {{count}} طلبًا في النطاق",
+    "ariaSummary_other": "مخطط نشاط الطلبات، {{count}} طلب في النطاق",
+    "ranges": {
+      "hour": "آخر ساعة",
+      "day": "آخر يوم",
+      "week": "آخر أسبوع",
+      "month": "آخر شهر"
+    },
+    "tooltip": {
+      "total": "الإجمالي: {{value}}",
+      "success": "نجاح: {{value}}",
+      "failure": "فشل: {{value}}",
+      "avg": "متوسط المدة: {{value}}"
+    }
+  },
+  "telemetry": {
+    "totalTime": "الوقت الإجمالي",
+    "queued": "في الانتظار",
+    "modelTime": "وقت النموذج",
+    "modelCalls": "استدعاءات النموذج",
+    "failedCalls": "الاستدعاءات الفاشلة",
+    "promptTokens": "رموز المطالبة",
+    "completionTokens": "رموز الإكمال",
+    "totalTokens": "إجمالي الرموز",
+    "inputImages": "الصور المُدخلة",
+    "noCalls": "لم تُجرَ أي استدعاءات للنموذج.",
+    "waterfallAria": "مخطط شلالي للقياس عن بُعد يضم {{stages}} مراحل و{{calls}} استدعاءات للنموذج",
+    "showAll": "إظهار كل استدعاءات النموذج ({{count}})",
+    "showFewer": "إظهار عدد أقل من استدعاءات النموذج",
+    "tooltip": {
+      "start": "يبدأ عند {{value}}",
+      "duration": "المدة {{value}}",
+      "model": "{{endpoint}} {{model}}",
+      "tokens": "الرموز {{value}}",
+      "attempts": "المحاولات {{value}}",
+      "queue": "في الانتظار {{value}}",
+      "ttft": "أول رمز بعد {{value}}",
+      "generation": "التوليد {{value}}",
+      "tokensPerSecond": "{{value}} رمز في الثانية"
+    },
+    "columns": {
+      "purpose": "الغرض",
+      "target": "الهدف",
+      "endpoint": "نقطة النهاية",
+      "model": "النموذج",
+      "duration": "المدة",
+      "attempts": "المحاولات",
+      "promptTokens": "رموز المطالبة",
+      "completionTokens": "رموز الإكمال",
+      "totalTokens": "إجمالي الرموز",
+      "finishReason": "سبب الانتهاء",
+      "status": "الحالة",
+      "queue": "الانتظار",
+      "ttft": "أول رمز",
+      "generation": "التوليد",
+      "tokensPerSecond": "رمز/ث",
+      "cachedTokens": "الرموز المخزنة مؤقتًا",
+      "reasoningTokens": "رموز الاستدلال"
+    },
+    "avgTtft": "متوسط الوقت حتى أول رمز",
+    "avgTokensPerSecond": "متوسط الرموز في الثانية",
+    "cachedTokens": "الرموز المخزنة مؤقتًا",
+    "reasoningTokens": "رموز الاستدلال"
+  },
+  "fieldBuilder": {
+    "title": "الحقول",
+    "empty": "لا توجد حقول بعد. أضف حقلًا لاستخراج قيم محددة النوع.",
+    "fieldNumber": "الحقل {{n}}",
+    "key": "المفتاح",
+    "keyPlaceholder": "dogCount",
+    "type": "النوع",
+    "prompt": "المطالبة",
+    "promptPlaceholder": "السؤال الذي يجيب عنه النموذج لهذا الحقل",
+    "options": "الخيارات",
+    "optionsPlaceholder": "اكتب خيارًا واضغط Enter",
+    "removeOption": "إزالة الخيار {{option}}",
+    "minimum": "الحد الأدنى",
+    "maximum": "الحد الأقصى",
+    "maxLength": "الطول الأقصى",
+    "maxItems": "أقصى عدد من العناصر",
+    "schema": "مخطط JSON",
+    "schemaPlaceholder": "{\"type\": \"object\", \"properties\": {}}",
+    "default": "الافتراضي",
+    "noDefault": "بدون قيمة افتراضية",
+    "defaultListPlaceholder": "قيم مفصولة بفواصل",
+    "optional": "اختياري",
+    "required": "مطلوب",
+    "add": "إضافة حقل",
+    "newFieldType": "نوع الحقل الجديد",
+    "moveUp": "نقل لأعلى",
+    "moveDown": "نقل لأسفل",
+    "duplicate": "تكرار الحقل",
+    "remove": "إزالة الحقل",
+    "dragToReorder": "اسحب لإعادة الترتيب",
+    "errors": {
+      "keyInvalid": "استخدم من 1 إلى 64 حرفًا أو رقمًا أو شرطة سفلية أو شرطة أو نقطة.",
+      "keyDuplicate": "المفتاح \"{{key}}\" مستخدم أكثر من مرة.",
+      "keySummary": "المفتاح \"{{key}}\" يتعارض مع مفتاح الملخص.",
+      "promptRequired": "المطالبة مطلوبة.",
+      "promptTooLong": "الحد الأقصى للمطالبات {{max}} حرفًا.",
+      "optionsRequired": "تحتاج حقول التعداد إلى خيار واحد على الأقل.",
+      "optionsTooMany": "{{max}} خيارات كحد أقصى.",
+      "notNumber": "أدخل رقمًا.",
+      "minAboveMax": "يجب ألا يتجاوز الحد الأدنى الحد الأقصى.",
+      "atLeastOne": "يجب أن تكون القيمة 1 على الأقل.",
+      "schemaJson": "المخطط ليس JSON صالحًا.",
+      "defaultJson": "القيمة الافتراضية ليست JSON صالحًا.",
+      "defaultNotOption": "يجب أن تكون القيمة الافتراضية أحد الخيارات."
+    }
+  },
+  "context": {
+    "help": "خلفية مشتركة مع كل مطالبة في الطلب: الملخص، وكل حقل، وكل مشهد في حالة الفيديو. يُعامَل السياق كبيانات وليس كتعليمات.",
+    "label": "التسمية",
+    "labelPlaceholder": "المصدر",
+    "text": "النص",
+    "textPlaceholder": "صور أرسلها متطوعو التبني.",
+    "add": "إضافة سياق",
+    "remove": "إزالة عنصر السياق {{n}}",
+    "errors": {
+      "tooMany": "{{max}} عناصر سياق كحد أقصى.",
+      "textRequired": "يحتاج عنصر السياق {{n}} إلى نص.",
+      "labelTooLong": "تتجاوز تسمية عنصر السياق {{n}} {{max}} حرفًا.",
+      "tooLong": "يتجاوز السياق {{max}} حرفًا إجمالًا."
+    }
+  },
+  "media": {
+    "source": "مصدر الوسائط",
+    "upload": "رفع",
+    "url": "URL",
+    "dropImage": "أفلت صورة هنا أو اختر ملفًا.",
+    "dropVideo": "أفلت فيديو هنا أو اختر ملفًا.",
+    "chooseFile": "اختيار ملف",
+    "chooseAnother": "اختيار ملف آخر",
+    "previewAlt": "معاينة الصورة المحددة",
+    "imageUrl": "عنوان URL للصورة",
+    "videoUrl": "عنوان URL للفيديو",
+    "urlHint": "يُنزّل الخادم عنوان URL بنفسه، لذا يجب أن يكون قابلًا للوصول من الخادم. تُحظر عناوين الشبكات الخاصة ما لم يكن Media.AllowPrivateNetworkUrls مفعّلًا.",
+    "videoUploadHint": "تُرسَل الملفات المرفوعة بترميز base64 في نص الطلب، مما يزيد حجمها بنحو الثلث. يُفضَّل استخدام عنوان URL للفيديوهات الكبيرة.",
+    "errors": {
+      "fileRequired": "اختر ملفًا لتحليله.",
+      "urlInvalid": "أدخل عنوان URL مطلقًا يبدأ بـ http أو https."
+    },
+    "dropAudio": "أفلت ملف صوت أو فيديو هنا أو اختر ملفًا.",
+    "audioUrl": "عنوان URL للصوت أو الفيديو",
+    "audioUploadHint": "تعمل ملفات الصوت بصيغ MP3 وWAV وFLAC وM4A وOGG وOpus وWebM. في ملفات الفيديو يُستخدم المسار الصوتي فقط. تُرسَل الملفات المرفوعة بترميز base64، مما يزيد حجمها بنحو الثلث."
+  },
+  "model": {
+    "endpoint": "نقطة النهاية",
+    "visionEndpoint": "نقطة نهاية الرؤية",
+    "textEndpoint": "نقطة نهاية النص",
+    "useDefault": "افتراضي الخادم",
+    "name": "تجاوز النموذج",
+    "namePlaceholder": "النموذج الافتراضي لنقطة النهاية",
+    "textHelp": "تتولى نقطة نهاية النص الخطوات النصية فقط، مثل ملخص الفيديو بأكمله. تكون افتراضيًا Inference.DefaultText، ثم نقطة نهاية الرؤية.",
+    "transcriptionEndpoint": "نقطة نهاية التفريغ النصي"
+  },
+  "summarize": {
+    "enable": "تلخيص",
+    "key": "مفتاح النتيجة",
+    "keyInvalid": "استخدم من 1 إلى 64 حرفًا أو رقمًا أو شرطة سفلية أو شرطة أو نقطة.",
+    "maxWords": "أقصى عدد من الكلمات",
+    "style": "النمط",
+    "instructions": "التعليمات",
+    "instructionsPlaceholder": "إرشادات اختيارية، مثل: اذكر المكان وأي حيوانات."
+  },
+  "extract": {
+    "enable": "استخراج حقول محددة النوع",
+    "mode": "وضع الاستخراج"
+  },
+  "results": {
+    "title": "النتيجة",
+    "noResults": "لم تُرجَع أي نتائج.",
+    "noFields": "لم تُطلب أي حقول.",
+    "noProperties": "لم تُطلب خصائص الوسائط.",
+    "copyValue": "نسخ قيمة {{key}}",
+    "errors_zero": "{{count}} خطأ",
+    "errors_one": "{{count}} خطأ",
+    "errors_two": "{{count}} خطآن",
+    "errors_few": "{{count}} أخطاء",
+    "errors_many": "{{count}} خطأً",
+    "errors_other": "{{count}} خطأ",
+    "errorsHint": "فشل استدعاء للنموذج بعد إعادة المحاولات. تُعرض نتائج جزئية. أعد المحاولة، أو اختبر نقطة النهاية من صفحة نقاط النهاية.",
+    "warnings_zero": "{{count}} تحذير",
+    "warnings_one": "{{count}} تحذير",
+    "warnings_two": "{{count}} تحذيران",
+    "warnings_few": "{{count}} تحذيرات",
+    "warnings_many": "{{count}} تحذيرًا",
+    "warnings_other": "{{count}} تحذير",
+    "tabs": {
+      "results": "النتائج",
+      "fields": "الحقول",
+      "telemetry": "القياس عن بُعد",
+      "properties": "الخصائص",
+      "raw": "JSON الخام"
+    },
+    "columns": {
+      "key": "المفتاح",
+      "type": "النوع",
+      "value": "القيمة",
+      "valid": "صالح",
+      "raw": "مخرجات النموذج الخام",
+      "notes": "الأخطاء والتحذيرات"
+    }
+  },
+  "properties": {
+    "mediaKind": "نوع الوسائط",
+    "contentType": "نوع المحتوى",
+    "format": "الصيغة",
+    "size": "الحجم",
+    "dimensions": "الأبعاد",
+    "duration": "المدة",
+    "frameRate": "معدل الإطارات",
+    "bitRate": "معدل البت",
+    "videoCodec": "ترميز الفيديو",
+    "hasAudio": "يحتوي على صوت",
+    "audioCodec": "ترميز الصوت",
+    "audioChannels": "قنوات الصوت",
+    "audioSampleRate": "معدل أخذ عينات الصوت",
+    "sha256": "SHA-256",
+    "tags": "الوسوم"
+  },
+  "snippets": {
+    "title": "نسخ كتعليمات برمجية",
+    "keyNote": "تقرأ المقتطفات المفتاح من متغير البيئة KEYFRAME_API_KEY ولا تتضمن مفتاحك أبدًا. تُعرض الوسائط المرفوعة كعنصر نائب.",
+    "languages": {
+      "curl": "cURL",
+      "fetch": "JavaScript",
+      "python": "Python",
+      "csharp": "C#"
+    }
+  },
+  "presets": {
+    "label": "إعداد مسبق",
+    "choose": "تحميل إعداد مسبق",
+    "none": "لا توجد إعدادات مسبقة محفوظة",
+    "save": "حفظ الإعداد المسبق",
+    "saveTitle": "حفظ الإعداد المسبق",
+    "name": "اسم الإعداد المسبق",
+    "saveHelp": "يحفظ السياق والنموذج والوظائف والحقول في هذا المتصفح. لا تُحفظ الوسائط والمفاتيح أبدًا.",
+    "delete": "حذف الإعداد المسبق",
+    "deleteTitle": "حذف الإعداد المسبق",
+    "deleteMessage": "هل تريد حذف الإعداد المسبق \"{{name}}\" من هذا المتصفح؟"
+  },
+  "analyze": {
+    "sections": {
+      "media": "الوسائط",
+      "context": "السياق",
+      "model": "النموذج",
+      "summary": "الملخص",
+      "fields": "الحقول محددة النوع"
+    },
+    "includeProperties": "تضمين خصائص الوسائط في الاستجابة",
+    "run": "تحليل",
+    "running": "جارٍ التحليل...",
+    "errors": {
+      "fixFields": "أصلح المشكلات المميزة أولًا.",
+      "noFields": "أضف حقلًا واحدًا على الأقل، أو أوقف الاستخراج.",
+      "noFunction": "فعّل التلخيص أو الاستخراج."
+    },
+    "toast": {
+      "done": "اكتمل التحليل في {{duration}}.",
+      "partial": "اكتمل التحليل مع أخطاء في {{duration}}. راجع النتيجة.",
+      "canceled": "أُلغي التحليل."
+    }
+  },
+  "analyzeImage": {
+    "title": "تحليل صورة",
+    "summary": "لخّص صورة واستخرج حقولًا محددة النوع. تتضمن النتائج صلاحية كل حقل وتفصيلًا للتوقيت.",
+    "emptyTitle": "لا يوجد تحليل بعد",
+    "emptyMessage": "اختر صورة، واضبط الحقول، ثم اختر تحليل. تظهر هنا النتائج والتحقق من الحقول والقياس عن بُعد وJSON الخام."
+  },
+  "analyzeVideo": {
+    "title": "تحليل فيديو",
+    "summary": "أرسل مهمة فيديو: اكتشاف المشاهد، وملخصات وحقول لكل مشهد، والتفريغ النصي، ونتائج الفيديو بأكمله. تنتقل إلى المهمة عند قبولها.",
+    "sections": {
+      "whole": "الفيديو بأكمله",
+      "scenes": "المشاهد",
+      "transcribe": "التفريغ النصي"
+    },
+    "wholeHelp": "الملخص والحقول للفيديو ككل.",
+    "sampleFrames": "إطارات العينة",
+    "sampleFramesHelp": "إطارات تؤخذ عبر الفيديو عند إيقاف المشاهد (من 1 إلى 64).",
+    "scenesEnable": "اكتشاف المشاهد وتحليل كل مشهد",
+    "threshold": "عتبة المشهد",
+    "thresholdHelp": "درجة مشهد ffmpeg من 0.01 إلى 1. القيمة الأقل تكتشف قطعات أكثر.",
+    "minSceneMs": "أدنى مدة للمشهد (مللي ثانية)",
+    "maxSceneMs": "أقصى مدة للمشهد (مللي ثانية)",
+    "maxScenes": "أقصى عدد من المشاهد",
+    "maxScenesHelp": "يحد من التكلفة. تُدمج المشاهد الإضافية.",
+    "framesPerScene": "الإطارات لكل مشهد",
+    "sceneSummary": "ملخص لكل مشهد",
+    "sceneExtract": "استخراج الحقول لكل مشهد",
+    "includeKeyframeData": "تضمين الصور المصغرة للإطارات الرئيسية (يستخدمها المخطط الزمني للمشاهد)",
+    "transcribeEnable": "تفريغ المسار الصوتي نصيًا",
+    "transcribeEndpoint": "نقطة نهاية التفريغ النصي",
+    "language": "اللغة",
+    "transcribePrompt": "مطالبة التفريغ النصي",
+    "transcribePromptPlaceholder": "تلميحات اختيارية للمفردات أو الإملاء",
+    "submit": "إرسال المهمة",
+    "submitting": "جارٍ الإرسال...",
+    "errors": {
+      "sceneRange": "يجب أن تكون أدنى مدة للمشهد أقل من أقصى مدة.",
+      "language": "استخدم رمز ISO-639 مثل en أو pt-BR.",
+      "noFunction": "فعّل واحدًا على الأقل من: التلخيص أو الاستخراج أو المشاهد أو التفريغ النصي.",
+      "queueFull": "قائمة انتظار المهام ممتلئة."
+    },
+    "toast": {
+      "submitted": "قُبلت المهمة {{id}}."
+    },
+    "languagePlaceholder": "en"
+  },
+  "samples": {
+    "image": {
+      "hasPeople": "هل يوجد أشخاص في هذه الصورة؟",
+      "objects": "اذكر الأشياء الرئيسية التي تراها.",
+      "setting": "أين التُقطت هذه الصورة؟",
+      "indoors": "في الداخل",
+      "outdoors": "في الخارج",
+      "unknown": "غير معروف"
+    },
+    "video": {
+      "topics": "اذكر الموضوعات الرئيسية التي يتناولها.",
+      "showsText": "هل يظهر نص بارز على الشاشة؟"
+    },
+    "audio": {
+      "speakerCount": "كم عدد المتحدثين المختلفين؟"
+    }
+  },
+  "home": {
+    "title": "الرئيسية",
+    "summary": "ما يفعله Keyframe الآن: سلامة الخادم، وحركة الطلبات، ومهام التحليل، ونقاط نهاية النماذج.",
+    "ctaLabel": "مسارات العمل الشائعة",
+    "cta": {
+      "image": "تحليل صورة",
+      "imageSub": "ملخص وحقول محددة النوع في استدعاء واحد",
+      "video": "تحليل فيديو",
+      "videoSub": "المشاهد والنص المفرغ والحقول كمهمة",
+      "explorer": "فتح مستكشف API",
+      "explorerSub": "استدعاء أي مسار من المتصفح",
+      "audio": "تحليل صوت",
+      "audioSub": "النص المفرغ والملخص والحقول كمهمة"
+    },
+    "kpiLabel": "المؤشرات الرئيسية",
+    "kpi": {
+      "requests": "الطلبات ({{range}})",
+      "successRate": "معدل النجاح",
+      "failures_zero": "{{value}} حالة فشل",
+      "failures_one": "{{value}} حالة فشل",
+      "failures_two": "{{value}} حالتا فشل",
+      "failures_few": "{{value}} حالات فشل",
+      "failures_many": "{{value}} حالة فشل",
+      "failures_other": "{{value}} حالة فشل",
+      "avgLatency": "متوسط زمن الاستجابة",
+      "jobs": "المهام النشطة",
+      "queued": "{{value}} في الانتظار",
+      "endpoints": "نقاط النهاية السليمة",
+      "healthyOf": "{{healthy}} من {{total}}",
+      "server": "الخادم",
+      "ffmpegAvailable": "ffmpeg متاح",
+      "ffmpegMissing": "ffmpeg مفقود"
+    },
+    "attention": {
+      "title": "يحتاج إلى انتباه",
+      "none": "لا شيء يحتاج إلى انتباه.",
+      "open": "فتح",
+      "unreachable": "نقطة نهاية السلامة لا تستجيب.",
+      "ffmpegMissing": "ffmpeg غير متاح على الخادم. سيفشل تحليل الفيديو وتسوية الصور حتى يتم تثبيته.",
+      "endpointUnhealthy": "نقطة النهاية {{name}} غير سليمة. {{message}}",
+      "noActiveEndpoints": "لا توجد نقاط نهاية نماذج نشطة. أضف واحدة أو فعّلها في الإعدادات.",
+      "failedJobs_zero": "فشلت {{count}} مهمة.",
+      "failedJobs_one": "فشلت {{count}} مهمة.",
+      "failedJobs_two": "فشلت {{count}} مهمتان.",
+      "failedJobs_few": "فشلت {{count}} مهام.",
+      "failedJobs_many": "فشلت {{count}} مهمةً.",
+      "failedJobs_other": "فشلت {{count}} مهمة.",
+      "failedRequests_zero": "فشل {{count}} طلب في هذا النطاق.",
+      "failedRequests_one": "فشل {{count}} طلب في هذا النطاق.",
+      "failedRequests_two": "فشل {{count}} طلبان في هذا النطاق.",
+      "failedRequests_few": "فشلت {{count}} طلبات في هذا النطاق.",
+      "failedRequests_many": "فشل {{count}} طلبًا في هذا النطاق.",
+      "failedRequests_other": "فشل {{count}} طلب في هذا النطاق.",
+      "authDisabled": "المصادقة متوقفة. يمكن لأي شخص يصل إلى الخادم استخدامه."
+    },
+    "activityTitle": "نشاط الطلبات",
+    "noTraffic": {
+      "title": "لا توجد حركة بعد",
+      "message": "شغّل تحليلًا أو استدعِ API، وستظهر الطلبات هنا."
+    },
+    "recentJobs": "المهام الأخيرة",
+    "viewAllJobs": "عرض كل المهام",
+    "noJobs": "لا توجد مهام بعد."
+  },
+  "externalServices": {
+    "title": "الخدمات الخارجية",
+    "summary": "أدوات المراقبة المضمّنة في حزمة Docker Compose. تستخدم الروابط المضيف الذي اتصلت به.",
+    "credentials": "بيانات الدخول الافتراضية",
+    "noLogin": "بدون تسجيل دخول",
+    "copyUrl": "نسخ عنوان URL",
+    "note": "هذه إعدادات افتراضية للتطوير المحلي. غيّر كلمة مرور Grafana قبل كشف الحزمة، وأبقِ Prometheus وTempo بعيدين عن الواجهات العامة. لن يتم تحميل أي خدمة ليست جزءًا من هذا النشر.",
+    "services": {
+      "grafana": {
+        "name": "Grafana",
+        "purpose": "لوحات معلومات لحركة الطلبات ومراحل المعالجة واستدعاءات النماذج"
+      },
+      "prometheus": {
+        "name": "Prometheus",
+        "purpose": "مخزن المقاييس وواجهة الاستعلام"
+      },
+      "tempo": {
+        "name": "Tempo",
+        "purpose": "مخزن التتبعات (نقطة نهاية الجاهزية)"
+      }
+    }
+  },
+  "jobs": {
+    "title": "المهام",
+    "summary": "مهام تحليل الفيديو والصوت مع تقدم مباشر. افتح مهمة لعرض المشاهد والنص المفرغ والقياس عن بُعد؛ ألغِ المهام قيد التشغيل أو احذف المهام المنتهية.",
+    "newJob": "مهمة فيديو جديدة",
+    "upload": "بيانات مرفوعة",
+    "columns": {
+      "id": "المهمة",
+      "status": "الحالة",
+      "progress": "التقدم",
+      "kind": "النوع",
+      "principal": "أُرسلت بواسطة",
+      "source": "المصدر",
+      "size": "الحجم",
+      "duration": "طول الوسائط",
+      "created": "تاريخ الإنشاء",
+      "completed": "تاريخ الاكتمال",
+      "error": "الخطأ"
+    },
+    "filters": {
+      "status": "الحالة",
+      "kind": "النوع",
+      "principal": "أُرسلت بواسطة",
+      "principalPlaceholder": "اسم المفتاح"
+    },
+    "cancel": "إلغاء المهمة",
+    "cancelTitle": "إلغاء المهمة",
+    "cancelMessage": "هل تريد إلغاء المهمة {{id}}؟ سيُتجاهل العمل الجاري.",
+    "deleteTitle_zero": "حذف {{count}} مهمة",
+    "deleteTitle_one": "حذف المهمة",
+    "deleteTitle_two": "حذف مهمتين",
+    "deleteTitle_few": "حذف {{count}} مهام",
+    "deleteTitle_many": "حذف {{count}} مهمةً",
+    "deleteTitle_other": "حذف {{count}} مهمة",
+    "deleteMessage_zero": "هل تريد حذف {{count}} مهمة منتهية (أولها {{id}}) ونتائجها المخزنة؟ لا يمكن التراجع عن ذلك.",
+    "deleteMessage_one": "هل تريد حذف المهمة {{id}} ونتيجتها المخزنة؟ لا يمكن التراجع عن ذلك.",
+    "deleteMessage_two": "هل تريد حذف مهمتين منتهيتين (أولاهما {{id}}) ونتائجهما المخزنة؟ لا يمكن التراجع عن ذلك.",
+    "deleteMessage_few": "هل تريد حذف {{count}} مهام منتهية (أولها {{id}}) ونتائجها المخزنة؟ لا يمكن التراجع عن ذلك.",
+    "deleteMessage_many": "هل تريد حذف {{count}} مهمةً منتهية (أولها {{id}}) ونتائجها المخزنة؟ لا يمكن التراجع عن ذلك.",
+    "deleteMessage_other": "هل تريد حذف {{count}} مهمة منتهية ونتائجها المخزنة؟ لا يمكن التراجع عن ذلك.",
+    "deleteSelected_zero": "حذف {{count}} مهمة منتهية",
+    "deleteSelected_one": "حذف {{count}} مهمة منتهية",
+    "deleteSelected_two": "حذف {{count}} مهمتين منتهيتين",
+    "deleteSelected_few": "حذف {{count}} مهام منتهية",
+    "deleteSelected_many": "حذف {{count}} مهمةً منتهية",
+    "deleteSelected_other": "حذف {{count}} مهمة منتهية",
+    "jsonTitle": "JSON المهمة",
+    "autoRefresh": "يتم التحديث كل بضع ثوانٍ ما دامت هناك مهام في الانتظار أو قيد التشغيل.",
+    "emptyTitle": "لا توجد مهام بعد",
+    "emptyMessage": "تعمل تحليلات الفيديو كمهام. أرسل واحدة من صفحة تحليل فيديو.",
+    "emptyFiltered": "لا توجد مهام تطابق عوامل التصفية هذه",
+    "emptyFilteredMessage": "امسح عوامل التصفية أو غيّرها لعرض مزيد من المهام.",
+    "toast": {
+      "canceled": "أُلغيت المهمة {{id}}.",
+      "deleted_zero": "حُذفت {{count}} مهمة.",
+      "deleted_one": "حُذفت {{count}} مهمة.",
+      "deleted_two": "حُذفت {{count}} مهمتان.",
+      "deleted_few": "حُذفت {{count}} مهام.",
+      "deleted_many": "حُذفت {{count}} مهمةً.",
+      "deleted_other": "حُذفت {{count}} مهمة."
+    }
+  },
+  "jobDetail": {
+    "title": "المهمة",
+    "summary": "الحالة والتقدم والنتائج لمهمة تحليل واحدة.",
+    "back": "كل المهام",
+    "jobJson": "JSON المهمة",
+    "download": "تنزيل النتيجة",
+    "notFound": "هذه المهمة غير موجودة أو حُذفت.",
+    "progress": "التقدم",
+    "progressCount": "{{completed}} من {{total}} خطوات",
+    "liveNote": "تتحدث هذه الصفحة مباشرة حتى تنتهي المهمة.",
+    "failedTitle": "فشلت المهمة",
+    "noErrorDetail": "لم يُبلغ الخادم عن رسالة خطأ.",
+    "failedHint": "تحقق من عنوان URL للوسائط ومن نقاط النهاية، ثم أرسل المهمة مرة أخرى.",
+    "interruptedTitle": "انقطعت المهمة",
+    "interruptedMessage": "أُعيد تشغيل الخادم أثناء تشغيل هذه المهمة، فلم تكتمل. أرسلها مرة أخرى.",
+    "canceledTitle": "أُلغيت المهمة",
+    "canceledMessage": "لا تُخزَّن نتيجة للمهام الملغاة.",
+    "details": "التفاصيل",
+    "meta": {
+      "kind": "النوع",
+      "principal": "أُرسلت بواسطة",
+      "source": "المصدر",
+      "size": "الحجم",
+      "duration": "طول الوسائط",
+      "created": "تاريخ الإنشاء",
+      "started": "تاريخ البدء",
+      "completed": "تاريخ الاكتمال"
+    },
+    "loadingResult": "جارٍ تحميل النتيجة...",
+    "resultTabs": "أقسام النتيجة",
+    "tabs": {
+      "overview": "نظرة عامة",
+      "scenes": "المشاهد",
+      "transcript": "النص المفرغ",
+      "telemetry": "القياس عن بُعد",
+      "raw": "JSON الخام"
+    },
+    "wholeResults": "نتائج الفيديو بأكمله",
+    "noScenes": "كان اكتشاف المشاهد متوقفًا أو لم يعثر على مشاهد.",
+    "sceneStrip": "المخطط الزمني للمشاهد",
+    "sceneTitle": "المشهد {{n}}: من {{start}} إلى {{end}}",
+    "sceneHeading": "المشهد {{n}} من {{count}}",
+    "prevScene": "المشهد السابق",
+    "nextScene": "المشهد التالي",
+    "keyframeAlt": "إطار رئيسي عند {{time}}",
+    "noThumbnail": "لا توجد صورة مصغرة",
+    "sceneResults": "نتائج المشهد",
+    "sceneFields": "حقول المشهد",
+    "sceneTranscript": "النص المفرغ خلال هذا المشهد",
+    "noTranscript": "كان التفريغ النصي متوقفًا أو لا يحتوي الفيديو على صوت.",
+    "noTranscriptMatches": "لا توجد مقاطع من النص المفرغ مطابقة.",
+    "transcriptLanguage": "اللغة: {{language}}",
+    "searchTranscript": "البحث في النص المفرغ"
+  },
+  "endpoints": {
+    "title": "نقاط النهاية",
+    "summary": "نقاط نهاية النماذج المهيأة على الخادم، مع المزوّد والنموذج وآخر حالة سلامة مرصودة. يمكن للمسؤولين اختبار الاتصال.",
+    "add": "إضافة نقطة نهاية",
+    "readOnlyNote": "تُحرَّر نقاط النهاية في الإعدادات باستخدام مفتاح المسؤول. يتطلب الاختبار أيضًا مفتاح المسؤول.",
+    "columns": {
+      "name": "الاسم",
+      "health": "السلامة",
+      "kind": "النوع",
+      "provider": "المزوّد",
+      "model": "النموذج",
+      "url": "URL",
+      "default": "افتراضي",
+      "concurrency": "أقصى عدد متزامن",
+      "timeout": "المهلة",
+      "apiKey": "مفتاح API",
+      "lastChecked": "آخر فحص",
+      "test": "اختبار"
+    },
+    "filters": {
+      "kind": "النوع",
+      "search": "بحث",
+      "searchPlaceholder": "الاسم أو المزوّد أو النموذج"
+    },
+    "localFilterNote": "عرض {{shown}} من {{total}}. التصفية محلية؛ يُعيد الخادم كل نقاط النهاية.",
+    "default": "افتراضي",
+    "noUrl": "افتراضي المزوّد",
+    "keySet": "مُعيَّن (ينتهي بـ {{last4}})",
+    "keyNotSet": "غير مُعيَّن",
+    "test": "اختبار",
+    "testing": "جارٍ الاختبار...",
+    "detailSubtitle": "تهيئة نقطة النهاية وسلامتها",
+    "editInSettings": "التحرير في الإعدادات",
+    "providerUnavailable": "المزوّد غير متاح في هذا الإصدار",
+    "healthMessage": "رسالة السلامة",
+    "testPassed": "نجح الاختبار",
+    "testFailedTitle": "فشل الاختبار",
+    "testDetail": "استغرق {{duration}}. النموذج: {{model}}",
+    "jsonTitle": "JSON نقطة النهاية",
+    "emptyTitle": "لا توجد نقاط نهاية مهيأة",
+    "emptyMessage": "أضف نقطة نهاية نموذج في الإعدادات ضمن الاستدلال حتى يكون للتحليلات نموذج تستدعيه.",
+    "emptyFiltered": "لا توجد نقاط نهاية تطابق عوامل التصفية هذه",
+    "toast": {
+      "testOk": "استجابت نقطة النهاية {{name}} في {{duration}}.",
+      "testFailed": "فشلت نقطة النهاية {{name}} في اختبارها بعد {{duration}}.",
+      "testError": "تعذر اختبار نقطة النهاية {{name}}."
+    }
+  },
+  "requestHistory": {
+    "title": "سجل الطلبات",
+    "summary": "كل طلبات API التي التقطها الخادم، مع الحالة والتوقيت والترويسات والنصوص بعد إخفاء البيانات الحساسة. صفِّ الحركة المحفوظة وافحصها وامسحها.",
+    "kpi": {
+      "inRange": "الطلبات ({{range}})",
+      "failures": "حالات الفشل",
+      "successRate": "معدل النجاح",
+      "avgDuration": "متوسط المدة",
+      "matching": "مطابقة لعوامل التصفية"
+    },
+    "filters": {
+      "method": "الأسلوب",
+      "status": "رمز الحالة",
+      "statusPlaceholder": "500",
+      "path": "المسار يحتوي على",
+      "pathPlaceholder": "/v1.0/image",
+      "principal": "صاحب المفتاح",
+      "principalPlaceholder": "اسم المفتاح"
+    },
+    "columns": {
+      "time": "الوقت",
+      "method": "الأسلوب",
+      "path": "المسار",
+      "status": "الحالة",
+      "duration": "المدة",
+      "principal": "صاحب المفتاح",
+      "sourceIp": "IP المصدر",
+      "id": "الإدخال",
+      "ago": "العمر"
+    },
+    "filterByPath": "التصفية حسب هذا المسار",
+    "deleteMatching": "حذف المطابق",
+    "clearAll": "مسح الكل",
+    "deleteTitle": "حذف الطلب",
+    "deleteMessage": "هل تريد حذف طلب {{method}} {{path}} الملتقط؟",
+    "bulkTitle": "حذف الطلبات الملتقطة",
+    "bulkMessageFiltered_zero": "هل تريد حذف {{count}} طلب مطابق لـ {{filters}}؟ لا يمكن التراجع عن ذلك.",
+    "bulkMessageFiltered_one": "هل تريد حذف {{count}} طلب مطابق لـ {{filters}}؟ لا يمكن التراجع عن ذلك.",
+    "bulkMessageFiltered_two": "هل تريد حذف الطلبين ({{count}}) المطابقين لـ {{filters}}؟ لا يمكن التراجع عن ذلك.",
+    "bulkMessageFiltered_few": "هل تريد حذف كل الطلبات ({{count}}) المطابقة لـ {{filters}}؟ لا يمكن التراجع عن ذلك.",
+    "bulkMessageFiltered_many": "هل تريد حذف كل الطلبات ({{count}}) المطابقة لـ {{filters}}؟ لا يمكن التراجع عن ذلك.",
+    "bulkMessageFiltered_other": "هل تريد حذف كل الطلبات ({{count}}) المطابقة لـ {{filters}}؟ لا يمكن التراجع عن ذلك.",
+    "bulkMessageAll_zero": "لم تُعيَّن عوامل تصفية. هل تريد حذف {{count}} طلب محفوظ؟ لا يمكن التراجع عن ذلك.",
+    "bulkMessageAll_one": "لم تُعيَّن عوامل تصفية. هل تريد حذف الطلب المحفوظ ({{count}})؟ لا يمكن التراجع عن ذلك.",
+    "bulkMessageAll_two": "لم تُعيَّن عوامل تصفية. هل تريد حذف الطلبين المحفوظين ({{count}})؟ لا يمكن التراجع عن ذلك.",
+    "bulkMessageAll_few": "لم تُعيَّن عوامل تصفية. هل تريد حذف كل الطلبات المحفوظة ({{count}})؟ لا يمكن التراجع عن ذلك.",
+    "bulkMessageAll_many": "لم تُعيَّن عوامل تصفية. هل تريد حذف كل الطلبات المحفوظة ({{count}})؟ لا يمكن التراجع عن ذلك.",
+    "bulkMessageAll_other": "لم تُعيَّن عوامل تصفية. هل تريد حذف كل الطلبات المحفوظة ({{count}})؟ لا يمكن التراجع عن ذلك.",
+    "filterParts": {
+      "method": "الأسلوب {{value}}",
+      "status": "الحالة {{value}}",
+      "path": "المسار الذي يحتوي على \"{{value}}\"",
+      "principal": "صاحب المفتاح {{value}}",
+      "from": "من {{value}}",
+      "to": "قبل {{value}}"
+    },
+    "jsonTitle": "JSON الطلب",
+    "emptyTitle": "لا توجد حركة محفوظة",
+    "emptyMessage": "تظهر الطلبات هنا عندما يعالجها الخادم. إذا ظلت القائمة فارغة، فتحقق من تفعيل RequestHistory.Enabled في الإعدادات.",
+    "emptyFiltered": "لا توجد طلبات تطابق عوامل التصفية هذه",
+    "emptyFilteredMessage": "امسح عوامل التصفية أو وسّعها، أو اختر نطاقًا زمنيًا آخر.",
+    "inspector": {
+      "title": "تفاصيل الطلب",
+      "metadata": "البيانات الوصفية",
+      "url": "URL",
+      "requestId": "معرّف الطلب",
+      "created": "وقت الاستلام",
+      "completed": "وقت الاكتمال",
+      "requestHeaders": "ترويسات الطلب",
+      "requestBody": "نص الطلب",
+      "responseHeaders": "ترويسات الاستجابة",
+      "responseBody": "نص الاستجابة",
+      "raw": "JSON الخام",
+      "noHeaders": "لم تُلتقط أي ترويسات.",
+      "noBody": "لم يُلتقط أي نص.",
+      "truncated": "مقتطع (الحجم الأصلي {{size}})"
+    },
+    "toast": {
+      "deleted": "حُذف الطلب.",
+      "bulkDeleted_zero": "حُذف {{count}} طلب.",
+      "bulkDeleted_one": "حُذف {{count}} طلب.",
+      "bulkDeleted_two": "حُذف {{count}} طلبان.",
+      "bulkDeleted_few": "حُذفت {{count}} طلبات.",
+      "bulkDeleted_many": "حُذف {{count}} طلبًا.",
+      "bulkDeleted_other": "حُذف {{count}} طلب.",
+      "loadFailed": "تعذر تحميل الطلب."
+    }
+  },
+  "explorer": {
+    "title": "مستكشف API",
+    "summary": "كل المسارات من مستند OpenAPI المباشر للخادم. تستخدم الطلبات المفتاح الذي سجّلت الدخول به.",
+    "loadingSpec": "جارٍ تحميل /openapi.json...",
+    "specMissing": "مستند OpenAPI غير متاح",
+    "specMissingMessage": "يحتاج المستكشف إلى GET /openapi.json من الخادم. تحقق من إمكانية الوصول إلى الخادم وأنه يقدّم المستند، ثم أعد المحاولة.",
+    "viaProxyTitle": "حُمّل مستند OpenAPI عبر وكيل لوحة التحكم",
+    "viaProxyMessage": "تعذر على المتصفح قراءة /openapi.json من الخادم مباشرة (فشل في الشبكة أو CORS)، لذا حُمّل من أصل لوحة التحكم بدلًا من ذلك. لا تزال الطلبات تذهب مباشرة إلى الخادم الذي سجّلت الدخول إليه.",
+    "search": "البحث في الأسلوب أو المسار أو الملخص",
+    "noMatches": "لا توجد عمليات مطابقة.",
+    "operations": "العمليات",
+    "pickOperation": "اختر عملية من القائمة أعلاه.",
+    "resolvedUrl": "عنوان URL الناتج",
+    "copyUrl": "نسخ عنوان URL",
+    "pathParams": "معاملات المسار",
+    "queryParams": "معاملات الاستعلام",
+    "required": "مطلوب",
+    "headers": "الترويسات",
+    "authInherited": "تُضاف ترويسة التفويض من جلستك تلقائيًا.",
+    "headerName": "اسم الترويسة",
+    "headerValue": "القيمة",
+    "addHeader": "إضافة ترويسة",
+    "removeHeader": "إزالة الترويسة",
+    "body": "نص الطلب",
+    "format": "تنسيق JSON",
+    "resetTemplate": "إعادة التعيين إلى القالب",
+    "copyBody": "نسخ النص",
+    "invalidJson": "JSON غير صالح: {{message}}",
+    "missingPath": "املأ: {{names}}",
+    "destructive": "تُغيّر هذه العملية البيانات أو تحذفها.",
+    "execute": "تنفيذ",
+    "running": "جارٍ التنفيذ...",
+    "stop": "إيقاف",
+    "response": "الاستجابة",
+    "responseTabs": "أقسام الاستجابة",
+    "noResponse": "نفّذ الطلب لعرض الاستجابة.",
+    "aborted": "أُوقف الطلب.",
+    "emptyBody": "لا تحتوي الاستجابة على نص.",
+    "streaming": "بث متدفق",
+    "tabs": {
+      "body": "النص",
+      "headers": "الترويسات",
+      "code": "التعليمات البرمجية"
+    },
+    "history": "السجل ({{count}})",
+    "historyTitle": "الطلبات الأخيرة",
+    "noHistory": "تظهر هنا الطلبات التي تنفذها. لا تُخزَّن المفاتيح أبدًا.",
+    "load": "تحميل",
+    "confirmTitle": "هل تريد تشغيل طلب مُتلِف؟",
+    "confirmMessage": "يُغيّر {{method}} {{path}} البيانات على الخادم أو يحذفها. هل تريد المتابعة؟",
+    "pickerLabel": "اختر عملية API",
+    "operationCount_zero": "{{count}} عملية",
+    "operationCount_one": "{{count}} عملية",
+    "operationCount_two": "{{count}} عمليتان",
+    "operationCount_few": "{{count}} عمليات",
+    "operationCount_many": "{{count}} عمليةً",
+    "operationCount_other": "{{count}} عملية",
+    "binaryTitle": "استجابة ثنائية",
+    "binaryMessage": "{{type}}، {{size}}. نزّلها لفتحها.",
+    "binaryFilename": "response.bin",
+    "downloadBody": "تنزيل"
+  },
+  "settings": {
+    "title": "الإعدادات",
+    "summary": "حرّر ملف إعدادات الخادم. تُطبَّق الإعدادات الفورية عند الحفظ؛ أما الإعدادات المميزة بإعادة التشغيل فتسري بعد إعادة التشغيل.",
+    "file": "ملف الإعدادات",
+    "notAdminTitle": "تتطلب الإعدادات مفتاح المسؤول",
+    "notAdminMessage": "سجّلت الدخول بمفتاح وصول، ولا يمكنه قراءة إعدادات الخادم أو تغييرها. سجّل الخروج واتصل بمفتاح المسؤول لتحرير الإعدادات أو إعادة تشغيل الخادم.",
+    "preferences": "تفضيلات لوحة التحكم",
+    "preferencesHelp": "تُخزَّن في هذا المتصفح فقط.",
+    "sections": "أقسام الإعدادات",
+    "showRaw": "عرض JSON",
+    "hideRaw": "إخفاء JSON",
+    "rawTitle": "JSON الإعدادات",
+    "rawHelp": "عرض للقراءة فقط للإعدادات المحفوظة كما يُعيدها الخادم، مع إخفاء الأسرار.",
+    "restart": "إعادة تشغيل الخادم",
+    "restartNow": "إعادة التشغيل الآن",
+    "restartTitle": "هل تريد إعادة تشغيل الخادم؟",
+    "restartMessage": "يُنهي الخادم هذه الاستجابة ثم يتوقف. في Docker Compose (restart: unless-stopped) يعود بالإعدادات المحفوظة. تُعلَّم المهام قيد التشغيل بأنها منقطعة.",
+    "restartUnsaved": "لديك تغييرات غير محفوظة. ستفقدها ما لم تحفظها أولًا.",
+    "restarting": "جارٍ إعادة التشغيل",
+    "restartingMessage": "في انتظار عودة الخادم. التحرير متوقف مؤقتًا.",
+    "restartDone": "عاد الخادم.",
+    "restartTimeout": "لم يعد الخادم",
+    "restartTimeoutMessage": "إذا لم يكن الخادم يعمل عبر بيئة تشغيل حاويات أو مدير خدمات بسياسة إعادة تشغيل، فشغّله مرة أخرى يدويًا.",
+    "restartRequired": "يلزم إعادة التشغيل",
+    "restartRequiredMessage": "لا تسري بعض التغييرات المحفوظة إلا بعد إعادة تشغيل الخادم.",
+    "saveFailed": "رفض الخادم الإعدادات.",
+    "unsaved": "تغييرات غير محفوظة",
+    "noChanges": "لا توجد تغييرات",
+    "discard": "تجاهل التغييرات",
+    "range": "النطاق من {{min}} إلى {{max}}",
+    "unset": "غير مُعيَّن",
+    "noEndpoint": "لا شيء",
+    "envOverride": "مُعيَّن بواسطة متغير البيئة {{name}}. قيمة البيئة لها الأولوية، لذا هذا الحقل للقراءة فقط هنا.",
+    "arrayEmpty": "لم يُهيَّأ أي عنصر.",
+    "newItem": "عنصر جديد",
+    "removeItem": "إزالة",
+    "badges": {
+      "live": "فوري",
+      "liveHelp": "يُطبَّق بمجرد الحفظ.",
+      "restart": "إعادة التشغيل",
+      "restartHelp": "يسري بعد إعادة تشغيل الخادم.",
+      "env": "البيئة: {{name}}",
+      "envHelp": "يتجاوزه {{name}}."
+    },
+    "secret": {
+      "set": "مُعيَّن (ينتهي بـ {{last4}})",
+      "notSet": "غير مُعيَّن",
+      "change": "تغيير",
+      "keep": "الإبقاء على الحالي",
+      "clear": "مسح"
+    },
+    "errors": {
+      "required": "مطلوب.",
+      "number": "أدخل رقمًا.",
+      "duplicateName": "يجب أن تكون الأسماء فريدة.",
+      "summary_zero": "{{count}} حقل يحتاج إلى انتباه.",
+      "summary_one": "{{count}} حقل يحتاج إلى انتباه.",
+      "summary_two": "{{count}} حقلان يحتاجان إلى انتباه.",
+      "summary_few": "{{count}} حقول تحتاج إلى انتباه.",
+      "summary_many": "{{count}} حقلًا يحتاج إلى انتباه.",
+      "summary_other": "{{count}} حقل يحتاج إلى انتباه."
+    },
+    "toast": {
+      "savedLive": "حُفظت الإعدادات وطُبّقت.",
+      "savedRestart": "حُفظت الإعدادات. أعد تشغيل الخادم لتطبيق كل التغييرات.",
+      "restarted": "أُعيد تشغيل الخادم."
+    },
+    "options": {
+      "Sqlite": "SQLite",
+      "Mysql": "MySQL",
+      "Postgresql": "PostgreSQL",
+      "SqlServer": "SQL Server",
+      "grpc": "gRPC",
+      "httpprotobuf": "HTTP (protobuf)",
+      "Completion": "إكمال",
+      "Transcription": "تفريغ نصي"
+    },
+    "severity": {
+      "0": "0 تصحيح",
+      "1": "1 معلومات",
+      "2": "2 تحذير",
+      "3": "3 خطأ",
+      "4": "4 تنبيه",
+      "5": "5 حرج",
+      "6": "6 طوارئ",
+      "7": "7 الأعلى"
+    },
+    "addItem": {
+      "Auth": {
+        "AccessKeys": "إضافة مفتاح وصول"
+      },
+      "Inference": {
+        "Endpoints": "إضافة نقطة نهاية"
+      },
+      "Logging": {
+        "Servers": "إضافة خادم syslog"
+      }
+    },
+    "groups": {
+      "rest": {
+        "title": "خادم REST",
+        "help": "عنوان الاستماع وحد حجم الطلب."
+      },
+      "auth": {
+        "title": "المصادقة",
+        "help": "مفتاح المسؤول ومفاتيح الوصول المسماة التي يستخدمها المتصلون. المفاتيح مخفية؛ لا تغيّر أيًا منها إلا عن قصد."
+      },
+      "database": {
+        "title": "قاعدة البيانات",
+        "help": "مكان تخزين المهام والنتائج وسجل الطلبات."
+      },
+      "inference": {
+        "title": "الاستدلال",
+        "help": "نقاط نهاية النماذج والقيم الافتراضية وإعادة المحاولات والمهل."
+      },
+      "media": {
+        "title": "الوسائط",
+        "help": "ffmpeg وحدود التنزيل وتحجيم الصور."
+      },
+      "jobs": {
+        "title": "المهام",
+        "help": "تزامن مهام الفيديو والصوت وحجم قائمة الانتظار والاحتفاظ."
+      },
+      "requestHistory": {
+        "title": "سجل الطلبات",
+        "help": "التقاط الطلبات ونصوصها لصفحة سجل الطلبات."
+      },
+      "logging": {
+        "title": "التسجيل",
+        "help": "المخرجات إلى وحدة التحكم والملف وsyslog."
+      },
+      "telemetry": {
+        "title": "القياس عن بُعد",
+        "help": "تصدير OpenTelemetry ونقطة نهاية الجمع لـ Prometheus وسجلات Loki."
+      },
+      "analytics": {
+        "title": "التحليلات",
+        "help": "سجلات الأداء لكل تحليل المعروضة في صفحة التحليلات، ومدة الاحتفاظ بها."
+      }
+    },
+    "fields": {
+      "Rest": {
+        "Hostname": "اسم المضيف",
+        "Port": "المنفذ",
+        "Ssl": "TLS",
+        "MaxRequestBodyBytes": "الحد الأقصى لنص الطلب"
+      },
+      "Auth": {
+        "RequireAuthentication": "طلب المصادقة",
+        "AdminApiKey": "مفتاح API للمسؤول",
+        "MaxFailedAttemptsPerMinute": "أقصى عدد من المحاولات الفاشلة في الدقيقة",
+        "AccessKeys": {
+          "_": "مفاتيح الوصول",
+          "Name": "الاسم",
+          "Key": "المفتاح",
+          "Active": "نشط"
+        }
+      },
+      "Database": {
+        "Type": "النوع",
+        "Filename": "الملف",
+        "Hostname": "اسم المضيف",
+        "Port": "المنفذ",
+        "DatabaseName": "اسم قاعدة البيانات",
+        "Username": "اسم المستخدم",
+        "Password": "كلمة المرور",
+        "TrustServerCertificate": "الوثوق بشهادة الخادم",
+        "CommandTimeoutSeconds": "مهلة الأمر (ثوانٍ)"
+      },
+      "Inference": {
+        "DefaultVision": "نقطة نهاية الرؤية الافتراضية",
+        "DefaultText": "نقطة نهاية النص الافتراضية",
+        "DefaultTranscription": "نقطة نهاية التفريغ النصي الافتراضية",
+        "MaxRetries": "أقصى عدد من إعادة المحاولات",
+        "MaxRepairAttempts": "أقصى عدد من محاولات إصلاح JSON",
+        "RetryBackoffMs": "مهلة التراجع قبل إعادة المحاولة (مللي ثانية)",
+        "RequestTimeoutMs": "مهلة الطلب (مللي ثانية)",
+        "MaxTranscriptCharacters": "أقصى عدد من أحرف النص المفرغ",
+        "Endpoints": {
+          "_": "نقاط النهاية",
+          "Name": "الاسم",
+          "Provider": "المزوّد",
+          "Kind": "النوع",
+          "Endpoint": "URL",
+          "ApiKey": "مفتاح API",
+          "Model": "النموذج",
+          "MaxConcurrentRequests": "أقصى عدد من الطلبات المتزامنة",
+          "TimeoutMs": "المهلة (مللي ثانية)",
+          "Temperature": "درجة الحرارة",
+          "MaxOutputTokens": "أقصى عدد من رموز المخرجات",
+          "Active": "نشط"
+        }
+      },
+      "Media": {
+        "TempDirectory": "الدليل المؤقت",
+        "FfmpegPath": "مسار ffmpeg",
+        "FfprobePath": "مسار ffprobe",
+        "MaxDownloadBytes": "الحد الأقصى لحجم التنزيل",
+        "DownloadTimeoutMs": "مهلة التنزيل (مللي ثانية)",
+        "AllowPrivateNetworkUrls": "السماح بعناوين URL للشبكات الخاصة",
+        "ImageMaxEdge": "أقصى طول لحافة الصورة (بكسل)",
+        "ThumbnailMaxEdge": "أقصى طول لحافة الصورة المصغرة (بكسل)",
+        "JpegQuality": "جودة JPEG (1 الأفضل، 31 الأسوأ)",
+        "MaxParallelFfmpeg": "أقصى عدد من عمليات ffmpeg المتوازية",
+        "FfmpegTimeoutMs": "مهلة ffmpeg (مللي ثانية)",
+        "MaxVideoDurationMs": "أقصى مدة للفيديو (مللي ثانية)",
+        "TranscriptionChunkSeconds": "مقطع التفريغ النصي (ثوانٍ)",
+        "MaxSegmentMs": "أقصى طول للمقطع (مللي ثانية)"
+      },
+      "Jobs": {
+        "MaxConcurrentJobs": "أقصى عدد من المهام المتزامنة",
+        "MaxQueuedJobs": "أقصى عدد من المهام في الانتظار",
+        "RetentionDays": "الاحتفاظ (أيام)",
+        "MaxWaitTimeoutMs": "أقصى مهلة انتظار (مللي ثانية)"
+      },
+      "RequestHistory": {
+        "Enabled": "التقاط الطلبات",
+        "MaxRequestBodyBytes": "الحد الأقصى لنص الطلب الملتقط",
+        "MaxResponseBodyBytes": "الحد الأقصى لنص الاستجابة الملتقط",
+        "RetentionDays": "الاحتفاظ (أيام)"
+      },
+      "Logging": {
+        "ConsoleLogging": "التسجيل في وحدة التحكم",
+        "EnableColors": "ألوان وحدة التحكم",
+        "LogDirectory": "دليل السجلات",
+        "LogFilename": "اسم ملف السجل",
+        "MinimumSeverity": "الحد الأدنى للخطورة",
+        "Servers": {
+          "_": "خوادم syslog",
+          "Hostname": "اسم المضيف",
+          "Port": "المنفذ"
+        }
+      },
+      "Telemetry": {
+        "Enable": "القياس عن بُعد",
+        "ServiceName": "اسم الخدمة",
+        "OtlpEnable": "تصدير OTLP",
+        "OtlpEndpoint": "نقطة نهاية OTLP",
+        "OtlpProtocol": "بروتوكول OTLP",
+        "PrometheusEnable": "نقطة نهاية Prometheus",
+        "PrometheusHostname": "اسم مضيف Prometheus",
+        "PrometheusPort": "منفذ Prometheus",
+        "PrometheusPath": "مسار Prometheus",
+        "LokiEnable": "تصدير Loki",
+        "LokiEndpoint": "نقطة نهاية Loki",
+        "ExportLogs": "تصدير السجلات",
+        "MetricExportIntervalMs": "فاصل تصدير المقاييس (مللي ثانية)",
+        "TraceSamplingRatio": "نسبة أخذ عينات التتبع"
+      },
+      "Analytics": {
+        "Enabled": "تسجيل التحليلات",
+        "RetentionDays": "الاحتفاظ (أيام)"
+      }
+    }
+  },
+  "server": {
+    "title": "معلومات الخادم",
+    "summary": "الإصدار، والسلامة، والمفتاح الذي سجّلت الدخول به، وعناوين URL للخادم القابلة للنسخ.",
+    "health": "السلامة",
+    "status": "الحالة",
+    "version": "إصدار الخادم",
+    "started": "وقت البدء",
+    "uptime": "مدة التشغيل",
+    "database": "قاعدة البيانات",
+    "jobs": "المهام",
+    "jobsValue": "{{active}} نشطة، {{queued}} في الانتظار",
+    "ffmpeg": "ffmpeg",
+    "ffmpegMissingHelp": "ثبّت ffmpeg وffprobe على مضيف الخادم، أو عيّن Media.FfmpegPath في الإعدادات.",
+    "endpoints": "سلامة نقاط النهاية",
+    "noEndpoints": "لا توجد نقاط نهاية نشطة",
+    "identity": "الهوية",
+    "principal": "صاحب المفتاح",
+    "role": "الدور",
+    "authRequired": "المصادقة مطلوبة",
+    "dashboardVersion": "إصدار لوحة التحكم",
+    "repository": "المستودع",
+    "copyUrl": "نسخ {{name}}",
+    "urls": {
+      "title": "عناوين URL للخادم",
+      "base": "عنوان URL الأساسي",
+      "health": "السلامة",
+      "openapi": "مستند OpenAPI",
+      "swagger": "Swagger UI",
+      "whoami": "من أنا",
+      "dashboard": "لوحة التحكم هذه"
+    }
+  },
+  "notFound": {
+    "title": "الصفحة غير موجودة",
+    "message": "مسار لوحة التحكم هذا غير موجود.",
+    "home": "الانتقال إلى الرئيسية"
+  },
+  "enums": {
+    "jobStatus": {
+      "Queued": "في الانتظار",
+      "Running": "قيد التشغيل",
+      "Succeeded": "نجحت",
+      "Failed": "فشلت",
+      "Canceled": "أُلغيت",
+      "Interrupted": "منقطعة"
+    },
+    "fieldType": {
+      "Boolean": "منطقي",
+      "String": "سلسلة نصية",
+      "Integer": "عدد صحيح",
+      "Number": "رقم",
+      "Enum": "تعداد",
+      "StringList": "قائمة سلاسل نصية",
+      "Object": "كائن"
+    },
+    "mediaKind": {
+      "Unknown": "غير معروف",
+      "Image": "صورة",
+      "Video": "فيديو",
+      "Audio": "صوت"
+    },
+    "summaryStyle": {
+      "Paragraph": "فقرة",
+      "Bullets": "نقاط",
+      "Caption": "تعليق توضيحي"
+    },
+    "extractMode": {
+      "Combined": "مجمّع",
+      "PerField": "لكل حقل"
+    },
+    "extractModeHelp": {
+      "Combined": "استدعاء واحد للنموذج يُعيد كل الحقول. الأسرع والأقل تكلفة.",
+      "PerField": "استدعاء لكل حقل، تُنفَّذ بالتوازي. أعلى تكلفة لكنه يعزل حالات الفشل ويقيس وقت كل حقل."
+    },
+    "endpointKind": {
+      "Completion": "إكمال",
+      "Transcription": "تفريغ نصي"
+    },
+    "provider": {
+      "Mock": "Mock (للاختبارات فقط)",
+      "Ollama": "Ollama",
+      "OllamaCloud": "Ollama Cloud",
+      "OpenAi": "OpenAI",
+      "OpenAiCompatible": "متوافق مع OpenAI",
+      "AzureOpenAi": "Azure OpenAI",
+      "Anthropic": "Anthropic",
+      "Gemini": "Gemini",
+      "VertexAi": "Vertex AI",
+      "Bedrock": "Bedrock",
+      "XAi": "xAI",
+      "Cohere": "Cohere"
+    },
+    "stage": {
+      "Resolve": "التحديد",
+      "Probe": "الفحص",
+      "Normalize": "التسوية",
+      "SceneDetection": "اكتشاف المشاهد",
+      "FrameExtraction": "استخراج الإطارات",
+      "AudioExtraction": "استخراج الصوت",
+      "Transcribe": "التفريغ النصي",
+      "Scenes": "المشاهد",
+      "Summarize": "التلخيص",
+      "Extract": "الاستخراج",
+      "Reduce": "الدمج"
+    },
+    "progressStage": {
+      "Queued": "في الانتظار",
+      "Done": "اكتملت",
+      "Resolve": "جارٍ تحديد الوسائط",
+      "Probe": "جارٍ الفحص",
+      "AudioExtraction": "جارٍ استخراج الصوت",
+      "Transcribe": "جارٍ التفريغ النصي",
+      "SceneDetection": "جارٍ اكتشاف المشاهد",
+      "FrameExtraction": "جارٍ استخراج الإطارات",
+      "Scenes": "جارٍ تحليل المشاهد",
+      "Reduce": "جارٍ تلخيص الفيديو",
+      "Summarize": "جارٍ التلخيص",
+      "Extract": "جارٍ استخراج الحقول"
+    },
+    "purpose": {
+      "Summarize": "التلخيص",
+      "Extract": "الاستخراج",
+      "SceneSummarize": "ملخص المشهد",
+      "SceneExtract": "حقول المشهد",
+      "Transcribe": "التفريغ النصي"
+    },
+    "health": {
+      "Healthy": "سليمة",
+      "Degraded": "متدهورة"
+    }
+  },
+  "units": {
+    "tokensPerSecond": "{{value}} رمز/ث",
+    "realtimeFactor": "{{value}}x"
+  },
+  "appearance": {
+    "title": "المظهر",
+    "open": "المظهر: لوحة الألوان والوضع الفاتح أو الداكن",
+    "mode": "الوضع",
+    "palette": "لوحة الألوان",
+    "modes": {
+      "light": "فاتح",
+      "dark": "داكن",
+      "system": "النظام"
+    },
+    "help": "يُحفظ في هذا المتصفح. يتبع خيار النظام إعداد الوضع الفاتح أو الداكن في نظام التشغيل لديك.",
+    "palettes": {
+      "slate": "أردوازي",
+      "indigoNight": "ليل نيلي",
+      "fjord": "مضيق",
+      "nocturne": "ليلية",
+      "solstice": "انقلاب شمسي",
+      "cocoa": "كاكاو",
+      "duskRose": "وردة الغسق",
+      "metroNight": "ليل المدينة",
+      "forest": "غابة",
+      "ocean": "محيط",
+      "amber": "كهرماني",
+      "graphite": "جرافيت",
+      "lavender": "خزامى",
+      "mint": "نعناع",
+      "sandstone": "حجر رملي",
+      "terracotta": "طين محروق"
+    }
+  },
+  "analyzeAudio": {
+    "title": "تحليل صوت",
+    "summary": "فرّغ ملفًا صوتيًا نصيًا (أو المسار الصوتي لفيديو)، ثم لخّصه واستخرج حقولًا محددة النوع من النص المفرغ. يعمل كمهمة؛ يظهر التقدم والنص المفرغ أدناه.",
+    "modelHelp": "تحوّل نقطة نهاية التفريغ النصي الكلام إلى نص (الافتراضي Inference.DefaultTranscription). وتكتب نقطة نهاية النص الملخص والحقول من النص المفرغ (الافتراضي Inference.DefaultText).",
+    "languageHelp": "رمز ISO-639 اختياري. اتركه فارغًا ليكتشف النموذج اللغة.",
+    "transcribeRequired": "التفريغ النصي مطلوب: يُنتَج الملخص والحقول من النص المفرغ.",
+    "summaryHelp": "تكتبه نقطة نهاية النص من النص المفرغ.",
+    "submit": "إرسال مهمة الصوت",
+    "jobTitle": "المهمة",
+    "openJob": "فتح المهمة",
+    "polling": "يُفحص التقدم كل بضع ثوانٍ. يمكنك مغادرة هذه الصفحة؛ ستستمر المهمة في العمل.",
+    "emptyTitle": "لا توجد مهمة صوت بعد",
+    "emptyMessage": "اختر ملفًا أو عنوان URL أعلاه ثم أرسل. يظهر هنا التقدم والنص المفرغ والنتائج.",
+    "toast": {
+      "submitted": "أُضيفت مهمة الصوت {{id}} إلى قائمة الانتظار.",
+      "cancelFailed": "تعذر إلغاء المهمة: {{message}}"
+    },
+    "errors": {
+      "notSupported": "لا يدعم هذا الخادم تحليل الصوت (لم يُعثر على POST /v1.0/audio)."
+    }
+  },
+  "segments": {
+    "uploadedTitle": "رُفعت الوسائط المصدر",
+    "uploadedMessage": "لا يحتفظ Keyframe بالوسائط المرفوعة، لذا تحتاج المقاطع والصوت والإطارات إلى الملف الأصلي مجددًا. اختره من القرص لتفعيل أزرار التنزيل.",
+    "usingFile": "يُستخدم {{name}} ({{size}}) مصدرًا للتنزيلات.",
+    "chooseFile": "اختيار الملف الأصلي",
+    "chooseOther": "اختيار ملف آخر",
+    "clearFile": "مسح",
+    "reading": "جارٍ القراءة...",
+    "needSource": "اختر الملف الأصلي أولًا",
+    "download": {
+      "Video": "تنزيل المقطع",
+      "Audio": "تنزيل الصوت",
+      "Frame": "تنزيل الإطار"
+    },
+    "hint": {
+      "Video": "قص هذا النطاق كمقطع MP4",
+      "Audio": "قص هذا النطاق كصوت MP3",
+      "Frame": "حفظ الإطار في بداية هذا المشهد كصورة JPEG"
+    },
+    "toast": {
+      "downloaded": "حُفظ {{name}}.",
+      "failed": "فشل التنزيل: {{message}}"
+    }
+  },
+  "analytics": {
+    "title": "التحليلات",
+    "summary": "الأداء بمرور الوقت لتحليل الصور والفيديو والصوت: الحجم، ومعدل النجاح، ومئينات زمن الاستجابة، وتوقيت النماذج، والرموز، وتفاصيل كل تحليل.",
+    "loading": "جارٍ تحميل التحليلات...",
+    "notAdminTitle": "تتطلب التحليلات مفتاح المسؤول",
+    "notAdminMessage": "سجّل الدخول بمفتاح المسؤول لعرض الأداء والقياس عن بُعد عبر كل التحليلات.",
+    "unavailableTitle": "التحليلات غير متاحة على هذا الخادم",
+    "unavailableMessage": "لم يُعثر على GET /v1.0/analytics/summary. حدّث الخادم إلى إصدار يتضمن التحليلات، وتحقق من تفعيل Analytics.Enabled في الإعدادات.",
+    "emptyTitle": "لا توجد تحليلات في هذا النطاق",
+    "emptyMessage": "شغّل تحليلًا أو وسّع النطاق الزمني. يُسجَّل هنا كل تحليل مكتمل للصور والفيديو والصوت.",
+    "windowNote": "عرض الفترة من {{from}} إلى {{to}}، مجمّعة حسب {{bucket}}.",
+    "ranges": {
+      "1h": "ساعة واحدة",
+      "24h": "24 ساعة",
+      "7d": "7 أيام",
+      "30d": "30 يومًا",
+      "custom": "مخصص"
+    },
+    "buckets": {
+      "minute": "الدقيقة",
+      "hour": "الساعة",
+      "day": "اليوم"
+    },
+    "filters": {
+      "label": "عوامل تصفية التحليلات",
+      "range": "النطاق الزمني",
+      "mediaKind": "الوسائط",
+      "endpoint": "نقطة النهاية",
+      "model": "النموذج",
+      "modelPlaceholder": "أي نموذج"
+    },
+    "kpi": {
+      "label": "مؤشرات التحليلات",
+      "analyses": "التحليلات",
+      "analysesSub": "{{ok}} نجحت، {{failed}} فشلت",
+      "successRate": "معدل النجاح",
+      "analysisP50": "وقت التحليل (p50)",
+      "queueP95": "الانتظار في القائمة (p95)",
+      "ttftP50": "الوقت حتى أول رمز (p50)",
+      "tokensPerSecond": "الرموز في الثانية (p50)",
+      "modelCalls": "استدعاءات النموذج",
+      "modelCallsSub": "{{failed}} فشلت، {{retries}} إعادة محاولة",
+      "totalTokens": "إجمالي الرموز",
+      "perAnalysis": "{{value}} لكل تحليل في المتوسط",
+      "p95": "p95 {{value}}",
+      "avg": "المتوسط {{value}}",
+      "generationP50": "التوليد p50 {{value}}"
+    },
+    "byKind": {
+      "label": "حسب نوع الوسائط",
+      "count_zero": "{{value}} تحليل",
+      "count_one": "{{value}} تحليل",
+      "count_two": "{{value}} تحليلان",
+      "count_few": "{{value}} تحليلات",
+      "count_many": "{{value}} تحليلًا",
+      "count_other": "{{value}} تحليل",
+      "none": "لا توجد تحليلات من هذا النوع في النطاق.",
+      "analysisP50": "التحليل p50",
+      "analysisP95": "التحليل p95",
+      "realtimeP50": "عامل الوقت الفعلي p50",
+      "imagesIn": "الصور المُدخلة",
+      "mediaSizeP50": "الحجم p50",
+      "mediaDurationP50": "المدة p50",
+      "tokens": "الرموز"
+    },
+    "charts": {
+      "volume": "التحليلات بمرور الوقت",
+      "volumeHint": "انقر على عمود لعرض تحليلاته أدناه.",
+      "volumeAria_zero": "التحليلات بمرور الوقت، {{count}} تحليل في النطاق",
+      "volumeAria_one": "التحليلات بمرور الوقت، {{count}} تحليل في النطاق",
+      "volumeAria_two": "التحليلات بمرور الوقت، {{count}} تحليلان في النطاق",
+      "volumeAria_few": "التحليلات بمرور الوقت، {{count}} تحليلات في النطاق",
+      "volumeAria_many": "التحليلات بمرور الوقت، {{count}} تحليلًا في النطاق",
+      "volumeAria_other": "التحليلات بمرور الوقت، {{count}} تحليل في النطاق",
+      "latency": "التوقيت بمرور الوقت",
+      "metric": "المقياس",
+      "latencyAria": "مئينات {{metric}} بمرور الوقت",
+      "noSamples": "لا توجد عينات لهذا المقياس في النطاق.",
+      "tokens": "الرموز بمرور الوقت",
+      "successRate": "معدل النجاح بمرور الوقت"
+    },
+    "series": {
+      "succeeded": "نجحت",
+      "failed": "فشلت",
+      "promptTokens": "رموز المطالبة",
+      "completionTokens": "رموز الإكمال",
+      "successRate": "معدل النجاح"
+    },
+    "stats": {
+      "avg": "المتوسط",
+      "p50": "p50",
+      "p90": "p90",
+      "p95": "p95",
+      "p99": "p99",
+      "max": "الأقصى"
+    },
+    "metrics": {
+      "AnalysisMs": "وقت التحليل",
+      "QueueWaitMs": "الانتظار في القائمة",
+      "ModelCallMs": "وقت استدعاء النموذج",
+      "TimeToFirstTokenMs": "الوقت حتى أول رمز",
+      "GenerationMs": "وقت التوليد",
+      "TokensPerSecond": "الرموز في الثانية",
+      "TokensPerAnalysis": "الرموز لكل تحليل",
+      "RealtimeFactor": "عامل الوقت الفعلي",
+      "MediaDurationMs": "مدة الوسائط",
+      "MediaBytes": "حجم الوسائط"
+    },
+    "columns": {
+      "metric": "المقياس",
+      "samples": "العينات"
+    },
+    "distributions": {
+      "title": "التوزيعات",
+      "help": "تُقاس مقاييس استدعاء النموذج لكل استدعاء، والبقية لكل تحليل. عامل الوقت الفعلي هو وقت التحليل مقسومًا على مدة الوسائط (للفيديو والصوت فقط)؛ القيمة الأقل من 1 أسرع من الوقت الفعلي."
+    },
+    "totals": {
+      "title": "الرموز والمدخلات",
+      "promptTokens": "رموز المطالبة",
+      "completionTokens": "رموز الإكمال",
+      "cachedTokens": "الرموز المخزنة مؤقتًا",
+      "reasoningTokens": "رموز الاستدلال",
+      "totalTokens": "إجمالي الرموز",
+      "tokensPerAnalysisP50": "الرموز لكل تحليل (p50)",
+      "tokensPerAnalysisP95": "الرموز لكل تحليل (p95)",
+      "modelCalls": "استدعاءات النموذج",
+      "failedModelCalls": "استدعاءات النموذج الفاشلة",
+      "retries": "إعادة المحاولات",
+      "repairAttempts": "محاولات الإصلاح",
+      "inputImages": "الصور المُدخلة",
+      "inputImageBytes": "بايتات الصور المرسلة",
+      "inputAudioBytes": "بايتات الصوت المرسلة",
+      "scenes": "المشاهد",
+      "transcriptCharacters": "أحرف النص المفرغ"
+    },
+    "byModel": {
+      "title": "حسب النموذج",
+      "empty": "لا توجد استدعاءات للنموذج في النطاق.",
+      "endpoint": "نقطة النهاية",
+      "provider": "المزوّد",
+      "model": "النموذج",
+      "calls": "الاستدعاءات",
+      "failed": "الفاشلة",
+      "durationP50": "المدة p50",
+      "durationP95": "المدة p95",
+      "ttftP50": "أول رمز p50",
+      "ttftP95": "أول رمز p95",
+      "generationP50": "التوليد p50",
+      "tokensPerSecondP50": "رمز/ث p50",
+      "promptTokens": "رموز المطالبة",
+      "completionTokens": "رموز الإكمال"
+    },
+    "byStage": {
+      "title": "حسب المرحلة",
+      "empty": "لا توجد توقيتات مراحل في النطاق.",
+      "stage": "المرحلة",
+      "share": "p50 النسبي"
+    },
+    "byPurpose": {
+      "title": "حسب الغرض",
+      "empty": "لا توجد استدعاءات للنموذج في النطاق.",
+      "purpose": "الغرض",
+      "calls": "الاستدعاءات",
+      "failed": "الفاشلة",
+      "durationP50": "المدة p50",
+      "durationP95": "المدة p95",
+      "ttftP50": "أول رمز p50"
+    },
+    "list": {
+      "title": "التحليلات الأخيرة",
+      "empty": "لا توجد تحليلات مطابقة",
+      "emptyMessage": "وسّع النطاق الزمني أو امسح عوامل التصفية.",
+      "filterNote": "يستخدم النطاق الزمني وعامل تصفية الوسائط أعلاه. تنطبق عوامل تصفية نقطة النهاية والنموذج على المخططات فقط.",
+      "statusFilter": "الحالة",
+      "started": "وقت البدء",
+      "kind": "النوع",
+      "status": "الحالة",
+      "analysisTime": "وقت التحليل",
+      "queueWait": "الانتظار في القائمة",
+      "mediaDuration": "مدة الوسائط",
+      "mediaSize": "حجم الوسائط",
+      "realtimeFactor": "الوقت الفعلي",
+      "model": "النموذج",
+      "calls": "الاستدعاءات",
+      "tokens": "الرموز",
+      "principal": "صاحب المفتاح",
+      "id": "ID",
+      "bucketTitle": "مصفّاة إلى فترة واحدة من المخطط",
+      "bucketMessage": "التحليلات من {{from}} إلى {{to}}.",
+      "bucketClear": "عرض النطاق بأكمله"
+    },
+    "detail": {
+      "title": "تفاصيل التحليل",
+      "subtitle": "تحليل {{kind}}، {{time}}",
+      "notFound": "لم يعد سجل التحليل هذا موجودًا.",
+      "error": "الخطأ",
+      "timeline": "المخطط الزمني",
+      "timelineHelp": "المراحل، ثم كل محاولة لاستدعاء النموذج. تعرض أشرطة الاستدعاء الانتظار في القائمة (الأفتح)، وانتظار أول رمز، والتوليد.",
+      "calls": "استدعاءات النموذج",
+      "jsonTitle": "سجل التحليل",
+      "openJob": "فتح المهمة",
+      "deleteTitle": "حذف سجل التحليل",
+      "deleteMessage": "هل تريد حذف سجل التحليلات {{id}}؟ لن تتأثر المهمة ونتيجتها.",
+      "callsValue": "{{calls}} ({{failed}} فشلت)",
+      "retriesValue": "{{retries}} إعادة محاولة، {{repairs}} إصلاح",
+      "imagesValue": "{{count}} ({{size}})",
+      "fieldsValue": "{{count}} ({{invalid}} غير صالحة)",
+      "fields": {
+        "kind": "نوع الوسائط",
+        "principal": "صاحب المفتاح",
+        "started": "وقت البدء",
+        "completed": "وقت الاكتمال",
+        "analysisTime": "وقت التحليل",
+        "queueWait": "الانتظار في القائمة",
+        "mediaDuration": "مدة الوسائط",
+        "mediaSize": "حجم الوسائط",
+        "realtimeFactor": "عامل الوقت الفعلي",
+        "visionModel": "نموذج الرؤية",
+        "textModel": "نموذج النص",
+        "transcriptionModel": "نموذج التفريغ النصي",
+        "modelCalls": "استدعاءات النموذج",
+        "retries": "إعادة المحاولات والإصلاحات",
+        "promptTokens": "رموز المطالبة",
+        "completionTokens": "رموز الإكمال",
+        "cachedTokens": "الرموز المخزنة مؤقتًا",
+        "reasoningTokens": "رموز الاستدلال",
+        "totalTokens": "إجمالي الرموز",
+        "inputImages": "الصور المُدخلة",
+        "inputAudio": "الصوت المرسل",
+        "scenes": "المشاهد",
+        "transcriptCharacters": "أحرف النص المفرغ",
+        "fields": "الحقول"
+      }
+    },
+    "toast": {
+      "deleted": "حُذف سجل التحليل {{id}}."
+    }
+  }
+}

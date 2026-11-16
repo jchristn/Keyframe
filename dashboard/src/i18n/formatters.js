@@ -98,7 +98,8 @@ export function formatBytes(bytes, locale) {
   return new Intl.NumberFormat(intlLocale(locale), {
     style: 'unit',
     unit: units[i],
-    unitDisplay: 'short',
+    // Plain bytes read best narrow ("512B"); larger units keep the short form ("2 kB").
+    unitDisplay: i === 0 ? 'narrow' : 'short',
     maximumFractionDigits: i === 0 ? 0 : 1
   }).format(value);
 }
@@ -107,4 +108,16 @@ export function formatList(items, locale, type = 'conjunction') {
   const list = (items || []).map(String);
   if (typeof Intl.ListFormat !== 'function') return list.join(', ');
   return new Intl.ListFormat(intlLocale(locale), { style: 'long', type }).format(list);
+}
+
+/** Compact number such as 1.2K or 3.4M, for chart axes and dense KPI tiles. */
+export function formatCompact(value, locale, digits = 1) {
+  if (value === null || value === undefined || Number.isNaN(Number(value))) return '';
+  return new Intl.NumberFormat(intlLocale(locale), { notation: 'compact', maximumFractionDigits: digits }).format(Number(value));
+}
+
+/** Plain decimal with a fixed maximum of fraction digits. */
+export function formatDecimal(value, locale, digits = 2) {
+  if (value === null || value === undefined || Number.isNaN(Number(value))) return '';
+  return new Intl.NumberFormat(intlLocale(locale), { maximumFractionDigits: digits }).format(Number(value));
 }

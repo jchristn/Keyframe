@@ -13,6 +13,9 @@ export type EndpointKind = 'Completion' | 'Transcription';
 export type ProviderType =
   | 'Mock' | 'Ollama' | 'OllamaCloud' | 'OpenAi' | 'OpenAiCompatible' | 'AzureOpenAi'
   | 'Anthropic' | 'Gemini' | 'VertexAi' | 'Bedrock' | 'XAi' | 'Cohere';
+export type SegmentOutput = 'Video' | 'Audio' | 'Frame';
+export type SegmentResponseFormat = 'Binary' | 'Json';
+export type AnalyticsBucketSize = 'minute' | 'hour' | 'day';
 export type DatabaseType = 'Sqlite' | 'Mysql' | 'Postgresql' | 'SqlServer';
 export type ApiErrorCode =
   | 'BadRequest' | 'RequestBodyMissing' | 'DeserializationError' | 'AuthenticationFailed' | 'AuthorizationFailed'
@@ -45,6 +48,8 @@ export interface SceneDetectionSpec { Threshold?: number; MinSceneMs?: number; M
 export interface ScenesSpec { Enable?: boolean; Detection?: SceneDetectionSpec; FramesPerScene?: number; Summarize?: SummarizeSpec; Extract?: ExtractSpec; }
 export interface TranscribeSpec { Enable?: boolean; Endpoint?: string | null; Model?: string | null; Language?: string | null; Prompt?: string | null; }
 export interface VideoFunctionsSpec extends FunctionsSpec { Scenes?: ScenesSpec; Transcribe?: TranscribeSpec; }
+/** Defaults: Transcribe and Summarize on, Extract off. Summarize and Extract run on the transcript. */
+export interface AudioFunctionsSpec extends FunctionsSpec { Transcribe?: TranscribeSpec; }
 export interface ImageAnalysisRequest {
   Image: MediaSource;
   Context?: ContextInput;
@@ -64,6 +69,36 @@ export interface VideoAnalysisRequest {
   IncludeProperties?: boolean;
   Functions: VideoFunctionsSpec;
 }
+export interface AudioAnalysisRequest {
+  /** Audio file, or a video file (only its audio track is used). */
+  Audio: MediaSource;
+  Context?: ContextInput;
+  /** Takes precedence over Functions.Transcribe.Endpoint and Model. */
+  TranscriptionModel?: ModelSelection | null;
+  /** Endpoint for Summarize and Extract on the transcript. */
+  TextModel?: ModelSelection | null;
+  Wait?: boolean;
+  /** Default 120000, 1000 to 3600000, also capped by Jobs.MaxWaitTimeoutMs. */
+  WaitTimeoutMs?: number;
+  IncludeProperties?: boolean;
+  Functions?: AudioFunctionsSpec;
+}
+export interface SegmentRequest {
+  /** The video or audio to cut, sent again as Url or Data. */
+  Source: MediaSource;
+  /** Start of the range, or the frame time for Frame. Default 0. */
+  StartMs?: number;
+  /** Exclusive end. Required for Video and Audio; clamped to the media duration. */
+  EndMs?: number | null;
+  /** Default Video. */
+  Output?: SegmentOutput;
+  /** mp4 or webm (Video), mp3, wav, flac, m4a, or ogg (Audio), jpg or png (Frame). */
+  Format?: string | null;
+  /** 16 to 4096; long-edge cap for video and frames. */
+  MaxEdge?: number | null;
+  /** Set by segments.get (Binary) and segments.getJson (Json). */
+  ResponseFormat?: SegmentResponseFormat;
+}
 export interface ProbeRequest { Media: MediaSource; }
 
 export interface JobFilter {
@@ -73,6 +108,28 @@ export interface JobFilter {
 export interface RequestHistoryFilter {
   method?: string; statusCode?: number; pathContains?: string; principalName?: string;
   fromUtc?: Date | string; toUtc?: Date | string; pageNumber?: number; pageSize?: number; bucketMinutes?: number;
+}
+export interface AnalyticsSummaryFilter {
+  /** Default 24 hours before toUtc; aligned down to the bucket width. */
+  fromUtc?: Date | string;
+  /** Exclusive. Default now. */
+  toUtc?: Date | string;
+  /** Default by range: minute up to 2 hours, hour up to 7 days, otherwise day. */
+  bucket?: AnalyticsBucketSize;
+  mediaKind?: MediaKind;
+  endpoint?: string;
+  model?: string;
+}
+export interface AnalyticsAnalysesFilter {
+  mediaKind?: MediaKind; success?: boolean; fromUtc?: Date | string; toUtc?: Date | string;
+  /** 1 to 1000, default 50. */
+  maxResults?: number;
+  /** Default 0. */
+  skip?: number;
+}
+export interface AnalyticsDeleteFilter {
+  /** Exclusive cutoff on completion time. Omit to delete every analysis. */
+  olderThanUtc?: Date | string;
 }
 
 // Responses
@@ -88,7 +145,8 @@ export interface FieldResult { Key: string; Type: FieldType; Value: unknown; Val
 export interface StageTiming { Name: string; StartUtc: string; DurationMs: number; Success: boolean; }
 export interface ModelCallTelemetry {
   Purpose: ModelCallPurpose; Target: string | null; Endpoint: string; Provider: ProviderType; Model: string | null;
-  StartUtc: string; DurationMs: number; TimeToFirstTokenMs: number | null; Attempts: number; RepairAttempts: number;
+  StartUtc: string; DurationMs: number; TimeToFirstTokenMs: number | null; GenerationMs: number | null; TokensPerSecond: number | null;
+  QueueMs: number; Attempts: number; RepairAttempts: number;
   Success: boolean; Error: string | null; StatusCode: number | null; InputImages: number; InputImageBytes: number;
   InputAudioBytes: number; PromptTokens: number | null; CompletionTokens: number | null; TotalTokens: number | null;
   CachedTokens: number | null; ReasoningTokens: number | null; FinishReason: string | null;
@@ -98,11 +156,17 @@ export interface TokenTotals {
   TotalTokens: number; CachedTokens: number; ReasoningTokens: number; InputImages: number; InputImageBytes: number;
 }
 export interface AnalysisTelemetry {
-  StartUtc: string; EndUtc: string | null; TotalMs: number; QueuedMs: number | null;
+  StartUtc: string; EndUtc: string | null; TotalMs: number;
+  /** Equals QueueWaitMs for jobs; null for images. */
+  QueuedMs: number | null;
+  QueueWaitMs: number;
   Stages: StageTiming[]; ModelCalls: ModelCallTelemetry[]; Totals: TokenTotals;
 }
 export interface AnalysisResponse {
-  Id: string; Success: boolean; MediaKind: MediaKind; Properties: MediaProperties | null;
+  Id: string;
+  /** The x-request-id of the submitting request. */
+  RequestId: string | null;
+  Success: boolean; MediaKind: MediaKind; Properties: MediaProperties | null;
   /** Caller-defined keys (summary key and field keys) mapped to coerced values. */
   Results: Record<string, unknown>;
   Fields: FieldResult[]; Telemetry: AnalysisTelemetry; Warnings: string[]; Errors: string[];
@@ -116,6 +180,7 @@ export interface SceneResult {
 export interface TranscriptSegmentResult { StartMs: number; EndMs: number; Text: string; }
 export interface TranscriptResult { Language: string | null; Text: string; Segments: TranscriptSegmentResult[]; }
 export interface VideoAnalysisResponse extends AnalysisResponse { Transcript: TranscriptResult | null; Scenes: SceneResult[]; }
+export interface AudioAnalysisResponse extends AnalysisResponse { Transcript: TranscriptResult | null; }
 export interface JobProgress { Stage: string | null; Completed: number; Total: number; Percent: number; }
 export interface JobResponse {
   Id: string; Status: JobStatus; MediaKind: MediaKind; PrincipalName: string | null; SourceUrl: string | null;
@@ -130,6 +195,41 @@ export interface VideoSubmitResult {
   job: JobResponse | null;
   /** Set when Wait was true and the job succeeded in time. */
   result: VideoAnalysisResponse | null;
+}
+export interface AudioSubmitResult {
+  /** 202 for a queued job, 200 when Wait finished. */
+  statusCode: number;
+  jobId: string;
+  /** Set for 202, or for 200 when the job finished without succeeding. */
+  job: JobResponse | null;
+  /** Set when Wait was true and the job succeeded in time. */
+  result: AudioAnalysisResponse | null;
+}
+export interface SegmentResponse {
+  MediaType: string; Filename: string;
+  /** After clamping; EndMs equals StartMs for frames. */
+  StartMs: number; EndMs: number;
+  /** 0 for frames. */
+  DurationMs: number;
+  SizeBytes: number;
+  /** Base64 media. */
+  Data: string;
+}
+/** Result of segments.get: the media bytes plus the parsed response headers. */
+export interface SegmentBinaryResult {
+  data: Uint8Array;
+  /** Content-Type. */
+  mediaType: string | null;
+  /** From Content-Disposition. */
+  filename: string | null;
+  /** From x-keyframe-segment-start-ms. */
+  startMs: number | null;
+  /** From x-keyframe-segment-end-ms. */
+  endMs: number | null;
+  /** From x-keyframe-segment-duration-ms. */
+  durationMs: number | null;
+  sizeBytes: number;
+  requestId: string | null;
 }
 export interface EnumerationResult<T> { Items: T[]; PageNumber: number; PageSize: number; TotalCount: number; TotalPages: number; }
 export interface HealthResponse {
@@ -156,6 +256,67 @@ export interface RequestHistorySummary {
   BucketMinutes: number; Buckets: RequestHistorySummaryBucket[];
 }
 export interface DeleteResult { DeletedCount: number; }
+
+// Analytics
+
+export interface Distribution {
+  Count: number; Min: number; Max: number; Avg: number; P50: number; P90: number; P95: number; P99: number; StdDev: number; Sum: number;
+}
+export interface StatBlock {
+  Count: number; Succeeded: number; Failed: number; SuccessRate: number;
+  AnalysisMs: Distribution | null; QueueWaitMs: Distribution | null; MediaDurationMs: Distribution | null;
+  RealtimeFactor: Distribution | null; MediaBytes: Distribution | null;
+  /** Logical calls, from the analyses rows. */
+  ModelCalls: number; FailedModelCalls: number; Retries: number; RepairAttempts: number;
+  ModelCallMs: Distribution | null; TimeToFirstTokenMs: Distribution | null; GenerationMs: Distribution | null; TokensPerSecond: Distribution | null;
+  PromptTokens: number; CompletionTokens: number; TotalTokens: number; CachedTokens: number; ReasoningTokens: number;
+  TokensPerAnalysis: Distribution | null; InputImages: number; InputImageBytes: number; InputAudioBytes: number;
+  Scenes: number; TranscriptCharacters: number;
+}
+export interface AnalyticsBucket { StartUtc: string; Stats: StatBlock; }
+export interface ModelStats {
+  Endpoint: string; Provider: ProviderType; Model: string | null;
+  /** Attempts. */
+  Calls: number; Failed: number;
+  DurationMs: Distribution | null; TimeToFirstTokenMs: Distribution | null; GenerationMs: Distribution | null; TokensPerSecond: Distribution | null;
+  PromptTokens: number; CompletionTokens: number;
+}
+export interface PurposeStats {
+  Purpose: ModelCallPurpose;
+  /** Attempts. */
+  Calls: number; Failed: number; DurationMs: Distribution | null; TimeToFirstTokenMs: Distribution | null;
+}
+export interface StageStats { Stage: string; DurationMs: Distribution | null; }
+export interface AnalyticsSummary {
+  FromUtc: string; ToUtc: string; Bucket: AnalyticsBucketSize; MediaKind: MediaKind | null; Endpoint: string | null; Model: string | null;
+  Totals: StatBlock;
+  /** Always has Image, Video, and Audio. */
+  ByMediaKind: Record<'Image' | 'Video' | 'Audio', StatBlock> & Record<string, StatBlock>;
+  /** Every bucket in the range, gap-filled with zero counts and null distributions. */
+  Buckets: AnalyticsBucket[];
+  ByModel: ModelStats[]; ByStage: StageStats[]; ByPurpose: PurposeStats[];
+}
+/** One model call attempt. */
+export interface ModelCallRecord {
+  Id: string; AnalysisId: string; Purpose: ModelCallPurpose; Target: string | null; Endpoint: string; Provider: ProviderType;
+  Model: string | null; Attempt: number; StartUtc: string; Success: boolean; Error: string | null; StatusCode: number | null;
+  DurationMs: number; QueueMs: number; TimeToFirstTokenMs: number | null; GenerationMs: number | null; TokensPerSecond: number | null;
+  PromptTokens: number | null; CompletionTokens: number | null; TotalTokens: number | null; CachedTokens: number | null;
+  ReasoningTokens: number | null; InputImages: number; InputImageBytes: number; InputAudioBytes: number; FinishReason: string | null;
+}
+export interface AnalysisRecord {
+  Id: string; RequestId: string | null; JobId: string | null; MediaKind: MediaKind; PrincipalName: string | null;
+  Success: boolean; Error: string | null; StartedUtc: string; CompletedUtc: string; AnalysisMs: number; QueueWaitMs: number;
+  MediaDurationMs: number | null; MediaBytes: number; RealtimeFactor: number | null;
+  VisionEndpoint: string | null; VisionModel: string | null; TextEndpoint: string | null; TextModel: string | null;
+  TranscriptionEndpoint: string | null; TranscriptionModel: string | null;
+  ModelCalls: number; FailedModelCalls: number; Retries: number; RepairAttempts: number;
+  PromptTokens: number; CompletionTokens: number; TotalTokens: number; CachedTokens: number; ReasoningTokens: number;
+  InputImages: number; InputImageBytes: number; InputAudioBytes: number; Scenes: number; TranscriptCharacters: number;
+  FieldCount: number; InvalidFields: number;
+  /** Null on listed records; filled by getAnalysis. */
+  Calls: ModelCallRecord[] | null;
+}
 export interface RestartResponse { Accepted: boolean; Message: string; }
 
 // Settings
@@ -178,10 +339,11 @@ export interface InferenceSettings {
 export interface MediaSettings {
   TempDirectory: string; FfmpegPath: string; FfprobePath: string; MaxDownloadBytes: number; DownloadTimeoutMs: number;
   AllowPrivateNetworkUrls: boolean; ImageMaxEdge: number; ThumbnailMaxEdge: number; JpegQuality: number; MaxParallelFfmpeg: number;
-  FfmpegTimeoutMs: number; MaxVideoDurationMs: number; TranscriptionChunkSeconds: number;
+  FfmpegTimeoutMs: number; MaxVideoDurationMs: number; MaxSegmentMs: number; MaxAudioDurationMs: number; TranscriptionChunkSeconds: number;
 }
 export interface JobSettings { MaxConcurrentJobs: number; MaxQueuedJobs: number; RetentionDays: number; MaxWaitTimeoutMs: number; }
 export interface RequestHistorySettings { Enabled: boolean; MaxRequestBodyBytes: number; MaxResponseBodyBytes: number; RetentionDays: number; }
+export interface AnalyticsSettings { Enabled: boolean; RetentionDays: number; }
 export interface SyslogServerSettings { Hostname: string; Port: number; }
 export interface LoggingSettings {
   ConsoleLogging: boolean; EnableColors: boolean; LogDirectory: string | null; LogFilename: string | null;
@@ -194,7 +356,8 @@ export interface TelemetrySettings {
 }
 export interface KeyframeSettings {
   CreatedUtc: string; Rest: RestSettings; Auth: AuthSettings; Database: DatabaseSettings; Inference: InferenceSettings;
-  Media: MediaSettings; Jobs: JobSettings; RequestHistory: RequestHistorySettings; Logging: LoggingSettings; Telemetry: TelemetrySettings;
+  Media: MediaSettings; Jobs: JobSettings; RequestHistory: RequestHistorySettings; Analytics: AnalyticsSettings;
+  Logging: LoggingSettings; Telemetry: TelemetrySettings;
 }
 export interface SettingsFieldMetadata { Path: string; ApplyMode: 'Live' | 'Restart'; OverriddenByEnvironment: boolean; EnvironmentVariable: string | null; Secret: boolean; }
 export interface SettingsResponse { Settings: KeyframeSettings; Fields: SettingsFieldMetadata[]; RestartRequired: boolean; SettingsFile: string | null; }
@@ -229,6 +392,7 @@ export declare function guessMediaType(name: string): string | undefined;
 export interface RequestOptions { signal?: AbortSignal; }
 export interface WaitOptions extends RequestOptions { pollIntervalMs?: number; timeoutMs?: number; }
 export interface RawResponse { statusCode: number; body: string; headers: Headers; requestId: string | null; }
+export interface RawBytesResponse { statusCode: number; body: Uint8Array; headers: Headers; requestId: string | null; }
 export interface KeyframeClientOptions {
   baseUrl?: string;
   apiKey?: string;
@@ -247,6 +411,8 @@ export declare class KeyframeClient {
   /** Node only: read a file and analyze it as the request's Image. */
   analyzeImageFile(path: string, request?: Omit<ImageAnalysisRequest, 'Image'>, options?: RequestOptions): Promise<ImageAnalysisResponse>;
   sendRaw(method: string, path: string, body?: unknown, options?: RequestOptions): Promise<RawResponse>;
+  /** Like sendRaw, but reads the body as bytes. */
+  sendRawBytes(method: string, path: string, body?: unknown, options?: RequestOptions): Promise<RawBytesResponse>;
   health: {
     get(options?: RequestOptions): Promise<HealthResponse>;
     isAlive(options?: RequestOptions): Promise<boolean>;
@@ -257,13 +423,24 @@ export declare class KeyframeClient {
     analyze(request: VideoAnalysisRequest, options?: RequestOptions): Promise<VideoSubmitResult>;
     analyzeAndWait(request: VideoAnalysisRequest, options?: WaitOptions): Promise<VideoAnalysisResponse>;
   };
+  audio: {
+    analyze(request: AudioAnalysisRequest, options?: RequestOptions): Promise<AudioSubmitResult>;
+    analyzeAndWait(request: AudioAnalysisRequest, options?: WaitOptions): Promise<AudioAnalysisResponse>;
+  };
+  segments: {
+    /** ResponseFormat is forced to Binary. */
+    get(request: SegmentRequest, options?: RequestOptions): Promise<SegmentBinaryResult>;
+    /** ResponseFormat is forced to Json. */
+    getJson(request: SegmentRequest, options?: RequestOptions): Promise<SegmentResponse>;
+  };
   probe: { probe(request: ProbeRequest | MediaSource, options?: RequestOptions): Promise<MediaProperties>; };
   jobs: {
     defaultPollIntervalMs: number;
     defaultWaitTimeoutMs: number;
     list(filter?: JobFilter, options?: RequestOptions): Promise<EnumerationResult<JobResponse>>;
     get(id: string, options?: RequestOptions): Promise<JobResponse>;
-    getResult(id: string, options?: RequestOptions): Promise<VideoAnalysisResponse>;
+    /** Video jobs return VideoAnalysisResponse; audio jobs return AudioAnalysisResponse. */
+    getResult<T extends AnalysisResponse = VideoAnalysisResponse>(id: string, options?: RequestOptions): Promise<T>;
     cancel(id: string, options?: RequestOptions): Promise<JobResponse>;
     delete(id: string, options?: RequestOptions): Promise<void>;
     wait(id: string, options?: WaitOptions): Promise<JobResponse>;
@@ -283,6 +460,15 @@ export declare class KeyframeClient {
     get(options?: RequestOptions): Promise<SettingsResponse>;
     update(settings: KeyframeSettings, options?: RequestOptions): Promise<SettingsResponse>;
     restart(options?: RequestOptions): Promise<RestartResponse>;
+  };
+  /** Admin key required. */
+  analytics: {
+    summary(filter?: AnalyticsSummaryFilter, options?: RequestOptions): Promise<AnalyticsSummary>;
+    listAnalyses(filter?: AnalyticsAnalysesFilter, options?: RequestOptions): Promise<EnumerationResult<AnalysisRecord>>;
+    getAnalysis(id: string, options?: RequestOptions): Promise<AnalysisRecord>;
+    deleteAnalysis(id: string, options?: RequestOptions): Promise<DeleteResult>;
+    /** Without olderThanUtc, deletes every analysis. */
+    deleteAnalyses(filter?: AnalyticsDeleteFilter, options?: RequestOptions): Promise<DeleteResult>;
   };
   toString(): string;
   toJSON(): { baseUrl: string; hasApiKey: boolean; authHeader: string; timeoutMs: number };

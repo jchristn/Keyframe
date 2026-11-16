@@ -9,6 +9,8 @@ import LoginView from './views/LoginView';
 import HomeView from './views/HomeView';
 import AnalyzeImageView from './views/AnalyzeImageView';
 import AnalyzeVideoView from './views/AnalyzeVideoView';
+import AnalyzeAudioView from './views/AnalyzeAudioView';
+import AnalyticsView from './views/AnalyticsView';
 import JobsView from './views/JobsView';
 import JobDetailView from './views/JobDetailView';
 import EndpointsView from './views/EndpointsView';
@@ -69,6 +71,8 @@ export function AppRoutes() {
         <Route path="analyze" element={<Navigate to="image" replace />} />
         <Route path="analyze/image" element={<AnalyzeImageView />} />
         <Route path="analyze/video" element={<AnalyzeVideoView />} />
+        <Route path="analyze/audio" element={<AnalyzeAudioView />} />
+        <Route path="analytics" element={<AnalyticsView />} />
         <Route path="jobs" element={<JobsView />} />
         <Route path="jobs/:id" element={<JobDetailView />} />
         <Route path="endpoints" element={<EndpointsView />} />

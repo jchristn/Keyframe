@@ -84,5 +84,40 @@ namespace Keyframe.Core.Observability
         /// Endpoint health, 1 healthy or 0 unhealthy, by endpoint name.
         /// </summary>
         public const string EndpointHealthy = "keyframe.endpoint.healthy";
+
+        /// <summary>
+        /// Time a model call attempt waited on its endpoint's concurrency gate, by purpose and provider.
+        /// </summary>
+        public const string ModelQueueDuration = "keyframe.model.queue.duration";
+
+        /// <summary>
+        /// Time to first token of a model call attempt, by purpose and provider.
+        /// </summary>
+        public const string ModelTimeToFirstToken = "keyframe.model.ttft";
+
+        /// <summary>
+        /// Generation time (first to last token) of a model call attempt, by purpose and provider.
+        /// </summary>
+        public const string ModelGenerationDuration = "keyframe.model.generation.duration";
+
+        /// <summary>
+        /// Completion tokens per second of generation time, by purpose and provider.
+        /// </summary>
+        public const string ModelTokensPerSecond = "keyframe.model.tokens_per_second";
+
+        /// <summary>
+        /// Time a job waited in the queue before a worker started it, by media kind.
+        /// </summary>
+        public const string JobQueueDuration = "keyframe.jobs.queue.duration";
+
+        /// <summary>
+        /// Analysis wall-clock time divided by media duration (video and audio), by media kind.
+        /// </summary>
+        public const string AnalysisRealtimeFactor = "keyframe.analysis.realtime_factor";
+
+        /// <summary>
+        /// Analytics rows written, by outcome.
+        /// </summary>
+        public const string AnalyticsWrites = "keyframe.analytics.writes";
     }
 }

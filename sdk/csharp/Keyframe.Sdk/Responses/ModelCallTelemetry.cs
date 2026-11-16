@@ -49,6 +49,21 @@ namespace Keyframe.Sdk.Responses
         public double? TimeToFirstTokenMs { get; set; } = null;
 
         /// <summary>
+        /// Generation time in milliseconds (first token to last token) for the last attempt that reported one. Null when unknown.
+        /// </summary>
+        public double? GenerationMs { get; set; } = null;
+
+        /// <summary>
+        /// Completion tokens per second of generation time for the last attempt that reported both. Null when unknown.
+        /// </summary>
+        public double? TokensPerSecond { get; set; } = null;
+
+        /// <summary>
+        /// Time spent waiting on the endpoint's concurrency gate in milliseconds, summed across attempts.
+        /// </summary>
+        public double QueueMs { get; set; } = 0;
+
+        /// <summary>
         /// Attempts made (1 means no retries).
         /// </summary>
         public int Attempts { get; set; } = 1;

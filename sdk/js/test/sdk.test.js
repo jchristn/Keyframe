@@ -29,7 +29,7 @@ const admin = new KeyframeClient({ baseUrl: URL_BASE, apiKey: ADMIN_KEY });
 const user = new KeyframeClient({ baseUrl: URL_BASE, apiKey: ACCESS_KEY });
 const anonymous = new KeyframeClient({ baseUrl: URL_BASE });
 
-const fx = { dir: null, image: null, video: null, longVideo: null, available: false, reason: null };
+const fx = { dir: null, image: null, video: null, longVideo: null, audio: null, available: false, reason: null };
 
 async function expectApiError(status, fn) {
   try {
@@ -48,6 +48,18 @@ function requireFixtures(t) {
     return false;
   }
   return true;
+}
+
+async function waitForAnalysis(id, timeoutMs = 15000) {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    try {
+      return await admin.analytics.getAnalysis(id);
+    } catch (err) {
+      if (!(err instanceof KeyframeApiError) || err.statusCode !== 404 || Date.now() >= deadline) throw err;
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    }
+  }
 }
 
 function videoArgs(seconds, path) {
@@ -85,6 +97,40 @@ async function videoRequest(path, wait) {
   };
 }
 
+async function audioRequest(path, wait) {
+  return {
+    Audio: await mediaFromFile(path),
+    Context: ['Synthetic sine tone.'],
+    Wait: wait,
+    WaitTimeoutMs: 60000,
+    Functions: {
+      Transcribe: { Enable: true, Language: 'en' },
+      Summarize: { Enable: true, MaxWords: 30 },
+      Extract: { Enable: true, Fields: [{ Key: 'speakerCount', Type: 'Integer', Prompt: 'How many speakers?', Minimum: 0, Maximum: 10 }] }
+    }
+  };
+}
+
+function checkAudioResult(result) {
+  assert.equal(result.Success, true, (result.Errors || []).join('; '));
+  assert.equal(result.MediaKind, 'Audio');
+  assert.ok(result.Id.startsWith('kfa_'));
+  assert.ok(result.RequestId, 'RequestId missing');
+  assert.ok(result.Transcript && result.Transcript.Text.length > 0, 'transcript missing');
+  assert.ok(result.Transcript.Segments.length > 0, 'transcript segments missing');
+  assert.equal(typeof result.Results.Summary, 'string');
+  assert.ok('speakerCount' in result.Results, 'field missing');
+  assert.equal(result.Properties.MediaKind, 'Audio');
+  assert.equal(result.Properties.HasAudio, true);
+  assert.equal(typeof result.Telemetry.QueueWaitMs, 'number');
+  assert.ok(result.Telemetry.ModelCalls.some((c) => c.Purpose === 'Transcribe'), 'no Transcribe call');
+  const completion = result.Telemetry.ModelCalls.find((c) => c.Purpose === 'Summarize');
+  assert.ok(completion, 'no Summarize call');
+  assert.equal(typeof completion.QueueMs, 'number');
+  assert.equal(typeof completion.GenerationMs, 'number', 'GenerationMs missing on the completion call');
+  assert.equal(typeof completion.TokensPerSecond, 'number', 'TokensPerSecond missing on the completion call');
+}
+
 function checkVideoResult(result) {
   assert.equal(result.Success, true, (result.Errors || []).join('; '));
   assert.equal(result.MediaKind, 'Video');
@@ -103,11 +149,13 @@ before(async () => {
   fx.image = join(fx.dir, 'image.jpg');
   fx.video = join(fx.dir, 'video.mp4');
   fx.longVideo = join(fx.dir, 'long.mp4');
+  fx.audio = join(fx.dir, 'tone.mp3');
   try {
     execFileSync(FFMPEG, ['-y', '-loglevel', 'error', '-f', 'lavfi', '-i', 'testsrc2=size=640x360', '-frames:v', '1', fx.image]);
     execFileSync(FFMPEG, videoArgs(6, fx.video));
     execFileSync(FFMPEG, videoArgs(30, fx.longVideo));
-    fx.available = existsSync(fx.image) && existsSync(fx.video) && existsSync(fx.longVideo);
+    execFileSync(FFMPEG, ['-y', '-loglevel', 'error', '-f', 'lavfi', '-i', 'sine=frequency=440:duration=5', '-c:a', 'libmp3lame', fx.audio]);
+    fx.available = existsSync(fx.image) && existsSync(fx.video) && existsSync(fx.longVideo) && existsSync(fx.audio);
     if (!fx.available) fx.reason = 'ffmpeg did not produce every fixture';
   } catch (err) {
     fx.reason = 'ffmpeg unavailable: ' + err.message;
@@ -404,6 +452,184 @@ describe('video and jobs', () => {
   });
 });
 
+describe('audio', () => {
+  it('queue then wait for the job', async (t) => {
+    if (!requireFixtures(t)) return;
+    const submitted = await user.audio.analyze(await audioRequest(fx.audio, false));
+    assert.equal(submitted.statusCode, 202);
+    assert.ok(submitted.job && !submitted.result);
+    assert.ok(submitted.jobId.startsWith('kfj_'));
+    assert.equal(submitted.job.MediaKind, 'Audio');
+    const done = await user.jobs.wait(submitted.jobId, { pollIntervalMs: 200, timeoutMs: 120000 });
+    assert.equal(done.Status, 'Succeeded', done.Error || '');
+    checkAudioResult(await user.jobs.getResult(submitted.jobId));
+    await user.jobs.delete(submitted.jobId);
+  });
+
+  it('Wait returns the result directly', async (t) => {
+    if (!requireFixtures(t)) return;
+    const submitted = await user.audio.analyze(await audioRequest(fx.audio, true));
+    assert.equal(submitted.statusCode, 200);
+    assert.ok(submitted.result && !submitted.job);
+    assert.ok(submitted.jobId.startsWith('kfj_'), 'x-keyframe-job-id header missing');
+    checkAudioResult(submitted.result);
+    await user.jobs.delete(submitted.jobId);
+  });
+
+  it('analyzeAndWait', async (t) => {
+    if (!requireFixtures(t)) return;
+    checkAudioResult(await user.audio.analyzeAndWait(await audioRequest(fx.audio, false), { pollIntervalMs: 200, timeoutMs: 120000 }));
+  });
+
+  it('missing Audio is 400', async () => {
+    await expectApiError(400, () => user.audio.analyze({ Functions: { Transcribe: { Enable: true } } }));
+  });
+});
+
+describe('segments', () => {
+  it('binary Audio segment', async (t) => {
+    if (!requireFixtures(t)) return;
+    const seg = await user.segments.get({ Source: await mediaFromFile(fx.audio), StartMs: 1000, EndMs: 3000, Output: 'Audio' });
+    assert.ok(seg.data instanceof Uint8Array);
+    assert.ok(seg.data.length > 0);
+    assert.equal(seg.sizeBytes, seg.data.length);
+    assert.equal(seg.mediaType, 'audio/mpeg');
+    assert.equal(seg.filename, 'segment-1000-3000.mp3');
+    assert.equal(seg.startMs, 1000);
+    assert.equal(seg.endMs, 3000);
+    assert.equal(seg.durationMs, 2000);
+    assert.ok(seg.requestId);
+  });
+
+  it('binary Audio segment from a video, wav format', async (t) => {
+    if (!requireFixtures(t)) return;
+    const seg = await user.segments.get({ Source: await mediaFromFile(fx.video), StartMs: 0, EndMs: 1500, Output: 'Audio', Format: 'wav' });
+    assert.ok(seg.data.length > 0);
+    assert.equal(seg.mediaType, 'audio/wav');
+    assert.equal(seg.filename, 'segment-0-1500.wav');
+    assert.equal(seg.durationMs, 1500);
+  });
+
+  it('binary Frame segment', async (t) => {
+    if (!requireFixtures(t)) return;
+    const seg = await user.segments.get({ Source: await mediaFromFile(fx.video), StartMs: 2000, Output: 'Frame', MaxEdge: 160 });
+    assert.ok(seg.data.length > 0);
+    assert.equal(seg.mediaType, 'image/jpeg');
+    assert.equal(seg.filename, 'segment-2000.jpg');
+    assert.equal(seg.startMs, 2000);
+    assert.equal(seg.endMs, 2000);
+    assert.equal(seg.durationMs, 0);
+    assert.equal(seg.data[0], 0xff);
+    assert.equal(seg.data[1], 0xd8);
+  });
+
+  it('json segment decodes to SizeBytes bytes', async (t) => {
+    if (!requireFixtures(t)) return;
+    const seg = await user.segments.getJson({ Source: await mediaFromFile(fx.video), StartMs: 1000, EndMs: 2000, Output: 'Video' });
+    assert.equal(seg.MediaType, 'video/mp4');
+    assert.equal(seg.Filename, 'segment-1000-2000.mp4');
+    assert.equal(seg.StartMs, 1000);
+    assert.equal(seg.EndMs, 2000);
+    assert.equal(seg.DurationMs, 1000);
+    assert.ok(seg.SizeBytes > 0);
+    assert.equal(Buffer.from(seg.Data, 'base64').length, seg.SizeBytes);
+  });
+
+  it('EndMs <= StartMs is 400', async (t) => {
+    if (!requireFixtures(t)) return;
+    const source = await mediaFromFile(fx.audio);
+    const err = await expectApiError(400, () => user.segments.get({ Source: source, StartMs: 3000, EndMs: 3000, Output: 'Audio' }));
+    assert.equal(err.error, 'BadRequest');
+    assert.ok(err.details.length > 0, err.responseBody);
+    await expectApiError(400, () => user.segments.getJson({ Source: source, StartMs: 3000, EndMs: 1000, Output: 'Audio' }));
+  });
+});
+
+describe('analytics', () => {
+  it('summary after an analysis', async (t) => {
+    if (!requireFixtures(t)) return;
+    const response = await user.analyzeImageFile(fx.image, { Functions: { Summarize: { Enable: true } } });
+    await waitForAnalysis(response.Id);
+    const summary = await admin.analytics.summary({ bucket: 'minute', fromUtc: new Date(Date.now() - 3600000) });
+    assert.equal(summary.Bucket, 'minute');
+    assert.ok(summary.Totals.Count > 0);
+    assert.ok(Array.isArray(summary.Buckets) && summary.Buckets.length > 0);
+    assert.ok(summary.Buckets.every((b) => b.StartUtc && b.Stats));
+    for (const kind of ['Image', 'Video', 'Audio']) assert.ok(kind in summary.ByMediaKind, `ByMediaKind.${kind} missing`);
+    assert.ok(summary.ByMediaKind.Image.Count > 0);
+    assert.ok(summary.Totals.AnalysisMs && summary.Totals.AnalysisMs.Count > 0);
+    assert.ok(Array.isArray(summary.ByModel) && Array.isArray(summary.ByStage) && Array.isArray(summary.ByPurpose));
+    const filtered = await admin.analytics.summary({ mediaKind: 'Audio', bucket: 'hour' });
+    assert.equal(filtered.MediaKind, 'Audio');
+    assert.equal(filtered.Bucket, 'hour');
+  });
+
+  it('list analyses filtered by mediaKind Audio', async (t) => {
+    if (!requireFixtures(t)) return;
+    const result = await user.audio.analyzeAndWait(await audioRequest(fx.audio, true), { pollIntervalMs: 200, timeoutMs: 120000 });
+    await waitForAnalysis(result.Id);
+    const page = await admin.analytics.listAnalyses({ mediaKind: 'Audio', maxResults: 100 });
+    assert.ok(page.Items.length > 0);
+    assert.ok(page.Items.every((a) => a.MediaKind === 'Audio'));
+    assert.ok(page.Items.every((a) => a.Calls === null));
+    assert.ok(page.Items.some((a) => a.Id === result.Id));
+    const one = await admin.analytics.listAnalyses({ maxResults: 1, skip: 1 });
+    assert.ok(one.Items.length <= 1);
+    assert.equal(one.PageNumber, 2);
+  });
+
+  it('get analysis with Calls', async (t) => {
+    if (!requireFixtures(t)) return;
+    const result = await user.audio.analyzeAndWait(await audioRequest(fx.audio, true), { pollIntervalMs: 200, timeoutMs: 120000 });
+    const record = await waitForAnalysis(result.Id);
+    assert.equal(record.Id, result.Id);
+    assert.equal(record.MediaKind, 'Audio');
+    assert.equal(record.Success, true);
+    assert.equal(record.RequestId, result.RequestId);
+    assert.ok(record.JobId && record.JobId.startsWith('kfj_'));
+    assert.ok(Array.isArray(record.Calls) && record.Calls.length > 0);
+    assert.ok(record.Calls.every((c) => c.AnalysisId === result.Id));
+    assert.ok(record.Calls.some((c) => c.Purpose === 'Transcribe'));
+    const completion = record.Calls.find((c) => c.Purpose === 'Summarize');
+    assert.ok(completion && typeof completion.TokensPerSecond === 'number');
+    assert.equal(record.TranscriptionEndpoint, 'mock-stt');
+  });
+
+  it('delete one then 404', async (t) => {
+    if (!requireFixtures(t)) return;
+    const response = await user.analyzeImageFile(fx.image, { Functions: { Summarize: { Enable: true } } });
+    await waitForAnalysis(response.Id);
+    const deleted = await admin.analytics.deleteAnalysis(response.Id);
+    assert.equal(deleted.DeletedCount, 1);
+    await expectApiError(404, () => admin.analytics.getAnalysis(response.Id));
+    await expectApiError(404, () => admin.analytics.deleteAnalysis(response.Id));
+  });
+
+  it('deleteAnalyses with a past cutoff returns a count', async () => {
+    const before = await admin.analytics.listAnalyses({ maxResults: 1 });
+    const result = await admin.analytics.deleteAnalyses({ olderThanUtc: new Date('2000-01-01T00:00:00Z') });
+    assert.equal(typeof result.DeletedCount, 'number');
+    assert.equal(result.DeletedCount, 0);
+    const afterward = await admin.analytics.listAnalyses({ maxResults: 1 });
+    assert.ok(afterward.TotalCount >= before.TotalCount);
+  });
+
+  it('unknown analysis is 404', async () => {
+    const err = await expectApiError(404, () => admin.analytics.getAnalysis('kfa_doesnotexist'));
+    assert.equal(err.error, 'NotFound');
+  });
+
+  it('non-admin key is 403', async () => {
+    const err = await expectApiError(403, () => user.analytics.summary());
+    assert.equal(err.error, 'AuthorizationFailed');
+    await expectApiError(403, () => user.analytics.listAnalyses());
+    await expectApiError(403, () => user.analytics.getAnalysis('kfa_doesnotexist'));
+    await expectApiError(403, () => user.analytics.deleteAnalysis('kfa_doesnotexist'));
+    await expectApiError(403, () => user.analytics.deleteAnalyses({ olderThanUtc: new Date('2000-01-01T00:00:00Z') }));
+    await expectApiError(401, () => anonymous.analytics.summary());
+  });
+});
+
 describe('endpoints', () => {
   it('list endpoints', async () => {
     const endpoints = await user.endpoints.list();
@@ -435,6 +661,16 @@ describe('settings', () => {
     assert.ok(s.Inference.Endpoints.every((e) => e.ApiKey === null || e.ApiKey.startsWith('****')));
     assert.ok(response.Fields.some((f) => f.Path === 'Auth.AdminApiKey' && f.Secret));
     assert.ok(response.Fields.some((f) => f.ApplyMode === 'Restart') && response.Fields.some((f) => f.ApplyMode === 'Live'));
+  });
+
+  it('includes Analytics and the segment and audio limits', async () => {
+    const s = (await admin.settings.get()).Settings;
+    assert.ok(s.Analytics, 'Analytics missing');
+    assert.equal(typeof s.Analytics.Enabled, 'boolean');
+    assert.equal(typeof s.Analytics.RetentionDays, 'number');
+    assert.equal(typeof s.Media.MaxSegmentMs, 'number');
+    assert.ok(s.Media.MaxSegmentMs >= 1000);
+    assert.equal(typeof s.Media.MaxAudioDurationMs, 'number');
   });
 
   it('live write round-trips masked secrets', async () => {

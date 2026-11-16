@@ -31,10 +31,11 @@ export function removeStorage(key) {
 export const STORAGE_KEYS = {
   serverUrl: 'keyframe.serverUrl',
   apiKey: 'keyframe.apiKey',
-  theme: 'keyframe.theme',
+  appearance: 'keyframe.appearance',
   sidebarCollapsed: 'keyframe.sidebarCollapsed',
   imagePresets: 'keyframe.presets.image',
   videoPresets: 'keyframe.presets.video',
+  audioPresets: 'keyframe.presets.audio',
   explorerHistory: 'keyframe.explorer.history',
   explorerSelected: 'keyframe.explorer.selected',
   columns: (table) => 'keyframe.columns.' + table,

@@ -22,9 +22,17 @@ export function AuthProvider({ children }) {
   const [restoreError, setRestoreError] = useState(null);
   const [hasSavedKey, setHasSavedKey] = useState(() => !!readStorage(STORAGE_KEYS.apiKey, null));
 
+  const [language, setLanguage] = useState(i18n.language);
+  useEffect(() => {
+    const onChange = (lng) => setLanguage(lng);
+    i18n.on('languageChanged', onChange);
+    return () => i18n.off('languageChanged', onChange);
+  }, []);
+
+  // Accept-Language follows the selected locale so server-authored text can be localized.
   const apiClient = useMemo(
-    () => (principal ? new ApiClient(serverUrl, apiKey, { locale: i18n.language }) : null),
-    [principal, serverUrl, apiKey]
+    () => (principal ? new ApiClient(serverUrl, apiKey, { locale: language }) : null),
+    [principal, serverUrl, apiKey, language]
   );
 
   const validate = useCallback(async (url, key) => {

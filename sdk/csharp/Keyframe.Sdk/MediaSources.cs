@@ -99,6 +99,21 @@ namespace Keyframe.Sdk
                     return "video/x-matroska";
                 case ".avi":
                     return "video/x-msvideo";
+                case ".mp3":
+                    return "audio/mpeg";
+                case ".wav":
+                    return "audio/wav";
+                case ".flac":
+                    return "audio/flac";
+                case ".m4a":
+                    return "audio/mp4";
+                case ".aac":
+                    return "audio/aac";
+                case ".ogg":
+                case ".oga":
+                    return "audio/ogg";
+                case ".opus":
+                    return "audio/opus";
                 default:
                     return null;
             }

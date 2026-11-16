@@ -36,6 +36,11 @@ namespace Keyframe.Core
         public const string RequestIdPrefix = "rqi_";
 
         /// <summary>
+        /// Identifier prefix for analytics model call records.
+        /// </summary>
+        public const string ModelCallIdPrefix = "kfc_";
+
+        /// <summary>
         /// Default key under which a summary is returned in the results dictionary.
         /// </summary>
         public const string DefaultSummaryKey = "Summary";

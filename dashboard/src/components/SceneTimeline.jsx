@@ -4,6 +4,7 @@ import { formatDuration, formatTimestamp } from '../i18n/formatters';
 import { keyframeSrc } from '../utils/media';
 import { FieldsTable, ResultsList } from './AnalysisParts';
 import Icon from './Icon';
+import { SegmentActions, SegmentSourceNote } from './SegmentDownloads';
 
 /** Proportional scene strip, thumbnails, and per-scene detail. */
 function SceneTimeline({ scenes, durationMs }) {
@@ -17,6 +18,7 @@ function SceneTimeline({ scenes, durationMs }) {
 
   return (
     <div className="scene-timeline">
+      <SegmentSourceNote />
       <div className="scene-strip" role="listbox" aria-label={t('jobDetail.sceneStrip')}>
         {list.map((s, i) => {
           const thumb = s.Keyframes && s.Keyframes.find((k) => k.Data);
@@ -59,6 +61,7 @@ function SceneTimeline({ scenes, durationMs }) {
               </button>
             </span>
           </div>
+          <SegmentActions startMs={scene.StartMs} endMs={scene.EndMs} frame />
           <div className="keyframe-row">
             {(scene.Keyframes || []).map((k, i) => (
               <figure key={i} className="keyframe">
@@ -111,6 +114,7 @@ export function TranscriptViewer({ transcript }) {
   const shown = q ? segments.filter((s) => s.Text.toLowerCase().includes(q)) : segments;
   return (
     <div className="transcript">
+      <SegmentSourceNote />
       <div className="transcript-toolbar">
         <span className="muted">{t('jobDetail.transcriptLanguage', { language: transcript.Language || t('common.unknown') })}</span>
         <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('jobDetail.searchTranscript')} aria-label={t('jobDetail.searchTranscript')} className="input-compact" />
@@ -123,6 +127,7 @@ export function TranscriptViewer({ transcript }) {
                 {formatTimestamp(s.StartMs, locale)} - {formatTimestamp(s.EndMs, locale)}
               </span>
               <span>{s.Text}</span>
+              <SegmentActions startMs={s.StartMs} endMs={s.EndMs} compact />
             </li>
           ))}
         </ol>

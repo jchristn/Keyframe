@@ -12,7 +12,7 @@ Keyframe generates summaries and extracts metadata from images and video. You po
 
 This image runs the Keyframe REST server with ffmpeg and ffprobe included. Source, documentation, and the full Docker Compose stack are at [github.com/jchristn/Keyframe](https://github.com/jchristn/Keyframe).
 
-> **Status.** Keyframe is in active development. Analyses currently run against a deterministic mock model provider. Real providers (Ollama, OpenAI, Anthropic, Gemini, Bedrock, and the rest) arrive through [PolyPrompt](https://github.com/jchristn/PolyPrompt) once its multimedia support lands.
+> **Status.** Keyframe is in active development. Model calls go through [PolyPrompt](https://github.com/jchristn/PolyPrompt) 5.0 (Ollama, OpenAI, Azure OpenAI, OpenAI-compatible servers, Anthropic, Gemini, xAI, Cohere). The default settings use Ollama on the Docker host (gemma3:4b, qwen3-vl:8b, gpt-oss:20b) and the `keyframe-whisper` speech-to-text service from the Compose stack.
 
 ## Use cases
 
@@ -37,7 +37,7 @@ This image runs the Keyframe REST server with ffmpeg and ffprobe included. Sourc
 ImageNormalizer             SceneDetector, FrameExtractor, AudioExtractor
      |                                 |
      +---------- IInferenceClient -----+---- ITranscriptionClient
-                 (PolyPrompt or mock)
+           (PolyPrompt, streamed; or mock)
                      |
         Results + Fields + Scenes + Telemetry
 ```

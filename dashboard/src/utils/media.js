@@ -40,3 +40,33 @@ export function downloadJson(value, filename) {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+/** Trigger a browser download of a Blob. */
+export function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/** Filename from a Content-Disposition header, or null. */
+export function filenameFromDisposition(header) {
+  if (!header) return null;
+  const star = /filename\*=(?:UTF-8'')?([^;]+)/i.exec(header);
+  if (star) {
+    try {
+      return decodeURIComponent(star[1].trim().replace(/^"|"$/g, ''));
+    } catch {
+      // Fall through to the plain filename parameter.
+    }
+  }
+  const plain = /filename="?([^";]+)"?/i.exec(header);
+  return plain ? plain[1].trim() : null;
+}
+
+/** Default extension for each segment output. */
+export const SEGMENT_FORMATS = { Video: 'mp4', Audio: 'mp3', Frame: 'jpg' };

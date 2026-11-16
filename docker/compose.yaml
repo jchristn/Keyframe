@@ -1,10 +1,11 @@
-# Keyframe stack: server, dashboard, MCP server, and the observability stack
-# (OpenTelemetry Collector, Prometheus, Tempo, Loki, Grafana).
+# Keyframe stack: server, dashboard, MCP server, speech to text (speaches), and the observability stack
+# (OpenTelemetry Collector, Prometheus, Tempo, Loki, Grafana). Vision and text models come from Ollama on the
+# host (host.docker.internal:11434): ollama pull gemma3:4b qwen3-vl:8b gpt-oss:20b
 #
 #   docker compose up -d                    # everything
 #   docker compose --profile ollama up -d   # also start a local Ollama for vision models
 #
-# Host ports (plan D7): server 8700, dashboard 8701, MCP 8702 (HTTP) / 8703 (TCP) / 8704 (WebSocket),
+# Host ports (plan D7): server 8700, dashboard 8701, MCP 8702 (HTTP) / 8703 (TCP) / 8704 (WebSocket), Whisper 8000,
 # Grafana 3700, Prometheus 9700, Tempo 3710, OTLP 4717 (gRPC) / 4718 (HTTP).
 # Observability ports are bound to host loopback only: Prometheus, Tempo, Loki, and the collector have no
 # authentication of their own.
@@ -34,6 +35,9 @@ services:
       - data:/app/data
       - temp:/app/temp
       - logs:/app/logs
+    # The default endpoints in keyframe.json reach the host's Ollama at host.docker.internal:11434.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       # The collector image is distroless (no shell, curl, or wget), so it cannot carry a healthcheck.
       otel-collector:
@@ -95,9 +99,48 @@ services:
     restart: unless-stopped
 
   # ------------------------------------------------------------------
-  # Optional local model server: docker compose --profile ollama up -d
-  # Activate the "local-ollama" endpoint in keyframe.json (Endpoint http://ollama:11434) and pull a vision
-  # model, for example: docker exec keyframe-ollama ollama pull qwen3-vl:8b
+  # Speech to text: speaches (OpenAI-compatible /v1/audio/transcriptions, faster-whisper on CPU).
+  # The default "whisper" endpoint in keyframe.json points here (http://keyframe-whisper:8000/v1).
+  # Bound to host loopback because it has no authentication; local (non-Docker) servers use 127.0.0.1:8000.
+  # Models are cached in the whisper-models volume.
+  # ------------------------------------------------------------------
+  keyframe-whisper:
+    container_name: keyframe-whisper
+    image: 'ghcr.io/speaches-ai/speaches:0.8.3-cpu'
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      ENABLE_UI: "false"
+      WHISPER__COMPUTE_TYPE: int8
+      # Keep the model loaded instead of unloading it after 300 idle seconds.
+      WHISPER__TTL: "-1"
+    volumes:
+      - whisper-models:/home/ubuntu/.cache/huggingface/hub
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  # speaches 0.8.3 does not download models on demand: until a model is installed, transcription returns 404.
+  # This one-shot job installs Systran/faster-whisper-small (about 460 MB) into the volume and exits; it is a
+  # no-op once the model is cached. Re-run it with: docker compose run --rm keyframe-whisper-init
+  keyframe-whisper-init:
+    container_name: keyframe-whisper-init
+    image: 'ghcr.io/speaches-ai/speaches:0.8.3-cpu'
+    entrypoint: ["curl", "-fsS", "-X", "POST", "http://keyframe-whisper:8000/v1/models/Systran/faster-whisper-small"]
+    depends_on:
+      keyframe-whisper:
+        condition: service_healthy
+    restart: "no"
+
+  # ------------------------------------------------------------------
+  # Optional Ollama in a container: docker compose --profile ollama up -d
+  # The default endpoints use the host's Ollama (host.docker.internal:11434). To use this container instead,
+  # stop the host Ollama (both bind port 11434), point the ollama-* endpoints in keyframe.json at
+  # http://ollama:11434, and pull the models, for example: docker exec keyframe-ollama ollama pull gemma3:4b
   # ------------------------------------------------------------------
   ollama:
     container_name: keyframe-ollama
@@ -231,6 +274,7 @@ volumes:
   data:
   temp:
   logs:
+  whisper-models:
   ollama:
   prometheus:
   tempo:

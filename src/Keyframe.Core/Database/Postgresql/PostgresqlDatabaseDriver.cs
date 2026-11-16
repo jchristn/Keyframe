@@ -60,6 +60,7 @@ namespace Keyframe.Core.Database.Postgresql
 
             RequestHistory = new RequestHistoryMethods(this);
             Jobs = new JobMethods(this);
+            Analytics = new AnalyticsMethods(this);
         }
 
         #endregion

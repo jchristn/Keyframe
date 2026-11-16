@@ -205,6 +205,22 @@ namespace Keyframe.Server.Routes
         }
 
         /// <summary>
+        /// Boolean query parameter (true or false, case-insensitive).
+        /// </summary>
+        /// <param name="context">HTTP context.</param>
+        /// <param name="key">Name.</param>
+        /// <returns>Value, or null when absent.</returns>
+        /// <exception cref="ArgumentException">Thrown when present but not true or false.</exception>
+        public static bool? QueryBool(HttpContextBase context, string key)
+        {
+            string? value = Query(context, key);
+            if (String.IsNullOrWhiteSpace(value)) return null;
+            bool parsed;
+            if (Boolean.TryParse(value.Trim(), out parsed)) return parsed;
+            throw new ArgumentException("Query parameter '" + key + "' must be true or false.");
+        }
+
+        /// <summary>
         /// UTC timestamp query parameter (ISO 8601).
         /// </summary>
         /// <param name="context">HTTP context.</param>

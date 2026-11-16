@@ -61,6 +61,11 @@ namespace Keyframe.Server.Classes
         public RequestHistoryCaptureService RequestHistory { get; }
 
         /// <summary>
+        /// Analytics persistence.
+        /// </summary>
+        public AnalyticsService Analytics { get; }
+
+        /// <summary>
         /// Logging.
         /// </summary>
         public LoggingModule Logging { get; }
@@ -94,6 +99,7 @@ namespace Keyframe.Server.Classes
         /// <param name="jobs">Jobs.</param>
         /// <param name="endpointHealth">Endpoint health.</param>
         /// <param name="requestHistory">Request history capture.</param>
+        /// <param name="analytics">Analytics persistence.</param>
         /// <param name="logging">Logging.</param>
         /// <exception cref="ArgumentNullException">Thrown when an argument is null.</exception>
         public ServerContext(
@@ -104,6 +110,7 @@ namespace Keyframe.Server.Classes
             JobService jobs,
             EndpointHealthService endpointHealth,
             RequestHistoryCaptureService requestHistory,
+            AnalyticsService analytics,
             LoggingModule logging)
         {
             SettingsManager = settingsManager ?? throw new ArgumentNullException(nameof(settingsManager));
@@ -113,6 +120,7 @@ namespace Keyframe.Server.Classes
             Jobs = jobs ?? throw new ArgumentNullException(nameof(jobs));
             EndpointHealth = endpointHealth ?? throw new ArgumentNullException(nameof(endpointHealth));
             RequestHistory = requestHistory ?? throw new ArgumentNullException(nameof(requestHistory));
+            Analytics = analytics ?? throw new ArgumentNullException(nameof(analytics));
             Logging = logging ?? throw new ArgumentNullException(nameof(logging));
         }
 

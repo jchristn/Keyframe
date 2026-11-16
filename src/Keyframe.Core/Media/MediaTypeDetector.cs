@@ -99,6 +99,7 @@ namespace Keyframe.Core.Media
             if (AsciiAt(header, 0, "OggS")) return Audio("audio/ogg", ".ogg");
             if (AsciiAt(header, 0, "ID3") || StartsWith(header, 0, 0xFF, 0xFB) || StartsWith(header, 0, 0xFF, 0xF3) || StartsWith(header, 0, 0xFF, 0xF2))
                 return Audio("audio/mpeg", ".mp3");
+            if (StartsWith(header, 0, 0xFF, 0xF1) || StartsWith(header, 0, 0xFF, 0xF9)) return Audio("audio/aac", ".aac");
 
             return new DetectedMediaType();
         }

@@ -5,6 +5,7 @@ namespace Keyframe.Core.Requests
     using System.Linq;
     using System.Text.RegularExpressions;
     using Keyframe.Core.Enums;
+    using Keyframe.Core.Media;
 
     /// <summary>
     /// Validates analysis requests. Returns every problem found rather than stopping at the first.
@@ -108,11 +109,72 @@ namespace Keyframe.Core.Requests
                 ValidateFunctions(functions.Scenes.Summarize, functions.Scenes.Extract, "Functions.Scenes", errors);
             }
 
-            if (functions.Transcribe.Language != null && !Regex.IsMatch(functions.Transcribe.Language, "^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})?$"))
-                errors.Add("Functions.Transcribe.Language must be an ISO-639 code such as 'en' or 'pt-BR'.");
+            ValidateTranscribe(functions.Transcribe, errors);
+            return errors;
+        }
 
-            if (functions.Transcribe.Prompt != null && functions.Transcribe.Prompt.Length > MaxPromptLength)
-                errors.Add("Functions.Transcribe.Prompt exceeds " + MaxPromptLength + " characters.");
+        /// <summary>
+        /// Validate an audio analysis request.
+        /// </summary>
+        /// <param name="request">Request.</param>
+        /// <returns>Validation errors. Empty when the request is valid.</returns>
+        public static List<string> Validate(AudioAnalysisRequest? request)
+        {
+            List<string> errors = new List<string>();
+            if (request == null)
+            {
+                errors.Add("Request body is required.");
+                return errors;
+            }
+
+            ValidateSource(request.Audio, "Audio", errors);
+            ValidateContext(request.Context, errors);
+            ValidateModel(request.TextModel, "TextModel", errors);
+            ValidateModel(request.TranscriptionModel, "TranscriptionModel", errors);
+
+            AudioFunctionsSpec functions = request.Functions;
+            if (!functions.Summarize.Enable && !functions.Extract.Enable && !functions.Transcribe.Enable)
+                errors.Add("Enable at least one function (Transcribe, Summarize, or Extract).");
+
+            if ((functions.Summarize.Enable || functions.Extract.Enable) && !functions.Transcribe.Enable)
+                errors.Add("Functions.Summarize and Functions.Extract run on the transcript; enable Functions.Transcribe.");
+
+            ValidateFunctions(functions.Summarize, functions.Extract, "Functions", errors);
+            ValidateTranscribe(functions.Transcribe, errors);
+            return errors;
+        }
+
+        /// <summary>
+        /// Validate a segment request.
+        /// </summary>
+        /// <param name="request">Request.</param>
+        /// <param name="maxSegmentMs">Longest segment allowed in milliseconds.</param>
+        /// <returns>Validation errors. Empty when the request is valid.</returns>
+        public static List<string> Validate(SegmentRequest? request, long maxSegmentMs)
+        {
+            List<string> errors = new List<string>();
+            if (request == null)
+            {
+                errors.Add("Request body is required.");
+                return errors;
+            }
+
+            ValidateSource(request.Source, "Source", errors);
+            if (request.StartMs < 0) errors.Add("StartMs must be 0 or greater.");
+
+            if (request.Output != SegmentOutputEnum.Frame)
+            {
+                if (request.EndMs == null) errors.Add("EndMs is required for " + request.Output + " output.");
+                else if (request.EndMs.Value <= request.StartMs) errors.Add("EndMs must be greater than StartMs.");
+                else if (request.EndMs.Value - request.StartMs > maxSegmentMs)
+                    errors.Add("The segment is " + (request.EndMs.Value - request.StartMs) + "ms long, over the limit of " + maxSegmentMs + "ms (Media.MaxSegmentMs).");
+            }
+
+            if (SegmentFormats.Normalize(request.Output, request.Format) == null)
+                errors.Add("Format '" + request.Format + "' is not valid for " + request.Output + " output; use one of: " + String.Join(", ", SegmentFormats.For(request.Output)) + ".");
+
+            if (request.MaxEdge.HasValue && (request.MaxEdge.Value < 16 || request.MaxEdge.Value > 4096))
+                errors.Add("MaxEdge must be 16 to 4096.");
 
             return errors;
         }
@@ -174,6 +236,18 @@ namespace Keyframe.Core.Requests
 
             if (source.MediaType != null && (source.MediaType.Length > 255 || !source.MediaType.Contains('/')))
                 errors.Add(name + ".MediaType must be a MIME type such as 'image/jpeg'.");
+        }
+
+        private static void ValidateTranscribe(TranscribeSpec transcribe, List<string> errors)
+        {
+            if (transcribe.Language != null && !Regex.IsMatch(transcribe.Language, "^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})?$"))
+                errors.Add("Functions.Transcribe.Language must be an ISO-639 code such as 'en' or 'pt-BR'.");
+
+            if (transcribe.Prompt != null && transcribe.Prompt.Length > MaxPromptLength)
+                errors.Add("Functions.Transcribe.Prompt exceeds " + MaxPromptLength + " characters.");
+
+            if (transcribe.Endpoint != null && (transcribe.Endpoint.Length < 1 || transcribe.Endpoint.Length > 64))
+                errors.Add("Functions.Transcribe.Endpoint must be 1 to 64 characters.");
         }
 
         private static void ValidateContext(List<ContextItem> context, List<string> errors)

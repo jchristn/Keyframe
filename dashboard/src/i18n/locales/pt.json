@@ -1,0 +1,1552 @@
+{
+  "app": {
+    "name": "Keyframe",
+    "documentTitle": "{{page}} | Keyframe",
+    "versionLabel": "v{{version}}",
+    "alpha": "ALFA"
+  },
+  "common": {
+    "actions": "Ações",
+    "any": "Qualquer",
+    "cancel": "Cancelar",
+    "close": "Fechar",
+    "confirm": "Confirmar",
+    "copied": "Copiado",
+    "copy": "Copiar",
+    "copyId": "Copiar ID",
+    "delete": "Excluir",
+    "disabled": "Desativado",
+    "dismiss": "Dispensar",
+    "download": "Baixar JSON",
+    "empty": "Nada para exibir.",
+    "emptyList": "Lista vazia",
+    "enabled": "Ativado",
+    "false": "Falso",
+    "true": "Verdadeiro",
+    "language": "Idioma",
+    "loading": "Carregando...",
+    "never": "Nunca",
+    "no": "Não",
+    "yes": "Sim",
+    "none": "Nenhum",
+    "notAvailable": "n/d",
+    "notYet": "Ainda não",
+    "null": "null",
+    "refresh": "Atualizar",
+    "retry": "Tentar novamente",
+    "save": "Salvar",
+    "saving": "Salvando...",
+    "unknown": "Desconhecido",
+    "updatedAt": "Atualizado {{time}}",
+    "view": "Ver",
+    "viewJson": "Ver JSON",
+    "working": "Processando..."
+  },
+  "nav": {
+    "label": "Navegação principal",
+    "home": "Início",
+    "image": "Imagem",
+    "video": "Vídeo",
+    "jobs": "Jobs",
+    "endpoints": "Endpoints",
+    "requestHistory": "Histórico de requisições",
+    "apiExplorer": "API Explorer",
+    "settings": "Configurações",
+    "server": "Informações do servidor",
+    "adminOnly": "Requer a chave de administrador",
+    "groups": {
+      "analyze": "Analisar",
+      "operate": "Operar",
+      "observability": "Observabilidade",
+      "system": "Sistema"
+    },
+    "audio": "Áudio",
+    "analytics": "Análises"
+  },
+  "roles": {
+    "admin": "Administrador",
+    "accessKey": "Chave de acesso"
+  },
+  "status": {
+    "active": "Ativo",
+    "inactive": "Inativo",
+    "available": "Disponível",
+    "missing": "Ausente",
+    "checking": "Verificando",
+    "failed": "Falhou",
+    "succeeded": "Concluído",
+    "partial": "Parcial",
+    "healthy": "Íntegro",
+    "unhealthy": "Com problemas",
+    "unreachable": "Inacessível",
+    "valid": "Válido",
+    "invalid": "Inválido"
+  },
+  "topbar": {
+    "toggleNav": "Alternar navegação",
+    "copyServerUrl": "Copiar URL do servidor",
+    "health": "Integridade do servidor",
+    "principal": "Chave conectada",
+    "anonymous": "Anônimo",
+    "repository": "Keyframe no GitHub",
+    "lightMode": "Mudar para o tema claro",
+    "darkMode": "Mudar para o tema escuro",
+    "logout": "Sair"
+  },
+  "login": {
+    "title": "Conectar a um servidor",
+    "tagline": "Resumos e metadados tipados de imagens e vídeos.",
+    "serverUrl": "URL do servidor",
+    "serverUrlHelp": "O servidor REST do Keyframe, por exemplo http://127.0.0.1:8700. Ele fica salvo neste dispositivo.",
+    "apiKey": "Chave de API",
+    "apiKeyPlaceholder": "Chave de acesso ou chave de administrador",
+    "showKey": "Mostrar chave",
+    "hideKey": "Ocultar chave",
+    "remember": "Lembrar a chave neste dispositivo",
+    "rememberHelp": "Se desmarcado, a chave fica apenas na memória e será preciso entrar novamente após recarregar a página.",
+    "connect": "Conectar",
+    "connecting": "Conectando...",
+    "restoring": "Restaurando sua sessão...",
+    "retrySaved": "Tentar novamente a sessão salva",
+    "localDefaults": "Instalações locais novas usam a chave de acesso \"default\" e a chave de administrador \"keyframeadmin\". Altere ambas antes de compartilhar o servidor.",
+    "errors": {
+      "badUrl": "Informe uma URL http ou https absoluta.",
+      "unreachable": "Não foi possível acessar {{url}}. Verifique se o servidor está em execução, se a URL e a porta estão corretas e se o navegador consegue acessá-lo.",
+      "badKey": "O servidor rejeitou esta chave. Verifique a chave e tente novamente.",
+      "rateLimited": "Muitas tentativas com falha a partir deste endereço. Aguarde um minuto e tente novamente.",
+      "notKeyframe": "O servidor respondeu, mas não parece ser o Keyframe (sem /v1.0/whoami). Verifique a URL.",
+      "unexpected": "O servidor retornou um erro inesperado.",
+      "savedKeyRejected": "A chave salva não é mais aceita por {{url}}. Entre novamente.",
+      "restoreUnreachable": "Não foi possível acessar {{url}} para restaurar sua sessão.",
+      "sessionExpired": "O servidor rejeitou a chave. Entre novamente."
+    }
+  },
+  "errors": {
+    "network": "Não foi possível acessar o servidor.",
+    "badRequest": "O servidor rejeitou a requisição como inválida.",
+    "unauthorized": "A chave está ausente ou é inválida.",
+    "forbidden": "Esta ação requer a chave de administrador.",
+    "notFound": "Não encontrado.",
+    "conflict": "A requisição entra em conflito com o estado atual.",
+    "unprocessable": "Não foi possível baixar ou decodificar a mídia.",
+    "tooManyRequests": "Aguarde um momento e tente novamente. Para jobs de vídeo e áudio, a fila pode estar cheia; cancele ou deixe os jobs em execução terminarem.",
+    "badGateway": "O endpoint do modelo está inacessível.",
+    "timeout": "A requisição excedeu o tempo limite.",
+    "server": "O servidor encontrou um erro interno (HTTP {{status}}).",
+    "unknown": "Algo deu errado (HTTP {{status}}).",
+    "requestId": "ID da requisição",
+    "hints": {
+      "network": "Verifique se o servidor está em execução e acessível a partir deste navegador e tente novamente.",
+      "badRequest": "Corrija os problemas listados acima e envie novamente.",
+      "forbidden": "Entre com a chave de administrador para executar esta ação.",
+      "unprocessable": "Verifique se a URL é acessível a partir do servidor e aponta para uma imagem ou vídeo compatível, ou envie o arquivo.",
+      "tooManyRequests": "Aguarde um momento e tente novamente. Para jobs de vídeo, a fila pode estar cheia; cancele ou deixe os jobs em execução terminarem.",
+      "badGateway": "Abra Endpoints para testar a conectividade ou escolha outro endpoint e tente novamente.",
+      "timeout": "Tente novamente, use uma entrada menor ou aumente o tempo limite em Configurações."
+    }
+  },
+  "pagination": {
+    "label": "Paginação",
+    "showing": "Exibindo {{from}}-{{to}} de {{total}}",
+    "pageOf": "Página {{page}} de {{pages}}",
+    "first": "Primeira página",
+    "previous": "Página anterior",
+    "next": "Próxima página",
+    "last": "Última página",
+    "jump": "Ir para a página",
+    "pageSize": "Por página"
+  },
+  "table": {
+    "empty": "Nenhum registro",
+    "selectColumns": "Selecionar colunas",
+    "showAllColumns": "Mostrar todas as colunas",
+    "sortBy": "Ordenar por {{column}}",
+    "sortPage": "A ordenação se aplica às linhas desta página; o servidor retorna as mais recentes primeiro.",
+    "sortLocal": "A ordenação se aplica às linhas exibidas.",
+    "selectAll": "Selecionar todas as linhas desta página",
+    "selectRow": "Selecionar linha",
+    "selectedCount_one": "{{count}} selecionado",
+    "selectedCount_other": "{{count}} selecionados",
+    "clearSelection": "Limpar seleção",
+    "bulkActions": "Ações em massa"
+  },
+  "filters": {
+    "from": "De",
+    "to": "Até",
+    "apply": "Aplicar",
+    "clear": "Limpar filtros"
+  },
+  "chart": {
+    "title": "Atividade de requisições",
+    "range": "Intervalo de tempo",
+    "refresh": "Atualizar gráfico",
+    "success": "Sucesso",
+    "failure": "Falha",
+    "noData": "Ainda não há requisições neste intervalo.",
+    "ariaSummary_one": "Gráfico de atividade de requisições, {{count}} requisição no intervalo",
+    "ariaSummary_other": "Gráfico de atividade de requisições, {{count}} requisições no intervalo",
+    "ranges": {
+      "hour": "Última hora",
+      "day": "Último dia",
+      "week": "Última semana",
+      "month": "Último mês"
+    },
+    "tooltip": {
+      "total": "Total: {{value}}",
+      "success": "Sucesso: {{value}}",
+      "failure": "Com falha: {{value}}",
+      "avg": "Duração média: {{value}}"
+    }
+  },
+  "telemetry": {
+    "totalTime": "Tempo total",
+    "queued": "Na fila",
+    "modelTime": "Tempo do modelo",
+    "modelCalls": "Chamadas ao modelo",
+    "failedCalls": "Chamadas com falha",
+    "promptTokens": "Tokens de prompt",
+    "completionTokens": "Tokens de conclusão",
+    "totalTokens": "Total de tokens",
+    "inputImages": "Imagens de entrada",
+    "noCalls": "Nenhuma chamada ao modelo foi feita.",
+    "waterfallAria": "Cascata de telemetria com {{stages}} etapas e {{calls}} chamadas ao modelo",
+    "showAll": "Mostrar todas as {{count}} chamadas ao modelo",
+    "showFewer": "Mostrar menos chamadas ao modelo",
+    "tooltip": {
+      "start": "Começa em {{value}}",
+      "duration": "Duração {{value}}",
+      "model": "{{endpoint}} {{model}}",
+      "tokens": "Tokens {{value}}",
+      "attempts": "Tentativas {{value}}",
+      "queue": "Na fila {{value}}",
+      "ttft": "Primeiro token após {{value}}",
+      "generation": "Geração {{value}}",
+      "tokensPerSecond": "{{value}} tokens por segundo"
+    },
+    "columns": {
+      "purpose": "Finalidade",
+      "target": "Alvo",
+      "endpoint": "Endpoint",
+      "model": "Modelo",
+      "duration": "Duração",
+      "attempts": "Tentativas",
+      "promptTokens": "Tokens de prompt",
+      "completionTokens": "Tokens de conclusão",
+      "totalTokens": "Total de tokens",
+      "finishReason": "Motivo de término",
+      "status": "Status",
+      "queue": "Fila",
+      "ttft": "Primeiro token",
+      "generation": "Geração",
+      "tokensPerSecond": "Tokens/s",
+      "cachedTokens": "Tokens em cache",
+      "reasoningTokens": "Tokens de raciocínio"
+    },
+    "avgTtft": "Tempo médio até o primeiro token",
+    "avgTokensPerSecond": "Média de tokens por segundo",
+    "cachedTokens": "Tokens em cache",
+    "reasoningTokens": "Tokens de raciocínio"
+  },
+  "fieldBuilder": {
+    "title": "Campos",
+    "empty": "Ainda não há campos. Adicione um para extrair valores tipados.",
+    "fieldNumber": "Campo {{n}}",
+    "key": "Chave",
+    "keyPlaceholder": "dogCount",
+    "type": "Tipo",
+    "prompt": "Prompt",
+    "promptPlaceholder": "A pergunta que o modelo responde para este campo",
+    "options": "Opções",
+    "optionsPlaceholder": "Digite uma opção e pressione Enter",
+    "removeOption": "Remover opção {{option}}",
+    "minimum": "Mínimo",
+    "maximum": "Máximo",
+    "maxLength": "Comprimento máximo",
+    "maxItems": "Máximo de itens",
+    "schema": "JSON Schema",
+    "schemaPlaceholder": "{\"type\": \"object\", \"properties\": {}}",
+    "default": "Padrão",
+    "noDefault": "Sem padrão",
+    "defaultListPlaceholder": "Valores separados por vírgula",
+    "optional": "Opcional",
+    "required": "Obrigatório",
+    "add": "Adicionar campo",
+    "newFieldType": "Tipo do novo campo",
+    "moveUp": "Mover para cima",
+    "moveDown": "Mover para baixo",
+    "duplicate": "Duplicar campo",
+    "remove": "Remover campo",
+    "dragToReorder": "Arraste para reordenar",
+    "errors": {
+      "keyInvalid": "Use de 1 a 64 letras, dígitos, sublinhado, hífen ou ponto.",
+      "keyDuplicate": "A chave \"{{key}}\" é usada mais de uma vez.",
+      "keySummary": "A chave \"{{key}}\" colide com a chave do resumo.",
+      "promptRequired": "O prompt é obrigatório.",
+      "promptTooLong": "Os prompts são limitados a {{max}} caracteres.",
+      "optionsRequired": "Campos enum precisam de pelo menos uma opção.",
+      "optionsTooMany": "No máximo {{max}} opções.",
+      "notNumber": "Informe um número.",
+      "minAboveMax": "O mínimo não pode ser maior que o máximo.",
+      "atLeastOne": "Deve ser pelo menos 1.",
+      "schemaJson": "O schema não é um JSON válido.",
+      "defaultJson": "O padrão não é um JSON válido.",
+      "defaultNotOption": "O padrão deve ser uma das opções."
+    }
+  },
+  "context": {
+    "help": "Informações de contexto compartilhadas com todos os prompts da requisição: o resumo, todos os campos e, para vídeo, todas as cenas. O contexto é tratado como dados, não como instruções.",
+    "label": "Rótulo",
+    "labelPlaceholder": "Origem",
+    "text": "Texto",
+    "textPlaceholder": "Fotos enviadas por voluntários de adoção.",
+    "add": "Adicionar contexto",
+    "remove": "Remover item de contexto {{n}}",
+    "errors": {
+      "tooMany": "No máximo {{max}} itens de contexto.",
+      "textRequired": "O item de contexto {{n}} precisa de texto.",
+      "labelTooLong": "O rótulo do item de contexto {{n}} excede {{max}} caracteres.",
+      "tooLong": "O contexto excede {{max}} caracteres no total."
+    }
+  },
+  "media": {
+    "source": "Origem da mídia",
+    "upload": "Enviar",
+    "url": "URL",
+    "dropImage": "Solte uma imagem aqui ou escolha um arquivo.",
+    "dropVideo": "Solte um vídeo aqui ou escolha um arquivo.",
+    "chooseFile": "Escolher arquivo",
+    "chooseAnother": "Escolher outro",
+    "previewAlt": "Prévia da imagem selecionada",
+    "imageUrl": "URL da imagem",
+    "videoUrl": "URL do vídeo",
+    "urlHint": "O próprio servidor baixa a URL, portanto ela precisa ser acessível a partir do servidor. Endereços de rede privada são bloqueados, a menos que Media.AllowPrivateNetworkUrls esteja ativado.",
+    "videoUploadHint": "Os envios vão como base64 no corpo da requisição, o que aumenta o tamanho em cerca de um terço. Prefira uma URL para vídeos grandes.",
+    "errors": {
+      "fileRequired": "Escolha um arquivo para analisar.",
+      "urlInvalid": "Informe uma URL http ou https absoluta."
+    },
+    "dropAudio": "Solte um arquivo de áudio ou vídeo aqui ou escolha um arquivo.",
+    "audioUrl": "URL do áudio ou vídeo",
+    "audioUploadHint": "Áudio em MP3, WAV, FLAC, M4A, OGG, Opus e WebM é aceito. Para um arquivo de vídeo, apenas a faixa de áudio é usada. Os envios vão como base64, o que aumenta o tamanho em cerca de um terço."
+  },
+  "model": {
+    "endpoint": "Endpoint",
+    "visionEndpoint": "Endpoint de visão",
+    "textEndpoint": "Endpoint de texto",
+    "useDefault": "Padrão do servidor",
+    "name": "Substituir modelo",
+    "namePlaceholder": "Modelo padrão do endpoint",
+    "textHelp": "O endpoint de texto processa as etapas somente de texto, como o resumo do vídeo inteiro. O padrão é Inference.DefaultText e, depois, o endpoint de visão.",
+    "transcriptionEndpoint": "Endpoint de transcrição"
+  },
+  "summarize": {
+    "enable": "Resumir",
+    "key": "Chave do resultado",
+    "keyInvalid": "Use de 1 a 64 letras, dígitos, sublinhado, hífen ou ponto.",
+    "maxWords": "Máximo de palavras",
+    "style": "Estilo",
+    "instructions": "Instruções",
+    "instructionsPlaceholder": "Orientação opcional, por exemplo: mencione o cenário e quaisquer animais."
+  },
+  "extract": {
+    "enable": "Extrair campos tipados",
+    "mode": "Modo de extração"
+  },
+  "results": {
+    "title": "Resultado",
+    "noResults": "Nenhum resultado foi retornado.",
+    "noFields": "Nenhum campo foi solicitado.",
+    "noProperties": "As propriedades da mídia não foram solicitadas.",
+    "copyValue": "Copiar valor de {{key}}",
+    "errors_one": "{{count}} erro",
+    "errors_other": "{{count}} erros",
+    "errorsHint": "Uma chamada ao modelo falhou após novas tentativas. Resultados parciais são exibidos. Tente novamente ou teste o endpoint na página Endpoints.",
+    "warnings_one": "{{count}} aviso",
+    "warnings_other": "{{count}} avisos",
+    "tabs": {
+      "results": "Resultados",
+      "fields": "Campos",
+      "telemetry": "Telemetria",
+      "properties": "Propriedades",
+      "raw": "JSON bruto"
+    },
+    "columns": {
+      "key": "Chave",
+      "type": "Tipo",
+      "value": "Valor",
+      "valid": "Válido",
+      "raw": "Saída bruta do modelo",
+      "notes": "Erros e avisos"
+    }
+  },
+  "properties": {
+    "mediaKind": "Tipo de mídia",
+    "contentType": "Tipo de conteúdo",
+    "format": "Formato",
+    "size": "Tamanho",
+    "dimensions": "Dimensões",
+    "duration": "Duração",
+    "frameRate": "Taxa de quadros",
+    "bitRate": "Taxa de bits",
+    "videoCodec": "Codec de vídeo",
+    "hasAudio": "Tem áudio",
+    "audioCodec": "Codec de áudio",
+    "audioChannels": "Canais de áudio",
+    "audioSampleRate": "Taxa de amostragem de áudio",
+    "sha256": "SHA-256",
+    "tags": "Tags"
+  },
+  "snippets": {
+    "title": "Copiar como código",
+    "keyNote": "Os snippets leem a chave da variável de ambiente KEYFRAME_API_KEY e nunca incluem sua chave. Mídias enviadas aparecem como um espaço reservado.",
+    "languages": {
+      "curl": "cURL",
+      "fetch": "JavaScript",
+      "python": "Python",
+      "csharp": "C#"
+    }
+  },
+  "presets": {
+    "label": "Predefinição",
+    "choose": "Carregar uma predefinição",
+    "none": "Nenhuma predefinição salva",
+    "save": "Salvar predefinição",
+    "saveTitle": "Salvar predefinição",
+    "name": "Nome da predefinição",
+    "saveHelp": "Salva contexto, modelo, funções e campos neste navegador. Mídia e chaves nunca são salvas.",
+    "delete": "Excluir predefinição",
+    "deleteTitle": "Excluir predefinição",
+    "deleteMessage": "Excluir a predefinição \"{{name}}\" deste navegador?"
+  },
+  "analyze": {
+    "sections": {
+      "media": "Mídia",
+      "context": "Contexto",
+      "model": "Modelo",
+      "summary": "Resumo",
+      "fields": "Campos tipados"
+    },
+    "includeProperties": "Incluir propriedades da mídia na resposta",
+    "run": "Analisar",
+    "running": "Analisando...",
+    "errors": {
+      "fixFields": "Corrija primeiro os problemas destacados.",
+      "noFields": "Adicione pelo menos um campo ou desative a extração.",
+      "noFunction": "Ative Resumir ou Extrair."
+    },
+    "toast": {
+      "done": "Análise concluída em {{duration}}.",
+      "partial": "Análise concluída com erros em {{duration}}. Verifique o resultado.",
+      "canceled": "Análise cancelada."
+    }
+  },
+  "analyzeImage": {
+    "title": "Analisar imagem",
+    "summary": "Resuma uma imagem e extraia campos tipados. Os resultados incluem a validade de cada campo e o detalhamento de tempos.",
+    "emptyTitle": "Nenhuma análise ainda",
+    "emptyMessage": "Escolha uma imagem, ajuste os campos e selecione Analisar. Resultados, validação de campos, telemetria e JSON bruto aparecem aqui."
+  },
+  "analyzeVideo": {
+    "title": "Analisar vídeo",
+    "summary": "Envie um job de vídeo: detecção de cenas, resumos e campos por cena, transcrição e resultados do vídeo inteiro. Você será levado ao job quando ele for aceito.",
+    "sections": {
+      "whole": "Vídeo inteiro",
+      "scenes": "Cenas",
+      "transcribe": "Transcrição"
+    },
+    "wholeHelp": "Resumo e campos para o vídeo como um todo.",
+    "sampleFrames": "Quadros de amostra",
+    "sampleFramesHelp": "Quadros amostrados ao longo do vídeo quando as cenas estão desativadas (de 1 a 64).",
+    "scenesEnable": "Detectar cenas e analisar cada uma",
+    "threshold": "Limiar de cena",
+    "thresholdHelp": "Pontuação de cena do ffmpeg de 0.01 a 1. Valores menores encontram mais cortes.",
+    "minSceneMs": "Cena mínima (ms)",
+    "maxSceneMs": "Cena máxima (ms)",
+    "maxScenes": "Máximo de cenas",
+    "maxScenesHelp": "Limita o custo. Cenas excedentes são mescladas.",
+    "framesPerScene": "Quadros por cena",
+    "sceneSummary": "Resumo por cena",
+    "sceneExtract": "Extrair campos de cada cena",
+    "includeKeyframeData": "Incluir miniaturas de keyframes (usadas pela linha do tempo de cenas)",
+    "transcribeEnable": "Transcrever a faixa de áudio",
+    "transcribeEndpoint": "Endpoint de transcrição",
+    "language": "Idioma",
+    "transcribePrompt": "Prompt de transcrição",
+    "transcribePromptPlaceholder": "Dicas opcionais de vocabulário ou grafia",
+    "submit": "Enviar job",
+    "submitting": "Enviando...",
+    "errors": {
+      "sceneRange": "A cena mínima deve ser menor que a cena máxima.",
+      "language": "Use um código ISO-639, como en ou pt-BR.",
+      "noFunction": "Ative pelo menos uma opção entre Resumir, Extrair, Cenas ou Transcrever.",
+      "queueFull": "A fila de jobs está cheia."
+    },
+    "toast": {
+      "submitted": "Job {{id}} aceito."
+    },
+    "languagePlaceholder": "en"
+  },
+  "samples": {
+    "image": {
+      "hasPeople": "Há pessoas nesta imagem?",
+      "objects": "Liste os principais objetos visíveis.",
+      "setting": "Onde esta foto foi tirada?",
+      "indoors": "Ambiente interno",
+      "outdoors": "Ambiente externo",
+      "unknown": "Desconhecido"
+    },
+    "video": {
+      "topics": "Liste os principais assuntos abordados.",
+      "showsText": "Há texto em destaque visível na tela?"
+    },
+    "audio": {
+      "speakerCount": "Quantos locutores distintos existem?"
+    }
+  },
+  "home": {
+    "title": "Início",
+    "summary": "O que o Keyframe está fazendo agora: integridade do servidor, tráfego de requisições, jobs de análise e endpoints de modelo.",
+    "ctaLabel": "Fluxos de trabalho comuns",
+    "cta": {
+      "image": "Analisar uma imagem",
+      "imageSub": "Resumo e campos tipados em uma única chamada",
+      "video": "Analisar um vídeo",
+      "videoSub": "Cenas, transcrição e campos como um job",
+      "explorer": "Abrir o API Explorer",
+      "explorerSub": "Chame qualquer rota pelo navegador",
+      "audio": "Analisar áudio",
+      "audioSub": "Transcrição, resumo e campos como um job"
+    },
+    "kpiLabel": "Indicadores principais",
+    "kpi": {
+      "requests": "Requisições ({{range}})",
+      "successRate": "Taxa de sucesso",
+      "failures_one": "{{value}} falha",
+      "failures_other": "{{value}} falhas",
+      "avgLatency": "Latência média",
+      "jobs": "Jobs ativos",
+      "queued": "{{value}} na fila",
+      "endpoints": "Endpoints íntegros",
+      "healthyOf": "{{healthy}} de {{total}}",
+      "server": "Servidor",
+      "ffmpegAvailable": "ffmpeg disponível",
+      "ffmpegMissing": "ffmpeg ausente"
+    },
+    "attention": {
+      "title": "Requer atenção",
+      "none": "Nada requer atenção.",
+      "open": "Abrir",
+      "unreachable": "O endpoint de integridade não está respondendo.",
+      "ffmpegMissing": "O ffmpeg não está disponível no servidor. A análise de vídeo e a normalização de imagens vão falhar até que ele seja instalado.",
+      "endpointUnhealthy": "O endpoint {{name}} está com problemas. {{message}}",
+      "noActiveEndpoints": "Nenhum endpoint de modelo está ativo. Adicione ou ative um em Configurações.",
+      "failedJobs_one": "{{count}} job falhou.",
+      "failedJobs_other": "{{count}} jobs falharam.",
+      "failedRequests_one": "{{count}} requisição falhou neste intervalo.",
+      "failedRequests_other": "{{count}} requisições falharam neste intervalo.",
+      "authDisabled": "A autenticação está desativada. Qualquer pessoa que consiga acessar o servidor pode usá-lo."
+    },
+    "activityTitle": "Atividade de requisições",
+    "noTraffic": {
+      "title": "Ainda não há tráfego",
+      "message": "Execute uma análise ou chame a API, e as requisições aparecerão aqui."
+    },
+    "recentJobs": "Jobs recentes",
+    "viewAllJobs": "Ver todos os jobs",
+    "noJobs": "Nenhum job ainda."
+  },
+  "externalServices": {
+    "title": "Serviços externos",
+    "summary": "Ferramentas de observabilidade incluídas na stack do Docker Compose. Os links usam o host ao qual você se conectou.",
+    "credentials": "Login padrão",
+    "noLogin": "Sem login",
+    "copyUrl": "Copiar URL",
+    "note": "Estes são padrões de desenvolvimento local. Altere a senha do Grafana antes de expor a stack e mantenha o Prometheus e o Tempo fora de interfaces públicas. Um serviço que não faz parte desta implantação não será carregado.",
+    "services": {
+      "grafana": {
+        "name": "Grafana",
+        "purpose": "Dashboards de tráfego, etapas do pipeline e chamadas ao modelo"
+      },
+      "prometheus": {
+        "name": "Prometheus",
+        "purpose": "Armazenamento de métricas e interface de consulta"
+      },
+      "tempo": {
+        "name": "Tempo",
+        "purpose": "Armazenamento de traces (endpoint de prontidão)"
+      }
+    }
+  },
+  "jobs": {
+    "title": "Jobs",
+    "summary": "Jobs de análise de vídeo e áudio com progresso em tempo real. Abra um para ver cenas, transcrição e telemetria; cancele jobs em execução ou exclua os concluídos.",
+    "newJob": "Novo job de vídeo",
+    "upload": "Dados enviados",
+    "columns": {
+      "id": "Job",
+      "status": "Status",
+      "progress": "Progresso",
+      "kind": "Tipo",
+      "principal": "Enviado por",
+      "source": "Origem",
+      "size": "Tamanho",
+      "duration": "Duração da mídia",
+      "created": "Criado",
+      "completed": "Concluído",
+      "error": "Erro"
+    },
+    "filters": {
+      "status": "Status",
+      "kind": "Tipo",
+      "principal": "Enviado por",
+      "principalPlaceholder": "Nome da chave"
+    },
+    "cancel": "Cancelar job",
+    "cancelTitle": "Cancelar job",
+    "cancelMessage": "Cancelar o job {{id}}? O trabalho em andamento será descartado.",
+    "deleteTitle_one": "Excluir job",
+    "deleteTitle_other": "Excluir {{count}} jobs",
+    "deleteMessage_one": "Excluir o job {{id}} e seu resultado armazenado? Esta ação não pode ser desfeita.",
+    "deleteMessage_other": "Excluir {{count}} jobs concluídos e seus resultados armazenados? Esta ação não pode ser desfeita.",
+    "deleteSelected_one": "Excluir {{count}} job concluído",
+    "deleteSelected_other": "Excluir {{count}} jobs concluídos",
+    "jsonTitle": "JSON do job",
+    "autoRefresh": "Atualizando a cada poucos segundos enquanto há jobs na fila ou em execução.",
+    "emptyTitle": "Nenhum job ainda",
+    "emptyMessage": "As análises de vídeo são executadas como jobs. Envie um em Analisar vídeo.",
+    "emptyFiltered": "Nenhum job corresponde a estes filtros",
+    "emptyFilteredMessage": "Limpe ou altere os filtros para ver mais jobs.",
+    "toast": {
+      "canceled": "Job {{id}} cancelado.",
+      "deleted_one": "{{count}} job excluído.",
+      "deleted_other": "{{count}} jobs excluídos."
+    }
+  },
+  "jobDetail": {
+    "title": "Job",
+    "summary": "Status, progresso e resultados de um job de análise.",
+    "back": "Todos os jobs",
+    "jobJson": "JSON do job",
+    "download": "Baixar resultado",
+    "notFound": "Este job não existe ou foi excluído.",
+    "progress": "Progresso",
+    "progressCount": "{{completed}} de {{total}} etapas",
+    "liveNote": "Esta página é atualizada em tempo real até o job terminar.",
+    "failedTitle": "O job falhou",
+    "noErrorDetail": "O servidor não informou uma mensagem de erro.",
+    "failedHint": "Verifique a URL da mídia e os endpoints e envie o job novamente.",
+    "interruptedTitle": "O job foi interrompido",
+    "interruptedMessage": "O servidor foi reiniciado enquanto este job estava em execução, por isso ele não terminou. Envie-o novamente.",
+    "canceledTitle": "O job foi cancelado",
+    "canceledMessage": "Nenhum resultado é armazenado para jobs cancelados.",
+    "details": "Detalhes",
+    "meta": {
+      "kind": "Tipo",
+      "principal": "Enviado por",
+      "source": "Origem",
+      "size": "Tamanho",
+      "duration": "Duração da mídia",
+      "created": "Criado",
+      "started": "Iniciado",
+      "completed": "Concluído"
+    },
+    "loadingResult": "Carregando o resultado...",
+    "resultTabs": "Seções do resultado",
+    "tabs": {
+      "overview": "Visão geral",
+      "scenes": "Cenas",
+      "transcript": "Transcrição",
+      "telemetry": "Telemetria",
+      "raw": "JSON bruto"
+    },
+    "wholeResults": "Resultados do vídeo inteiro",
+    "noScenes": "A detecção de cenas estava desativada ou não encontrou cenas.",
+    "sceneStrip": "Linha do tempo de cenas",
+    "sceneTitle": "Cena {{n}}: {{start}} a {{end}}",
+    "sceneHeading": "Cena {{n}} de {{count}}",
+    "prevScene": "Cena anterior",
+    "nextScene": "Próxima cena",
+    "keyframeAlt": "Keyframe em {{time}}",
+    "noThumbnail": "Sem miniatura",
+    "sceneResults": "Resultados da cena",
+    "sceneFields": "Campos da cena",
+    "sceneTranscript": "Transcrição durante esta cena",
+    "noTranscript": "A transcrição estava desativada ou o vídeo não tem áudio.",
+    "noTranscriptMatches": "Nenhum segmento da transcrição corresponde.",
+    "transcriptLanguage": "Idioma: {{language}}",
+    "searchTranscript": "Pesquisar na transcrição"
+  },
+  "endpoints": {
+    "title": "Endpoints",
+    "summary": "Endpoints de modelo configurados no servidor, com provedor, modelo e a última integridade observada. Administradores podem testar a conectividade.",
+    "add": "Adicionar endpoint",
+    "readOnlyNote": "Os endpoints são editados em Configurações com a chave de administrador. O teste também requer a chave de administrador.",
+    "columns": {
+      "name": "Nome",
+      "health": "Integridade",
+      "kind": "Tipo",
+      "provider": "Provedor",
+      "model": "Modelo",
+      "url": "URL",
+      "default": "Padrão",
+      "concurrency": "Máx. simultâneas",
+      "timeout": "Tempo limite",
+      "apiKey": "Chave de API",
+      "lastChecked": "Última verificação",
+      "test": "Testar"
+    },
+    "filters": {
+      "kind": "Tipo",
+      "search": "Pesquisar",
+      "searchPlaceholder": "Nome, provedor ou modelo"
+    },
+    "localFilterNote": "Exibindo {{shown}} de {{total}}. A filtragem é local; o servidor retorna todos os endpoints.",
+    "default": "Padrão",
+    "noUrl": "Padrão do provedor",
+    "keySet": "Definida (termina em {{last4}})",
+    "keyNotSet": "Não definida",
+    "test": "Testar",
+    "testing": "Testando...",
+    "detailSubtitle": "Configuração e integridade do endpoint",
+    "editInSettings": "Editar em Configurações",
+    "providerUnavailable": "provedor não disponível nesta build",
+    "healthMessage": "Mensagem de integridade",
+    "testPassed": "Teste aprovado",
+    "testFailedTitle": "Teste falhou",
+    "testDetail": "Levou {{duration}}. Modelo: {{model}}",
+    "jsonTitle": "JSON do endpoint",
+    "emptyTitle": "Nenhum endpoint configurado",
+    "emptyMessage": "Adicione um endpoint de modelo em Configurações, na seção Inferência, para que as análises tenham um modelo para chamar.",
+    "emptyFiltered": "Nenhum endpoint corresponde a estes filtros",
+    "toast": {
+      "testOk": "O endpoint {{name}} respondeu em {{duration}}.",
+      "testFailed": "O endpoint {{name}} falhou no teste após {{duration}}.",
+      "testError": "Não foi possível testar o endpoint {{name}}."
+    }
+  },
+  "requestHistory": {
+    "title": "Histórico de requisições",
+    "summary": "Todas as requisições de API capturadas pelo servidor, com status, tempos e cabeçalhos e corpos com dados sensíveis ocultados. Filtre, inspecione e limpe o tráfego retido.",
+    "kpi": {
+      "inRange": "Requisições ({{range}})",
+      "failures": "Falhas",
+      "successRate": "Taxa de sucesso",
+      "avgDuration": "Duração média",
+      "matching": "Correspondentes aos filtros"
+    },
+    "filters": {
+      "method": "Método",
+      "status": "Código de status",
+      "statusPlaceholder": "500",
+      "path": "Caminho contém",
+      "pathPlaceholder": "/v1.0/image",
+      "principal": "Principal",
+      "principalPlaceholder": "Nome da chave"
+    },
+    "columns": {
+      "time": "Horário",
+      "method": "Método",
+      "path": "Caminho",
+      "status": "Status",
+      "duration": "Duração",
+      "principal": "Principal",
+      "sourceIp": "IP de origem",
+      "id": "Entrada",
+      "ago": "Idade"
+    },
+    "filterByPath": "Filtrar por este caminho",
+    "deleteMatching": "Excluir correspondentes",
+    "clearAll": "Limpar tudo",
+    "deleteTitle": "Excluir requisição",
+    "deleteMessage": "Excluir a requisição capturada {{method}} {{path}}?",
+    "bulkTitle": "Excluir requisições capturadas",
+    "bulkMessageFiltered_one": "Excluir {{count}} requisição correspondente a {{filters}}? Esta ação não pode ser desfeita.",
+    "bulkMessageFiltered_other": "Excluir todas as {{count}} requisições correspondentes a {{filters}}? Esta ação não pode ser desfeita.",
+    "bulkMessageAll_one": "Nenhum filtro está definido. Excluir a {{count}} requisição retida? Esta ação não pode ser desfeita.",
+    "bulkMessageAll_other": "Nenhum filtro está definido. Excluir todas as {{count}} requisições retidas? Esta ação não pode ser desfeita.",
+    "filterParts": {
+      "method": "método {{value}}",
+      "status": "status {{value}}",
+      "path": "caminho contendo \"{{value}}\"",
+      "principal": "principal {{value}}",
+      "from": "a partir de {{value}}",
+      "to": "antes de {{value}}"
+    },
+    "jsonTitle": "JSON da requisição",
+    "emptyTitle": "Nenhum tráfego retido",
+    "emptyMessage": "As requisições aparecem aqui à medida que o servidor as processa. Se continuar vazio, verifique se RequestHistory.Enabled está ativado em Configurações.",
+    "emptyFiltered": "Nenhuma requisição corresponde a estes filtros",
+    "emptyFilteredMessage": "Limpe ou amplie os filtros, ou escolha outro intervalo de tempo.",
+    "inspector": {
+      "title": "Detalhes da requisição",
+      "metadata": "Metadados",
+      "url": "URL",
+      "requestId": "ID da requisição",
+      "created": "Recebida",
+      "completed": "Concluída",
+      "requestHeaders": "Cabeçalhos da requisição",
+      "requestBody": "Corpo da requisição",
+      "responseHeaders": "Cabeçalhos da resposta",
+      "responseBody": "Corpo da resposta",
+      "raw": "JSON bruto",
+      "noHeaders": "Nenhum cabeçalho capturado.",
+      "noBody": "Nenhum corpo capturado.",
+      "truncated": "Truncado (original {{size}})"
+    },
+    "toast": {
+      "deleted": "Requisição excluída.",
+      "bulkDeleted_one": "{{count}} requisição excluída.",
+      "bulkDeleted_other": "{{count}} requisições excluídas.",
+      "loadFailed": "Não foi possível carregar a requisição."
+    }
+  },
+  "explorer": {
+    "title": "API Explorer",
+    "summary": "Todas as rotas do documento OpenAPI ativo do servidor. As requisições usam a chave com a qual você entrou.",
+    "loadingSpec": "Carregando /openapi.json...",
+    "specMissing": "O documento OpenAPI não está disponível",
+    "specMissingMessage": "O explorer precisa de GET /openapi.json no servidor. Verifique se o servidor está acessível e fornece o documento e tente novamente.",
+    "viaProxyTitle": "Documento OpenAPI carregado pelo proxy do dashboard",
+    "viaProxyMessage": "O navegador não conseguiu ler /openapi.json diretamente do servidor (falha de rede ou de CORS), por isso ele foi carregado a partir da origem do dashboard. As requisições continuam indo direto para o servidor no qual você entrou.",
+    "search": "Pesquisar método, caminho ou resumo",
+    "noMatches": "Nenhuma operação corresponde.",
+    "operations": "Operações",
+    "pickOperation": "Escolha uma operação na lista acima.",
+    "resolvedUrl": "URL resolvida",
+    "copyUrl": "Copiar URL",
+    "pathParams": "Parâmetros de caminho",
+    "queryParams": "Parâmetros de consulta",
+    "required": "Obrigatório",
+    "headers": "Cabeçalhos",
+    "authInherited": "A autorização é adicionada automaticamente a partir da sua sessão.",
+    "headerName": "Nome do cabeçalho",
+    "headerValue": "Valor",
+    "addHeader": "Adicionar cabeçalho",
+    "removeHeader": "Remover cabeçalho",
+    "body": "Corpo da requisição",
+    "format": "Formatar JSON",
+    "resetTemplate": "Restaurar modelo",
+    "copyBody": "Copiar corpo",
+    "invalidJson": "JSON inválido: {{message}}",
+    "missingPath": "Preencha: {{names}}",
+    "destructive": "Esta operação altera ou exclui dados.",
+    "execute": "Executar",
+    "running": "Executando...",
+    "stop": "Parar",
+    "response": "Resposta",
+    "responseTabs": "Seções da resposta",
+    "noResponse": "Execute a requisição para ver a resposta.",
+    "aborted": "A requisição foi interrompida.",
+    "emptyBody": "A resposta não tem corpo.",
+    "streaming": "Streaming",
+    "tabs": {
+      "body": "Corpo",
+      "headers": "Cabeçalhos",
+      "code": "Código"
+    },
+    "history": "Histórico ({{count}})",
+    "historyTitle": "Requisições recentes",
+    "noHistory": "As requisições que você executar são listadas aqui. As chaves nunca são armazenadas.",
+    "load": "Carregar",
+    "confirmTitle": "Executar uma requisição destrutiva?",
+    "confirmMessage": "{{method}} {{path}} altera ou exclui dados no servidor. Continuar?",
+    "pickerLabel": "Escolha uma operação da API",
+    "operationCount_one": "{{count}} operação",
+    "operationCount_other": "{{count}} operações",
+    "binaryTitle": "Resposta binária",
+    "binaryMessage": "{{type}}, {{size}}. Baixe para abrir.",
+    "binaryFilename": "response.bin",
+    "downloadBody": "Baixar"
+  },
+  "settings": {
+    "title": "Configurações",
+    "summary": "Edite o arquivo de configurações do servidor. As configurações ao vivo são aplicadas ao salvar; as marcadas com Reiniciar entram em vigor após uma reinicialização.",
+    "file": "Arquivo de configurações",
+    "notAdminTitle": "As configurações requerem a chave de administrador",
+    "notAdminMessage": "Você entrou com uma chave de acesso, que não pode ler nem alterar as configurações do servidor. Saia e conecte-se com a chave de administrador para editar as configurações ou reiniciar o servidor.",
+    "preferences": "Preferências do dashboard",
+    "preferencesHelp": "Armazenadas apenas neste navegador.",
+    "sections": "Seções de configurações",
+    "showRaw": "Ver JSON",
+    "hideRaw": "Ocultar JSON",
+    "rawTitle": "JSON das configurações",
+    "rawHelp": "Visualização somente leitura das configurações salvas, como o servidor as retorna, com segredos mascarados.",
+    "restart": "Reiniciar servidor",
+    "restartNow": "Reiniciar agora",
+    "restartTitle": "Reiniciar o servidor?",
+    "restartMessage": "O servidor conclui esta resposta e encerra. No Docker Compose (restart: unless-stopped), ele volta com as configurações salvas. Jobs em execução são marcados como Interrompidos.",
+    "restartUnsaved": "Você tem alterações não salvas. Elas serão perdidas se você não salvar primeiro.",
+    "restarting": "Reiniciando",
+    "restartingMessage": "Aguardando o servidor voltar. A edição está pausada.",
+    "restartDone": "O servidor voltou.",
+    "restartTimeout": "O servidor não voltou",
+    "restartTimeoutMessage": "Se o servidor não for executado por um runtime de contêiner ou gerenciador de serviços com política de reinicialização, inicie-o novamente manualmente.",
+    "restartRequired": "Reinicialização necessária",
+    "restartRequiredMessage": "Algumas alterações salvas só entram em vigor após a reinicialização do servidor.",
+    "saveFailed": "O servidor rejeitou as configurações.",
+    "unsaved": "Alterações não salvas",
+    "noChanges": "Nenhuma alteração",
+    "discard": "Descartar alterações",
+    "range": "Intervalo de {{min}} a {{max}}",
+    "unset": "Não definido",
+    "noEndpoint": "Nenhum",
+    "envOverride": "Definido pela variável de ambiente {{name}}. O valor do ambiente prevalece, por isso este campo é somente leitura aqui.",
+    "arrayEmpty": "Nenhum configurado.",
+    "newItem": "Novo item",
+    "removeItem": "Remover",
+    "badges": {
+      "live": "Ao vivo",
+      "liveHelp": "Aplicado assim que você salva.",
+      "restart": "Reiniciar",
+      "restartHelp": "Entra em vigor após a reinicialização do servidor.",
+      "env": "Env: {{name}}",
+      "envHelp": "Substituído por {{name}}."
+    },
+    "secret": {
+      "set": "Definido (termina em {{last4}})",
+      "notSet": "Não definido",
+      "change": "Alterar",
+      "keep": "Manter atual",
+      "clear": "Limpar"
+    },
+    "errors": {
+      "required": "Obrigatório.",
+      "number": "Informe um número.",
+      "duplicateName": "Os nomes devem ser únicos.",
+      "summary_one": "{{count}} campo requer atenção.",
+      "summary_other": "{{count}} campos requerem atenção."
+    },
+    "toast": {
+      "savedLive": "Configurações salvas e aplicadas.",
+      "savedRestart": "Configurações salvas. Reinicie o servidor para aplicar todas as alterações.",
+      "restarted": "O servidor foi reiniciado."
+    },
+    "options": {
+      "Sqlite": "SQLite",
+      "Mysql": "MySQL",
+      "Postgresql": "PostgreSQL",
+      "SqlServer": "SQL Server",
+      "grpc": "gRPC",
+      "httpprotobuf": "HTTP (protobuf)",
+      "Completion": "Conclusão",
+      "Transcription": "Transcrição"
+    },
+    "severity": {
+      "0": "0 Debug",
+      "1": "1 Info",
+      "2": "2 Aviso",
+      "3": "3 Erro",
+      "4": "4 Alerta",
+      "5": "5 Crítico",
+      "6": "6 Emergência",
+      "7": "7 Máximo"
+    },
+    "addItem": {
+      "Auth": {
+        "AccessKeys": "Adicionar chave de acesso"
+      },
+      "Inference": {
+        "Endpoints": "Adicionar endpoint"
+      },
+      "Logging": {
+        "Servers": "Adicionar servidor syslog"
+      }
+    },
+    "groups": {
+      "rest": {
+        "title": "Servidor REST",
+        "help": "Endereço de escuta e limite de tamanho das requisições."
+      },
+      "auth": {
+        "title": "Autenticação",
+        "help": "A chave de administrador e as chaves de acesso nomeadas usadas pelos chamadores. As chaves são mascaradas; altere uma apenas quando for realmente necessário."
+      },
+      "database": {
+        "title": "Banco de dados",
+        "help": "Onde jobs, resultados e o histórico de requisições são armazenados."
+      },
+      "inference": {
+        "title": "Inferência",
+        "help": "Endpoints de modelo, padrões, novas tentativas e tempos limite."
+      },
+      "media": {
+        "title": "Mídia",
+        "help": "ffmpeg, limites de download e dimensionamento de imagens."
+      },
+      "jobs": {
+        "title": "Jobs",
+        "help": "Simultaneidade de jobs de vídeo e áudio, tamanho da fila e retenção."
+      },
+      "requestHistory": {
+        "title": "Histórico de requisições",
+        "help": "Captura de requisições e corpos para a página Histórico de requisições."
+      },
+      "logging": {
+        "title": "Logs",
+        "help": "Saída para console, arquivo e syslog."
+      },
+      "telemetry": {
+        "title": "Telemetria",
+        "help": "Exportação OpenTelemetry, endpoint de coleta do Prometheus e logs do Loki."
+      },
+      "analytics": {
+        "title": "Análises",
+        "help": "Registros de desempenho por análise exibidos na página Análises e por quanto tempo são mantidos."
+      }
+    },
+    "fields": {
+      "Rest": {
+        "Hostname": "Nome do host",
+        "Port": "Porta",
+        "Ssl": "TLS",
+        "MaxRequestBodyBytes": "Corpo máximo da requisição"
+      },
+      "Auth": {
+        "RequireAuthentication": "Exigir autenticação",
+        "AdminApiKey": "Chave de API de administrador",
+        "MaxFailedAttemptsPerMinute": "Máximo de tentativas com falha por minuto",
+        "AccessKeys": {
+          "_": "Chaves de acesso",
+          "Name": "Nome",
+          "Key": "Chave",
+          "Active": "Ativa"
+        }
+      },
+      "Database": {
+        "Type": "Tipo",
+        "Filename": "Arquivo",
+        "Hostname": "Nome do host",
+        "Port": "Porta",
+        "DatabaseName": "Nome do banco de dados",
+        "Username": "Nome de usuário",
+        "Password": "Senha",
+        "TrustServerCertificate": "Confiar no certificado do servidor",
+        "CommandTimeoutSeconds": "Tempo limite de comando (segundos)"
+      },
+      "Inference": {
+        "DefaultVision": "Endpoint de visão padrão",
+        "DefaultText": "Endpoint de texto padrão",
+        "DefaultTranscription": "Endpoint de transcrição padrão",
+        "MaxRetries": "Máximo de novas tentativas",
+        "MaxRepairAttempts": "Máximo de tentativas de reparo de JSON",
+        "RetryBackoffMs": "Intervalo entre tentativas (ms)",
+        "RequestTimeoutMs": "Tempo limite da requisição (ms)",
+        "MaxTranscriptCharacters": "Máximo de caracteres da transcrição",
+        "Endpoints": {
+          "_": "Endpoints",
+          "Name": "Nome",
+          "Provider": "Provedor",
+          "Kind": "Tipo",
+          "Endpoint": "URL",
+          "ApiKey": "Chave de API",
+          "Model": "Modelo",
+          "MaxConcurrentRequests": "Máximo de requisições simultâneas",
+          "TimeoutMs": "Tempo limite (ms)",
+          "Temperature": "Temperatura",
+          "MaxOutputTokens": "Máximo de tokens de saída",
+          "Active": "Ativo"
+        }
+      },
+      "Media": {
+        "TempDirectory": "Diretório temporário",
+        "FfmpegPath": "Caminho do ffmpeg",
+        "FfprobePath": "Caminho do ffprobe",
+        "MaxDownloadBytes": "Tamanho máximo de download",
+        "DownloadTimeoutMs": "Tempo limite de download (ms)",
+        "AllowPrivateNetworkUrls": "Permitir URLs de rede privada",
+        "ImageMaxEdge": "Lado máximo da imagem (px)",
+        "ThumbnailMaxEdge": "Lado máximo da miniatura (px)",
+        "JpegQuality": "Qualidade JPEG (1 melhor, 31 pior)",
+        "MaxParallelFfmpeg": "Máximo de ffmpeg em paralelo",
+        "FfmpegTimeoutMs": "Tempo limite do ffmpeg (ms)",
+        "MaxVideoDurationMs": "Duração máxima do vídeo (ms)",
+        "TranscriptionChunkSeconds": "Bloco de transcrição (segundos)",
+        "MaxSegmentMs": "Duração máxima do segmento (ms)"
+      },
+      "Jobs": {
+        "MaxConcurrentJobs": "Máximo de jobs simultâneos",
+        "MaxQueuedJobs": "Máximo de jobs na fila",
+        "RetentionDays": "Retenção (dias)",
+        "MaxWaitTimeoutMs": "Tempo máximo de espera (ms)"
+      },
+      "RequestHistory": {
+        "Enabled": "Capturar requisições",
+        "MaxRequestBodyBytes": "Corpo máximo de requisição capturado",
+        "MaxResponseBodyBytes": "Corpo máximo de resposta capturado",
+        "RetentionDays": "Retenção (dias)"
+      },
+      "Logging": {
+        "ConsoleLogging": "Logs no console",
+        "EnableColors": "Cores no console",
+        "LogDirectory": "Diretório de logs",
+        "LogFilename": "Nome do arquivo de log",
+        "MinimumSeverity": "Severidade mínima",
+        "Servers": {
+          "_": "Servidores syslog",
+          "Hostname": "Nome do host",
+          "Port": "Porta"
+        }
+      },
+      "Telemetry": {
+        "Enable": "Telemetria",
+        "ServiceName": "Nome do serviço",
+        "OtlpEnable": "Exportação OTLP",
+        "OtlpEndpoint": "Endpoint OTLP",
+        "OtlpProtocol": "Protocolo OTLP",
+        "PrometheusEnable": "Endpoint do Prometheus",
+        "PrometheusHostname": "Nome do host do Prometheus",
+        "PrometheusPort": "Porta do Prometheus",
+        "PrometheusPath": "Caminho do Prometheus",
+        "LokiEnable": "Exportação para o Loki",
+        "LokiEndpoint": "Endpoint do Loki",
+        "ExportLogs": "Exportar logs",
+        "MetricExportIntervalMs": "Intervalo de exportação de métricas (ms)",
+        "TraceSamplingRatio": "Taxa de amostragem de traces"
+      },
+      "Analytics": {
+        "Enabled": "Registrar análises",
+        "RetentionDays": "Retenção (dias)"
+      }
+    }
+  },
+  "server": {
+    "title": "Informações do servidor",
+    "summary": "Versão, integridade, a chave com a qual você entrou e URLs do servidor para copiar.",
+    "health": "Integridade",
+    "status": "Status",
+    "version": "Versão do servidor",
+    "started": "Iniciado",
+    "uptime": "Tempo de atividade",
+    "database": "Banco de dados",
+    "jobs": "Jobs",
+    "jobsValue": "{{active}} ativos, {{queued}} na fila",
+    "ffmpeg": "ffmpeg",
+    "ffmpegMissingHelp": "Instale o ffmpeg e o ffprobe no host do servidor ou defina Media.FfmpegPath em Configurações.",
+    "endpoints": "Integridade dos endpoints",
+    "noEndpoints": "Nenhum endpoint ativo",
+    "identity": "Identidade",
+    "principal": "Principal",
+    "role": "Função",
+    "authRequired": "Autenticação obrigatória",
+    "dashboardVersion": "Versão do dashboard",
+    "repository": "Repositório",
+    "copyUrl": "Copiar {{name}}",
+    "urls": {
+      "title": "URLs do servidor",
+      "base": "URL base",
+      "health": "Integridade",
+      "openapi": "Documento OpenAPI",
+      "swagger": "Swagger UI",
+      "whoami": "Quem sou eu",
+      "dashboard": "Este dashboard"
+    }
+  },
+  "notFound": {
+    "title": "Página não encontrada",
+    "message": "Esta rota do dashboard não existe.",
+    "home": "Ir para o Início"
+  },
+  "enums": {
+    "jobStatus": {
+      "Queued": "Na fila",
+      "Running": "Em execução",
+      "Succeeded": "Concluído",
+      "Failed": "Falhou",
+      "Canceled": "Cancelado",
+      "Interrupted": "Interrompido"
+    },
+    "fieldType": {
+      "Boolean": "Booleano",
+      "String": "String",
+      "Integer": "Inteiro",
+      "Number": "Número",
+      "Enum": "Enum",
+      "StringList": "Lista de strings",
+      "Object": "Objeto"
+    },
+    "mediaKind": {
+      "Unknown": "Desconhecido",
+      "Image": "Imagem",
+      "Video": "Vídeo",
+      "Audio": "Áudio"
+    },
+    "summaryStyle": {
+      "Paragraph": "Parágrafo",
+      "Bullets": "Tópicos",
+      "Caption": "Legenda"
+    },
+    "extractMode": {
+      "Combined": "Combinado",
+      "PerField": "Por campo"
+    },
+    "extractModeHelp": {
+      "Combined": "Uma única chamada ao modelo retorna todos os campos. Mais rápido e mais barato.",
+      "PerField": "Uma chamada por campo, executadas em paralelo. Custa mais, mas isola falhas e mede o tempo de cada campo."
+    },
+    "endpointKind": {
+      "Completion": "Conclusão",
+      "Transcription": "Transcrição"
+    },
+    "provider": {
+      "Mock": "Mock (somente testes)",
+      "Ollama": "Ollama",
+      "OllamaCloud": "Ollama Cloud",
+      "OpenAi": "OpenAI",
+      "OpenAiCompatible": "Compatível com OpenAI",
+      "AzureOpenAi": "Azure OpenAI",
+      "Anthropic": "Anthropic",
+      "Gemini": "Gemini",
+      "VertexAi": "Vertex AI",
+      "Bedrock": "Bedrock",
+      "XAi": "xAI",
+      "Cohere": "Cohere"
+    },
+    "stage": {
+      "Resolve": "Resolver",
+      "Probe": "Sondar",
+      "Normalize": "Normalizar",
+      "SceneDetection": "Detecção de cenas",
+      "FrameExtraction": "Extração de quadros",
+      "AudioExtraction": "Extração de áudio",
+      "Transcribe": "Transcrever",
+      "Scenes": "Cenas",
+      "Summarize": "Resumir",
+      "Extract": "Extrair",
+      "Reduce": "Reduzir"
+    },
+    "progressStage": {
+      "Queued": "Na fila",
+      "Done": "Concluído",
+      "Resolve": "Resolvendo a mídia",
+      "Probe": "Sondando",
+      "AudioExtraction": "Extraindo áudio",
+      "Transcribe": "Transcrevendo",
+      "SceneDetection": "Detectando cenas",
+      "FrameExtraction": "Extraindo quadros",
+      "Scenes": "Analisando cenas",
+      "Reduce": "Resumindo o vídeo",
+      "Summarize": "Resumindo",
+      "Extract": "Extraindo campos"
+    },
+    "purpose": {
+      "Summarize": "Resumir",
+      "Extract": "Extrair",
+      "SceneSummarize": "Resumo da cena",
+      "SceneExtract": "Campos da cena",
+      "Transcribe": "Transcrever"
+    },
+    "health": {
+      "Healthy": "Íntegro",
+      "Degraded": "Degradado"
+    }
+  },
+  "units": {
+    "tokensPerSecond": "{{value}} tok/s",
+    "realtimeFactor": "{{value}}x"
+  },
+  "appearance": {
+    "title": "Aparência",
+    "open": "Aparência: paleta e modo claro ou escuro",
+    "mode": "Modo",
+    "palette": "Paleta",
+    "modes": {
+      "light": "Claro",
+      "dark": "Escuro",
+      "system": "Sistema"
+    },
+    "help": "Salvo neste navegador. Sistema segue a configuração de modo claro ou escuro do seu sistema operacional.",
+    "palettes": {
+      "slate": "Ardósia",
+      "indigoNight": "Noite Índigo",
+      "fjord": "Fiorde",
+      "nocturne": "Noturno",
+      "solstice": "Solstício",
+      "cocoa": "Cacau",
+      "duskRose": "Rosa do Crepúsculo",
+      "metroNight": "Noite Urbana",
+      "forest": "Floresta",
+      "ocean": "Oceano",
+      "amber": "Âmbar",
+      "graphite": "Grafite",
+      "lavender": "Lavanda",
+      "mint": "Menta",
+      "sandstone": "Arenito",
+      "terracotta": "Terracota"
+    }
+  },
+  "analyzeAudio": {
+    "title": "Analisar áudio",
+    "summary": "Transcreva um arquivo de áudio (ou a faixa de áudio de um vídeo) e, em seguida, resuma-o e extraia campos tipados da transcrição. É executado como um job; o progresso e a transcrição aparecem abaixo.",
+    "modelHelp": "O endpoint de transcrição converte fala em texto (padrão Inference.DefaultTranscription). O endpoint de texto escreve o resumo e os campos a partir da transcrição (padrão Inference.DefaultText).",
+    "languageHelp": "Código ISO-639 opcional. Deixe em branco para que o modelo detecte o idioma.",
+    "transcribeRequired": "A transcrição é obrigatória: o resumo e os campos são gerados a partir da transcrição.",
+    "summaryHelp": "Escrito pelo endpoint de texto a partir da transcrição.",
+    "submit": "Enviar job de áudio",
+    "jobTitle": "Job",
+    "openJob": "Abrir job",
+    "polling": "Verificando o progresso a cada poucos segundos. Você pode sair desta página; o job continua em execução.",
+    "emptyTitle": "Nenhum job de áudio ainda",
+    "emptyMessage": "Escolha um arquivo ou uma URL acima e envie. Progresso, transcrição e resultados aparecem aqui.",
+    "toast": {
+      "submitted": "Job de áudio {{id}} na fila.",
+      "cancelFailed": "Não foi possível cancelar o job: {{message}}"
+    },
+    "errors": {
+      "notSupported": "Este servidor não oferece suporte à análise de áudio (POST /v1.0/audio não foi encontrado)."
+    }
+  },
+  "segments": {
+    "uploadedTitle": "A mídia de origem foi enviada",
+    "uploadedMessage": "O Keyframe não guarda mídias enviadas, por isso clipes, áudio e quadros precisam do arquivo original novamente. Escolha-o no disco para ativar os botões de download.",
+    "usingFile": "Usando {{name}} ({{size}}) como origem dos downloads.",
+    "chooseFile": "Escolher arquivo original",
+    "chooseOther": "Escolher outro arquivo",
+    "clearFile": "Limpar",
+    "reading": "Lendo...",
+    "needSource": "Escolha primeiro o arquivo original",
+    "download": {
+      "Video": "Baixar clipe",
+      "Audio": "Baixar áudio",
+      "Frame": "Baixar quadro"
+    },
+    "hint": {
+      "Video": "Recortar este intervalo como um clipe MP4",
+      "Audio": "Recortar este intervalo como áudio MP3",
+      "Frame": "Salvar o quadro do início desta cena como JPEG"
+    },
+    "toast": {
+      "downloaded": "{{name}} salvo.",
+      "failed": "Falha no download: {{message}}"
+    }
+  },
+  "analytics": {
+    "title": "Análises",
+    "summary": "Desempenho ao longo do tempo para análise de imagem, vídeo e áudio: volume, taxa de sucesso, percentis de latência, tempos do modelo, tokens e detalhes por análise.",
+    "loading": "Carregando análises...",
+    "notAdminTitle": "As análises requerem a chave de administrador",
+    "notAdminMessage": "Entre com a chave de administrador para ver o desempenho e a telemetria de todas as análises.",
+    "unavailableTitle": "As análises não estão disponíveis neste servidor",
+    "unavailableMessage": "GET /v1.0/analytics/summary não foi encontrado. Atualize o servidor para uma versão com análises e verifique se Analytics.Enabled está ativado em Configurações.",
+    "emptyTitle": "Nenhuma análise neste intervalo",
+    "emptyMessage": "Execute uma análise ou amplie o intervalo de tempo. Toda análise concluída de imagem, vídeo e áudio é registrada aqui.",
+    "windowNote": "Exibindo de {{from}} a {{to}}, agrupado por {{bucket}}.",
+    "ranges": {
+      "1h": "1 hora",
+      "24h": "24 horas",
+      "7d": "7 dias",
+      "30d": "30 dias",
+      "custom": "Personalizado"
+    },
+    "buckets": {
+      "minute": "minuto",
+      "hour": "hora",
+      "day": "dia"
+    },
+    "filters": {
+      "label": "Filtros de análises",
+      "range": "Intervalo de tempo",
+      "mediaKind": "Mídia",
+      "endpoint": "Endpoint",
+      "model": "Modelo",
+      "modelPlaceholder": "Qualquer modelo"
+    },
+    "kpi": {
+      "label": "Indicadores de análises",
+      "analyses": "Análises",
+      "analysesSub": "{{ok}} concluídas, {{failed}} com falha",
+      "successRate": "Taxa de sucesso",
+      "analysisP50": "Tempo de análise (p50)",
+      "queueP95": "Espera na fila (p95)",
+      "ttftP50": "Tempo até o primeiro token (p50)",
+      "tokensPerSecond": "Tokens por segundo (p50)",
+      "modelCalls": "Chamadas ao modelo",
+      "modelCallsSub": "{{failed}} com falha, {{retries}} novas tentativas",
+      "totalTokens": "Total de tokens",
+      "perAnalysis": "{{value}} por análise, em média",
+      "p95": "p95 {{value}}",
+      "avg": "Média {{value}}",
+      "generationP50": "Geração p50 {{value}}"
+    },
+    "byKind": {
+      "label": "Por tipo de mídia",
+      "count_one": "{{value}} análise",
+      "count_other": "{{value}} análises",
+      "none": "Nenhuma análise deste tipo no intervalo.",
+      "analysisP50": "Análise p50",
+      "analysisP95": "Análise p95",
+      "realtimeP50": "Fator de tempo real p50",
+      "imagesIn": "Imagens de entrada",
+      "mediaSizeP50": "Tamanho p50",
+      "mediaDurationP50": "Duração p50",
+      "tokens": "Tokens"
+    },
+    "charts": {
+      "volume": "Análises ao longo do tempo",
+      "volumeHint": "Clique em uma barra para listar suas análises abaixo.",
+      "volumeAria_one": "Análises ao longo do tempo, {{count}} análise no intervalo",
+      "volumeAria_other": "Análises ao longo do tempo, {{count}} análises no intervalo",
+      "latency": "Tempos ao longo do tempo",
+      "metric": "Métrica",
+      "latencyAria": "Percentis de {{metric}} ao longo do tempo",
+      "noSamples": "Nenhuma amostra desta métrica no intervalo.",
+      "tokens": "Tokens ao longo do tempo",
+      "successRate": "Taxa de sucesso ao longo do tempo"
+    },
+    "series": {
+      "succeeded": "Concluídas",
+      "failed": "Com falha",
+      "promptTokens": "Tokens de prompt",
+      "completionTokens": "Tokens de conclusão",
+      "successRate": "Taxa de sucesso"
+    },
+    "stats": {
+      "avg": "Média",
+      "p50": "p50",
+      "p90": "p90",
+      "p95": "p95",
+      "p99": "p99",
+      "max": "Máx."
+    },
+    "metrics": {
+      "AnalysisMs": "Tempo de análise",
+      "QueueWaitMs": "Espera na fila",
+      "ModelCallMs": "Tempo de chamada ao modelo",
+      "TimeToFirstTokenMs": "Tempo até o primeiro token",
+      "GenerationMs": "Tempo de geração",
+      "TokensPerSecond": "Tokens por segundo",
+      "TokensPerAnalysis": "Tokens por análise",
+      "RealtimeFactor": "Fator de tempo real",
+      "MediaDurationMs": "Duração da mídia",
+      "MediaBytes": "Tamanho da mídia"
+    },
+    "columns": {
+      "metric": "Métrica",
+      "samples": "Amostras"
+    },
+    "distributions": {
+      "title": "Distribuições",
+      "help": "As métricas de chamadas ao modelo são medidas por chamada; as demais, por análise. O fator de tempo real é o tempo de análise dividido pela duração da mídia (somente vídeo e áudio); abaixo de 1 é mais rápido que o tempo real."
+    },
+    "totals": {
+      "title": "Tokens e entradas",
+      "promptTokens": "Tokens de prompt",
+      "completionTokens": "Tokens de conclusão",
+      "cachedTokens": "Tokens em cache",
+      "reasoningTokens": "Tokens de raciocínio",
+      "totalTokens": "Total de tokens",
+      "tokensPerAnalysisP50": "Tokens por análise (p50)",
+      "tokensPerAnalysisP95": "Tokens por análise (p95)",
+      "modelCalls": "Chamadas ao modelo",
+      "failedModelCalls": "Chamadas ao modelo com falha",
+      "retries": "Novas tentativas",
+      "repairAttempts": "Tentativas de reparo",
+      "inputImages": "Imagens de entrada",
+      "inputImageBytes": "Bytes de imagem enviados",
+      "inputAudioBytes": "Bytes de áudio enviados",
+      "scenes": "Cenas",
+      "transcriptCharacters": "Caracteres da transcrição"
+    },
+    "byModel": {
+      "title": "Por modelo",
+      "empty": "Nenhuma chamada ao modelo no intervalo.",
+      "endpoint": "Endpoint",
+      "provider": "Provedor",
+      "model": "Modelo",
+      "calls": "Chamadas",
+      "failed": "Com falha",
+      "durationP50": "Duração p50",
+      "durationP95": "Duração p95",
+      "ttftP50": "Primeiro token p50",
+      "ttftP95": "Primeiro token p95",
+      "generationP50": "Geração p50",
+      "tokensPerSecondP50": "Tokens/s p50",
+      "promptTokens": "Tokens de prompt",
+      "completionTokens": "Tokens de conclusão"
+    },
+    "byStage": {
+      "title": "Por etapa",
+      "empty": "Nenhum tempo de etapa no intervalo.",
+      "stage": "Etapa",
+      "share": "p50 relativo"
+    },
+    "byPurpose": {
+      "title": "Por finalidade",
+      "empty": "Nenhuma chamada ao modelo no intervalo.",
+      "purpose": "Finalidade",
+      "calls": "Chamadas",
+      "failed": "Com falha",
+      "durationP50": "Duração p50",
+      "durationP95": "Duração p95",
+      "ttftP50": "Primeiro token p50"
+    },
+    "list": {
+      "title": "Análises recentes",
+      "empty": "Nenhuma análise corresponde",
+      "emptyMessage": "Amplie o intervalo de tempo ou limpe os filtros.",
+      "filterNote": "Usa o intervalo de tempo e o filtro de mídia acima. Os filtros de endpoint e modelo se aplicam apenas aos gráficos.",
+      "statusFilter": "Status",
+      "started": "Iniciada",
+      "kind": "Tipo",
+      "status": "Status",
+      "analysisTime": "Tempo de análise",
+      "queueWait": "Espera na fila",
+      "mediaDuration": "Duração da mídia",
+      "mediaSize": "Tamanho da mídia",
+      "realtimeFactor": "Tempo real",
+      "model": "Modelo",
+      "calls": "Chamadas",
+      "tokens": "Tokens",
+      "principal": "Principal",
+      "id": "ID",
+      "bucketTitle": "Filtrado para um intervalo do gráfico",
+      "bucketMessage": "Análises de {{from}} a {{to}}.",
+      "bucketClear": "Mostrar o intervalo inteiro"
+    },
+    "detail": {
+      "title": "Detalhes da análise",
+      "subtitle": "Análise de {{kind}}, {{time}}",
+      "notFound": "Este registro de análise não existe mais.",
+      "error": "Erro",
+      "timeline": "Linha do tempo",
+      "timelineHelp": "Etapas e, em seguida, cada tentativa de chamada ao modelo. As barras de chamada mostram a espera na fila (mais clara), a espera pelo primeiro token e a geração.",
+      "calls": "Chamadas ao modelo",
+      "jsonTitle": "Registro da análise",
+      "openJob": "Abrir job",
+      "deleteTitle": "Excluir registro de análise",
+      "deleteMessage": "Excluir o registro de análise {{id}}? O job e seu resultado não são afetados.",
+      "callsValue": "{{calls}} ({{failed}} com falha)",
+      "retriesValue": "{{retries}} novas tentativas, {{repairs}} reparos",
+      "imagesValue": "{{count}} ({{size}})",
+      "fieldsValue": "{{count}} ({{invalid}} inválidos)",
+      "fields": {
+        "kind": "Tipo de mídia",
+        "principal": "Principal",
+        "started": "Iniciada",
+        "completed": "Concluída",
+        "analysisTime": "Tempo de análise",
+        "queueWait": "Espera na fila",
+        "mediaDuration": "Duração da mídia",
+        "mediaSize": "Tamanho da mídia",
+        "realtimeFactor": "Fator de tempo real",
+        "visionModel": "Modelo de visão",
+        "textModel": "Modelo de texto",
+        "transcriptionModel": "Modelo de transcrição",
+        "modelCalls": "Chamadas ao modelo",
+        "retries": "Novas tentativas e reparos",
+        "promptTokens": "Tokens de prompt",
+        "completionTokens": "Tokens de conclusão",
+        "cachedTokens": "Tokens em cache",
+        "reasoningTokens": "Tokens de raciocínio",
+        "totalTokens": "Total de tokens",
+        "inputImages": "Imagens de entrada",
+        "inputAudio": "Áudio enviado",
+        "scenes": "Cenas",
+        "transcriptCharacters": "Caracteres da transcrição",
+        "fields": "Campos"
+      }
+    },
+    "toast": {
+      "deleted": "Registro de análise {{id}} excluído."
+    }
+  }
+}

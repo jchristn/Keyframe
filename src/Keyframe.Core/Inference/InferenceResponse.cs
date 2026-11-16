@@ -73,9 +73,24 @@ namespace Keyframe.Core.Inference
         public long? ReasoningTokens { get; set; } = null;
 
         /// <summary>
-        /// Time to first token in milliseconds, when streaming reports it.
+        /// Time to first token in milliseconds: request sent to the first content or reasoning token. Null when unknown.
         /// </summary>
         public double? TimeToFirstTokenMs { get; set; } = null;
+
+        /// <summary>
+        /// Generation time in milliseconds: first token to last token. Null when unknown.
+        /// </summary>
+        public double? GenerationMs { get; set; } = null;
+
+        /// <summary>
+        /// Completion tokens per second of generation time. Null when tokens or generation time are unknown or zero.
+        /// </summary>
+        public double? TokensPerSecond { get; set; } = null;
+
+        /// <summary>
+        /// Time spent waiting on the endpoint's concurrency gate in milliseconds. Set by the gated wrapper.
+        /// </summary>
+        public double QueueMs { get; set; } = 0;
 
         /// <summary>
         /// Call duration in milliseconds.

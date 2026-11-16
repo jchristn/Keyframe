@@ -19,9 +19,19 @@ namespace Keyframe.Server.Services
         public Job Job { get; }
 
         /// <summary>
-        /// Request to run.
+        /// Video request to run, for video jobs.
         /// </summary>
-        public VideoAnalysisRequest Request { get; }
+        public VideoAnalysisRequest? Video { get; }
+
+        /// <summary>
+        /// Audio request to run, for audio jobs.
+        /// </summary>
+        public AudioAnalysisRequest? Audio { get; }
+
+        /// <summary>
+        /// HTTP request identifier of the submission, when known.
+        /// </summary>
+        public string? RequestId { get; }
 
         /// <summary>
         /// Cancellation for this job.
@@ -54,15 +64,31 @@ namespace Keyframe.Server.Services
         #region Constructors-and-Factories
 
         /// <summary>
-        /// Instantiate.
+        /// Instantiate a video job.
         /// </summary>
         /// <param name="job">Job.</param>
         /// <param name="request">Request.</param>
-        /// <exception cref="ArgumentNullException">Thrown when an argument is null.</exception>
-        public JobWork(Job job, VideoAnalysisRequest request)
+        /// <param name="requestId">HTTP request identifier, or null.</param>
+        /// <exception cref="ArgumentNullException">Thrown when job or request is null.</exception>
+        public JobWork(Job job, VideoAnalysisRequest request, string? requestId = null)
         {
             Job = job ?? throw new ArgumentNullException(nameof(job));
-            Request = request ?? throw new ArgumentNullException(nameof(request));
+            Video = request ?? throw new ArgumentNullException(nameof(request));
+            RequestId = requestId;
+        }
+
+        /// <summary>
+        /// Instantiate an audio job.
+        /// </summary>
+        /// <param name="job">Job.</param>
+        /// <param name="request">Request.</param>
+        /// <param name="requestId">HTTP request identifier, or null.</param>
+        /// <exception cref="ArgumentNullException">Thrown when job or request is null.</exception>
+        public JobWork(Job job, AudioAnalysisRequest request, string? requestId = null)
+        {
+            Job = job ?? throw new ArgumentNullException(nameof(job));
+            Audio = request ?? throw new ArgumentNullException(nameof(request));
+            RequestId = requestId;
         }
 
         #endregion

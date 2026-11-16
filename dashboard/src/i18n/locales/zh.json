@@ -1,0 +1,1534 @@
+{
+  "app": {
+    "name": "Keyframe",
+    "documentTitle": "{{page}} | Keyframe",
+    "versionLabel": "v{{version}}",
+    "alpha": "ALPHA"
+  },
+  "common": {
+    "actions": "操作",
+    "any": "任意",
+    "cancel": "取消",
+    "close": "关闭",
+    "confirm": "确认",
+    "copied": "已复制",
+    "copy": "复制",
+    "copyId": "复制 ID",
+    "delete": "删除",
+    "disabled": "已禁用",
+    "dismiss": "忽略",
+    "download": "下载 JSON",
+    "empty": "暂无内容。",
+    "emptyList": "空列表",
+    "enabled": "已启用",
+    "false": "否",
+    "true": "是",
+    "language": "语言",
+    "loading": "加载中...",
+    "never": "从不",
+    "no": "否",
+    "yes": "是",
+    "none": "无",
+    "notAvailable": "不适用",
+    "notYet": "尚未",
+    "null": "null",
+    "refresh": "刷新",
+    "retry": "重试",
+    "save": "保存",
+    "saving": "保存中...",
+    "unknown": "未知",
+    "updatedAt": "更新于 {{time}}",
+    "view": "查看",
+    "viewJson": "查看 JSON",
+    "working": "处理中..."
+  },
+  "nav": {
+    "label": "主导航",
+    "home": "首页",
+    "image": "图像",
+    "video": "视频",
+    "jobs": "任务",
+    "endpoints": "端点",
+    "requestHistory": "请求历史",
+    "apiExplorer": "API 浏览器",
+    "settings": "设置",
+    "server": "服务器信息",
+    "adminOnly": "需要管理员密钥",
+    "groups": {
+      "analyze": "分析",
+      "operate": "运维",
+      "observability": "可观测性",
+      "system": "系统"
+    },
+    "audio": "音频",
+    "analytics": "统计分析"
+  },
+  "roles": {
+    "admin": "管理员",
+    "accessKey": "访问密钥"
+  },
+  "status": {
+    "active": "活动",
+    "inactive": "非活动",
+    "available": "可用",
+    "missing": "缺失",
+    "checking": "检查中",
+    "failed": "失败",
+    "succeeded": "成功",
+    "partial": "部分成功",
+    "healthy": "健康",
+    "unhealthy": "不健康",
+    "unreachable": "无法访问",
+    "valid": "有效",
+    "invalid": "无效"
+  },
+  "topbar": {
+    "toggleNav": "切换导航",
+    "copyServerUrl": "复制服务器 URL",
+    "health": "服务器健康状态",
+    "principal": "已登录密钥",
+    "anonymous": "匿名",
+    "repository": "GitHub 上的 Keyframe",
+    "lightMode": "切换到浅色主题",
+    "darkMode": "切换到深色主题",
+    "logout": "退出登录"
+  },
+  "login": {
+    "title": "连接到服务器",
+    "tagline": "从图像和视频中生成摘要和类型化元数据。",
+    "serverUrl": "服务器 URL",
+    "serverUrlHelp": "Keyframe REST 服务器，例如 http://127.0.0.1:8700。此设备会记住该地址。",
+    "apiKey": "API 密钥",
+    "apiKeyPlaceholder": "访问密钥或管理员密钥",
+    "showKey": "显示密钥",
+    "hideKey": "隐藏密钥",
+    "remember": "在此设备上记住密钥",
+    "rememberHelp": "不勾选时，密钥仅保存在内存中，重新加载页面后需要再次登录。",
+    "connect": "连接",
+    "connecting": "连接中...",
+    "restoring": "正在恢复会话...",
+    "retrySaved": "重试已保存的会话",
+    "localDefaults": "全新的本地安装使用访问密钥“default”和管理员密钥“keyframeadmin”。共享服务器前请修改这两个密钥。",
+    "errors": {
+      "badUrl": "请输入完整的 http 或 https URL。",
+      "unreachable": "无法访问 {{url}}。请确认服务器正在运行、URL 和端口正确，并且浏览器可以访问它。",
+      "badKey": "服务器拒绝了此密钥。请检查密钥后重试。",
+      "rateLimited": "此地址的失败尝试次数过多。请等待一分钟后重试。",
+      "notKeyframe": "服务器有响应，但似乎不是 Keyframe（没有 /v1.0/whoami）。请检查 URL。",
+      "unexpected": "服务器返回了意外错误。",
+      "savedKeyRejected": "{{url}} 不再接受已保存的密钥。请重新登录。",
+      "restoreUnreachable": "无法访问 {{url}}，会话恢复失败。",
+      "sessionExpired": "服务器拒绝了密钥。请重新登录。"
+    }
+  },
+  "errors": {
+    "network": "无法访问服务器。",
+    "badRequest": "服务器认为请求无效并拒绝了它。",
+    "unauthorized": "密钥缺失或无效。",
+    "forbidden": "此操作需要管理员密钥。",
+    "notFound": "未找到。",
+    "conflict": "请求与当前状态冲突。",
+    "unprocessable": "无法下载或解码媒体。",
+    "tooManyRequests": "请稍候重试。对于视频和音频任务，队列可能已满；请取消任务或等待运行中的任务完成。",
+    "badGateway": "无法访问模型端点。",
+    "timeout": "请求超时。",
+    "server": "服务器发生内部错误（HTTP {{status}}）。",
+    "unknown": "出现错误（HTTP {{status}}）。",
+    "requestId": "请求 ID",
+    "hints": {
+      "network": "请确认服务器正在运行且此浏览器可以访问，然后重试。",
+      "badRequest": "请修正上面列出的问题后再次提交。",
+      "forbidden": "请使用管理员密钥登录以执行此操作。",
+      "unprocessable": "请确认服务器可以访问该 URL，且其指向受支持的图像或视频；也可以改为上传文件。",
+      "tooManyRequests": "请稍候重试。对于视频任务，队列可能已满；请取消任务或等待运行中的任务完成。",
+      "badGateway": "打开“端点”页面测试连通性，或选择其他端点后重试。",
+      "timeout": "请重试、改用更小的输入，或在“设置”中调高超时时间。"
+    }
+  },
+  "pagination": {
+    "label": "分页",
+    "showing": "显示第 {{from}}-{{to}} 条，共 {{total}} 条",
+    "pageOf": "第 {{page}} 页，共 {{pages}} 页",
+    "first": "第一页",
+    "previous": "上一页",
+    "next": "下一页",
+    "last": "最后一页",
+    "jump": "转到页",
+    "pageSize": "每页"
+  },
+  "table": {
+    "empty": "无记录",
+    "selectColumns": "选择列",
+    "showAllColumns": "显示所有列",
+    "sortBy": "按{{column}}排序",
+    "sortPage": "排序仅作用于本页的行；服务器按从新到旧的顺序返回。",
+    "sortLocal": "排序仅作用于当前显示的行。",
+    "selectAll": "选择本页所有行",
+    "selectRow": "选择行",
+    "selectedCount_other": "已选择 {{count}} 项",
+    "clearSelection": "清除选择",
+    "bulkActions": "批量操作"
+  },
+  "filters": {
+    "from": "从",
+    "to": "至",
+    "apply": "应用",
+    "clear": "清除筛选"
+  },
+  "chart": {
+    "title": "请求活动",
+    "range": "时间范围",
+    "refresh": "刷新图表",
+    "success": "成功",
+    "failure": "失败",
+    "noData": "此范围内暂无请求。",
+    "ariaSummary_other": "请求活动图表，范围内共 {{count}} 个请求",
+    "ranges": {
+      "hour": "最近一小时",
+      "day": "最近一天",
+      "week": "最近一周",
+      "month": "最近一个月"
+    },
+    "tooltip": {
+      "total": "总计：{{value}}",
+      "success": "成功：{{value}}",
+      "failure": "失败：{{value}}",
+      "avg": "平均耗时：{{value}}"
+    }
+  },
+  "telemetry": {
+    "totalTime": "总耗时",
+    "queued": "排队",
+    "modelTime": "模型耗时",
+    "modelCalls": "模型调用",
+    "failedCalls": "失败调用",
+    "promptTokens": "提示 Token",
+    "completionTokens": "补全 Token",
+    "totalTokens": "总 Token",
+    "inputImages": "输入图像",
+    "noCalls": "未进行任何模型调用。",
+    "waterfallAria": "遥测瀑布图，包含 {{stages}} 个阶段和 {{calls}} 次模型调用",
+    "showAll": "显示全部 {{count}} 次模型调用",
+    "showFewer": "显示较少的模型调用",
+    "tooltip": {
+      "start": "开始于 {{value}}",
+      "duration": "耗时 {{value}}",
+      "model": "{{endpoint}} {{model}}",
+      "tokens": "Token {{value}}",
+      "attempts": "尝试次数 {{value}}",
+      "queue": "排队 {{value}}",
+      "ttft": "首个 Token 用时 {{value}}",
+      "generation": "生成 {{value}}",
+      "tokensPerSecond": "每秒 {{value}} 个 Token"
+    },
+    "columns": {
+      "purpose": "用途",
+      "target": "目标",
+      "endpoint": "端点",
+      "model": "模型",
+      "duration": "耗时",
+      "attempts": "尝试次数",
+      "promptTokens": "提示 Token",
+      "completionTokens": "补全 Token",
+      "totalTokens": "总 Token",
+      "finishReason": "结束原因",
+      "status": "状态",
+      "queue": "排队",
+      "ttft": "首个 Token",
+      "generation": "生成",
+      "tokensPerSecond": "Token/秒",
+      "cachedTokens": "缓存 Token",
+      "reasoningTokens": "推理 Token"
+    },
+    "avgTtft": "平均首个 Token 用时",
+    "avgTokensPerSecond": "平均每秒 Token 数",
+    "cachedTokens": "缓存 Token",
+    "reasoningTokens": "推理 Token"
+  },
+  "fieldBuilder": {
+    "title": "字段",
+    "empty": "暂无字段。添加一个字段以提取类型化的值。",
+    "fieldNumber": "字段 {{n}}",
+    "key": "键",
+    "keyPlaceholder": "dogCount",
+    "type": "类型",
+    "prompt": "提示词",
+    "promptPlaceholder": "模型为此字段回答的问题",
+    "options": "选项",
+    "optionsPlaceholder": "输入一个选项并按 Enter",
+    "removeOption": "移除选项 {{option}}",
+    "minimum": "最小值",
+    "maximum": "最大值",
+    "maxLength": "最大长度",
+    "maxItems": "最大项数",
+    "schema": "JSON Schema",
+    "schemaPlaceholder": "{\"type\": \"object\", \"properties\": {}}",
+    "default": "默认值",
+    "noDefault": "无默认值",
+    "defaultListPlaceholder": "以逗号分隔的值",
+    "optional": "可选",
+    "required": "必填",
+    "add": "添加字段",
+    "newFieldType": "新字段的类型",
+    "moveUp": "上移",
+    "moveDown": "下移",
+    "duplicate": "复制字段",
+    "remove": "移除字段",
+    "dragToReorder": "拖动以重新排序",
+    "errors": {
+      "keyInvalid": "请使用 1 到 64 个字母、数字、下划线、连字符或句点。",
+      "keyDuplicate": "键“{{key}}”被使用了多次。",
+      "keySummary": "键“{{key}}”与摘要键冲突。",
+      "promptRequired": "提示词为必填项。",
+      "promptTooLong": "提示词最多 {{max}} 个字符。",
+      "optionsRequired": "枚举字段至少需要一个选项。",
+      "optionsTooMany": "最多 {{max}} 个选项。",
+      "notNumber": "请输入数字。",
+      "minAboveMax": "最小值不能大于最大值。",
+      "atLeastOne": "至少为 1。",
+      "schemaJson": "该 Schema 不是有效的 JSON。",
+      "defaultJson": "默认值不是有效的 JSON。",
+      "defaultNotOption": "默认值必须是其中一个选项。"
+    }
+  },
+  "context": {
+    "help": "与请求中的每个提示词共享的背景信息：摘要、每个字段，以及视频的每个场景。上下文被视为数据，而不是指令。",
+    "label": "标签",
+    "labelPlaceholder": "来源",
+    "text": "文本",
+    "textPlaceholder": "领养志愿者提交的照片。",
+    "add": "添加上下文",
+    "remove": "移除上下文项 {{n}}",
+    "errors": {
+      "tooMany": "最多 {{max}} 个上下文项。",
+      "textRequired": "上下文项 {{n}} 需要填写文本。",
+      "labelTooLong": "上下文项 {{n}} 的标签超过 {{max}} 个字符。",
+      "tooLong": "上下文总长度超过 {{max}} 个字符。"
+    }
+  },
+  "media": {
+    "source": "媒体来源",
+    "upload": "上传",
+    "url": "URL",
+    "dropImage": "将图像拖放到此处，或选择文件。",
+    "dropVideo": "将视频拖放到此处，或选择文件。",
+    "chooseFile": "选择文件",
+    "chooseAnother": "重新选择",
+    "previewAlt": "所选图像的预览",
+    "imageUrl": "图像 URL",
+    "videoUrl": "视频 URL",
+    "urlHint": "服务器会自行下载该 URL，因此服务器必须能够访问它。除非开启 Media.AllowPrivateNetworkUrls，否则会阻止私有网络地址。",
+    "videoUploadHint": "上传的文件会以 base64 形式放在请求正文中，体积约增加三分之一。大型视频建议使用 URL。",
+    "errors": {
+      "fileRequired": "请选择要分析的文件。",
+      "urlInvalid": "请输入完整的 http 或 https URL。"
+    },
+    "dropAudio": "将音频或视频文件拖放到此处，或选择文件。",
+    "audioUrl": "音频或视频 URL",
+    "audioUploadHint": "支持 MP3、WAV、FLAC、M4A、OGG、Opus 和 WebM 音频。对于视频文件，仅使用其音轨。上传的文件以 base64 形式发送，体积约增加三分之一。"
+  },
+  "model": {
+    "endpoint": "端点",
+    "visionEndpoint": "视觉端点",
+    "textEndpoint": "文本端点",
+    "useDefault": "服务器默认",
+    "name": "覆盖模型",
+    "namePlaceholder": "端点默认模型",
+    "textHelp": "文本端点处理纯文本步骤，例如整段视频摘要。默认使用 Inference.DefaultText，其次使用视觉端点。",
+    "transcriptionEndpoint": "转录端点"
+  },
+  "summarize": {
+    "enable": "生成摘要",
+    "key": "结果键",
+    "keyInvalid": "请使用 1 到 64 个字母、数字、下划线、连字符或句点。",
+    "maxWords": "最大字数",
+    "style": "样式",
+    "instructions": "说明",
+    "instructionsPlaceholder": "可选的指导，例如：提及场景环境和任何动物。"
+  },
+  "extract": {
+    "enable": "提取类型化字段",
+    "mode": "提取模式"
+  },
+  "results": {
+    "title": "结果",
+    "noResults": "未返回任何结果。",
+    "noFields": "未请求任何字段。",
+    "noProperties": "未请求媒体属性。",
+    "copyValue": "复制 {{key}} 的值",
+    "errors_other": "{{count}} 个错误",
+    "errorsHint": "某次模型调用在重试后仍然失败。下面显示的是部分结果。请重试，或在“端点”页面测试该端点。",
+    "warnings_other": "{{count}} 个警告",
+    "tabs": {
+      "results": "结果",
+      "fields": "字段",
+      "telemetry": "遥测",
+      "properties": "属性",
+      "raw": "原始 JSON"
+    },
+    "columns": {
+      "key": "键",
+      "type": "类型",
+      "value": "值",
+      "valid": "有效",
+      "raw": "模型原始输出",
+      "notes": "错误和警告"
+    }
+  },
+  "properties": {
+    "mediaKind": "媒体类型",
+    "contentType": "内容类型",
+    "format": "格式",
+    "size": "大小",
+    "dimensions": "尺寸",
+    "duration": "时长",
+    "frameRate": "帧率",
+    "bitRate": "比特率",
+    "videoCodec": "视频编解码器",
+    "hasAudio": "包含音频",
+    "audioCodec": "音频编解码器",
+    "audioChannels": "音频声道",
+    "audioSampleRate": "音频采样率",
+    "sha256": "SHA-256",
+    "tags": "标签"
+  },
+  "snippets": {
+    "title": "复制为代码",
+    "keyNote": "代码片段从 KEYFRAME_API_KEY 环境变量读取密钥，绝不包含您的密钥。上传的媒体以占位符显示。",
+    "languages": {
+      "curl": "cURL",
+      "fetch": "JavaScript",
+      "python": "Python",
+      "csharp": "C#"
+    }
+  },
+  "presets": {
+    "label": "预设",
+    "choose": "加载预设",
+    "none": "没有已保存的预设",
+    "save": "保存预设",
+    "saveTitle": "保存预设",
+    "name": "预设名称",
+    "saveHelp": "在此浏览器中保存上下文、模型、功能和字段。绝不会保存媒体和密钥。",
+    "delete": "删除预设",
+    "deleteTitle": "删除预设",
+    "deleteMessage": "要从此浏览器中删除预设“{{name}}”吗？"
+  },
+  "analyze": {
+    "sections": {
+      "media": "媒体",
+      "context": "上下文",
+      "model": "模型",
+      "summary": "摘要",
+      "fields": "类型化字段"
+    },
+    "includeProperties": "在响应中包含媒体属性",
+    "run": "分析",
+    "running": "分析中...",
+    "errors": {
+      "fixFields": "请先修正突出显示的问题。",
+      "noFields": "请至少添加一个字段，或关闭提取。",
+      "noFunction": "请启用“生成摘要”或“提取”。"
+    },
+    "toast": {
+      "done": "分析完成，用时 {{duration}}。",
+      "partial": "分析完成但有错误，用时 {{duration}}。请检查结果。",
+      "canceled": "已取消分析。"
+    }
+  },
+  "analyzeImage": {
+    "title": "分析图像",
+    "summary": "为图像生成摘要并提取类型化字段。结果包括每个字段的有效性和耗时明细。",
+    "emptyTitle": "尚无分析",
+    "emptyMessage": "选择一张图像，调整字段，然后选择“分析”。结果、字段校验、遥测和原始 JSON 将显示在此处。"
+  },
+  "analyzeVideo": {
+    "title": "分析视频",
+    "summary": "提交视频任务：场景检测、每个场景的摘要和字段、转录以及整段视频结果。任务被接受后将跳转到该任务。",
+    "sections": {
+      "whole": "整段视频",
+      "scenes": "场景",
+      "transcribe": "转录"
+    },
+    "wholeHelp": "针对整段视频的摘要和字段。",
+    "sampleFrames": "采样帧数",
+    "sampleFramesHelp": "关闭场景检测时在整段视频中采样的帧数（1 到 64）。",
+    "scenesEnable": "检测场景并逐一分析",
+    "threshold": "场景阈值",
+    "thresholdHelp": "ffmpeg 场景分数，范围 0.01 到 1。值越低，检测到的切换越多。",
+    "minSceneMs": "最短场景 (ms)",
+    "maxSceneMs": "最长场景 (ms)",
+    "maxScenes": "最大场景数",
+    "maxScenesHelp": "限制成本。多出的场景会被合并。",
+    "framesPerScene": "每个场景的帧数",
+    "sceneSummary": "每个场景的摘要",
+    "sceneExtract": "为每个场景提取字段",
+    "includeKeyframeData": "包含关键帧缩略图（用于场景时间线）",
+    "transcribeEnable": "转录音轨",
+    "transcribeEndpoint": "转录端点",
+    "language": "语言",
+    "transcribePrompt": "转录提示词",
+    "transcribePromptPlaceholder": "可选的词汇或拼写提示",
+    "submit": "提交任务",
+    "submitting": "提交中...",
+    "errors": {
+      "sceneRange": "最短场景必须小于最长场景。",
+      "language": "请使用 ISO-639 代码，例如 en 或 pt-BR。",
+      "noFunction": "请至少启用“生成摘要”、“提取”、“场景”或“转录”中的一项。",
+      "queueFull": "任务队列已满。"
+    },
+    "toast": {
+      "submitted": "已接受任务 {{id}}。"
+    },
+    "languagePlaceholder": "en"
+  },
+  "samples": {
+    "image": {
+      "hasPeople": "这张图像中有人吗？",
+      "objects": "列出您能看到的主要物体。",
+      "setting": "这张照片是在哪里拍摄的？",
+      "indoors": "室内",
+      "outdoors": "室外",
+      "unknown": "未知"
+    },
+    "video": {
+      "topics": "列出涉及的主要话题。",
+      "showsText": "画面中是否有醒目的文字？"
+    },
+    "audio": {
+      "speakerCount": "共有多少位不同的说话人？"
+    }
+  },
+  "home": {
+    "title": "首页",
+    "summary": "Keyframe 当前的运行情况：服务器健康状态、请求流量、分析任务和模型端点。",
+    "ctaLabel": "常用工作流",
+    "cta": {
+      "image": "分析图像",
+      "imageSub": "一次调用获取摘要和类型化字段",
+      "video": "分析视频",
+      "videoSub": "以任务形式获取场景、转录文本和字段",
+      "explorer": "打开 API 浏览器",
+      "explorerSub": "在浏览器中调用任意路由",
+      "audio": "分析音频",
+      "audioSub": "以任务形式获取转录文本、摘要和字段"
+    },
+    "kpiLabel": "关键指标",
+    "kpi": {
+      "requests": "请求数（{{range}}）",
+      "successRate": "成功率",
+      "failures_other": "{{value}} 次失败",
+      "avgLatency": "平均延迟",
+      "jobs": "活动任务",
+      "queued": "{{value}} 个排队中",
+      "endpoints": "健康端点",
+      "healthyOf": "{{healthy}} / {{total}}",
+      "server": "服务器",
+      "ffmpegAvailable": "ffmpeg 可用",
+      "ffmpegMissing": "缺少 ffmpeg"
+    },
+    "attention": {
+      "title": "需要关注",
+      "none": "没有需要关注的事项。",
+      "open": "打开",
+      "unreachable": "健康检查端点没有响应。",
+      "ffmpegMissing": "服务器上没有可用的 ffmpeg。安装之前，视频分析和图像规范化都会失败。",
+      "endpointUnhealthy": "端点 {{name}} 不健康。{{message}}",
+      "noActiveEndpoints": "没有活动的模型端点。请在“设置”中添加或启用一个端点。",
+      "failedJobs_other": "{{count}} 个任务失败。",
+      "failedRequests_other": "此范围内有 {{count}} 个请求失败。",
+      "authDisabled": "身份验证已关闭。任何能访问服务器的人都可以使用它。"
+    },
+    "activityTitle": "请求活动",
+    "noTraffic": {
+      "title": "暂无流量",
+      "message": "运行一次分析或调用 API 后，请求将显示在此处。"
+    },
+    "recentJobs": "最近任务",
+    "viewAllJobs": "查看所有任务",
+    "noJobs": "暂无任务。"
+  },
+  "externalServices": {
+    "title": "外部服务",
+    "summary": "随 Docker Compose 栈一起提供的可观测性工具。链接使用您所连接的主机。",
+    "credentials": "默认登录凭据",
+    "noLogin": "无需登录",
+    "copyUrl": "复制 URL",
+    "note": "这些是本地开发的默认配置。对外暴露该栈之前请修改 Grafana 密码，并且不要将 Prometheus 和 Tempo 暴露在公共网络接口上。不属于此部署的服务将无法加载。",
+    "services": {
+      "grafana": {
+        "name": "Grafana",
+        "purpose": "流量、管道阶段和模型调用的仪表板"
+      },
+      "prometheus": {
+        "name": "Prometheus",
+        "purpose": "指标存储和查询界面"
+      },
+      "tempo": {
+        "name": "Tempo",
+        "purpose": "链路追踪存储（就绪端点）"
+      }
+    }
+  },
+  "jobs": {
+    "title": "任务",
+    "summary": "带实时进度的视频和音频分析任务。打开任务可查看场景、转录文本和遥测；可以取消运行中的任务或删除已完成的任务。",
+    "newJob": "新建视频任务",
+    "upload": "上传的数据",
+    "columns": {
+      "id": "任务",
+      "status": "状态",
+      "progress": "进度",
+      "kind": "类型",
+      "principal": "提交者",
+      "source": "来源",
+      "size": "大小",
+      "duration": "媒体时长",
+      "created": "创建时间",
+      "completed": "完成时间",
+      "error": "错误"
+    },
+    "filters": {
+      "status": "状态",
+      "kind": "类型",
+      "principal": "提交者",
+      "principalPlaceholder": "密钥名称"
+    },
+    "cancel": "取消任务",
+    "cancelTitle": "取消任务",
+    "cancelMessage": "要取消任务 {{id}} 吗？正在进行的工作将被丢弃。",
+    "deleteTitle_other": "删除 {{count}} 个任务",
+    "deleteMessage_other": "要删除 {{count}} 个已完成的任务及其存储的结果吗？此操作无法撤销。",
+    "deleteSelected_other": "删除 {{count}} 个已完成的任务",
+    "jsonTitle": "任务 JSON",
+    "autoRefresh": "有任务排队或运行时，每隔几秒自动刷新。",
+    "emptyTitle": "暂无任务",
+    "emptyMessage": "视频分析以任务形式运行。请在“分析视频”中提交任务。",
+    "emptyFiltered": "没有符合这些筛选条件的任务",
+    "emptyFilteredMessage": "清除或更改筛选条件以查看更多任务。",
+    "toast": {
+      "canceled": "已取消任务 {{id}}。",
+      "deleted_other": "已删除 {{count}} 个任务。"
+    }
+  },
+  "jobDetail": {
+    "title": "任务",
+    "summary": "单个分析任务的状态、进度和结果。",
+    "back": "所有任务",
+    "jobJson": "任务 JSON",
+    "download": "下载结果",
+    "notFound": "此任务不存在或已被删除。",
+    "progress": "进度",
+    "progressCount": "{{completed}} / {{total}} 个步骤",
+    "liveNote": "此页面会实时更新，直到任务完成。",
+    "failedTitle": "任务失败",
+    "noErrorDetail": "服务器没有报告错误消息。",
+    "failedHint": "请检查媒体 URL 和端点，然后重新提交任务。",
+    "interruptedTitle": "任务被中断",
+    "interruptedMessage": "此任务运行期间服务器重启，因此任务未完成。请重新提交。",
+    "canceledTitle": "任务已取消",
+    "canceledMessage": "已取消的任务不会存储结果。",
+    "details": "详细信息",
+    "meta": {
+      "kind": "类型",
+      "principal": "提交者",
+      "source": "来源",
+      "size": "大小",
+      "duration": "媒体时长",
+      "created": "创建时间",
+      "started": "开始时间",
+      "completed": "完成时间"
+    },
+    "loadingResult": "正在加载结果...",
+    "resultTabs": "结果分区",
+    "tabs": {
+      "overview": "概览",
+      "scenes": "场景",
+      "transcript": "转录文本",
+      "telemetry": "遥测",
+      "raw": "原始 JSON"
+    },
+    "wholeResults": "整段视频结果",
+    "noScenes": "场景检测已关闭或未发现任何场景。",
+    "sceneStrip": "场景时间线",
+    "sceneTitle": "场景 {{n}}：{{start}} 至 {{end}}",
+    "sceneHeading": "场景 {{n}} / {{count}}",
+    "prevScene": "上一个场景",
+    "nextScene": "下一个场景",
+    "keyframeAlt": "{{time}} 处的关键帧",
+    "noThumbnail": "无缩略图",
+    "sceneResults": "场景结果",
+    "sceneFields": "场景字段",
+    "sceneTranscript": "此场景期间的转录文本",
+    "noTranscript": "转录已关闭或视频没有音频。",
+    "noTranscriptMatches": "没有匹配的转录片段。",
+    "transcriptLanguage": "语言：{{language}}",
+    "searchTranscript": "搜索转录文本"
+  },
+  "endpoints": {
+    "title": "端点",
+    "summary": "服务器上配置的模型端点，包括提供商、模型和最近观测到的健康状态。管理员可以测试连通性。",
+    "add": "添加端点",
+    "readOnlyNote": "端点需使用管理员密钥在“设置”中编辑。测试同样需要管理员密钥。",
+    "columns": {
+      "name": "名称",
+      "health": "健康状态",
+      "kind": "类型",
+      "provider": "提供商",
+      "model": "模型",
+      "url": "URL",
+      "default": "默认",
+      "concurrency": "最大并发数",
+      "timeout": "超时",
+      "apiKey": "API 密钥",
+      "lastChecked": "上次检查",
+      "test": "测试"
+    },
+    "filters": {
+      "kind": "类型",
+      "search": "搜索",
+      "searchPlaceholder": "名称、提供商或模型"
+    },
+    "localFilterNote": "显示 {{shown}} / {{total}}。筛选在本地进行；服务器会返回所有端点。",
+    "default": "默认",
+    "noUrl": "提供商默认值",
+    "keySet": "已设置（末尾为 {{last4}}）",
+    "keyNotSet": "未设置",
+    "test": "测试",
+    "testing": "测试中...",
+    "detailSubtitle": "端点配置和健康状态",
+    "editInSettings": "在设置中编辑",
+    "providerUnavailable": "此构建中不提供该提供商",
+    "healthMessage": "健康消息",
+    "testPassed": "测试通过",
+    "testFailedTitle": "测试失败",
+    "testDetail": "用时 {{duration}}。模型：{{model}}",
+    "jsonTitle": "端点 JSON",
+    "emptyTitle": "未配置端点",
+    "emptyMessage": "请在“设置”的“推理”下添加模型端点，以便分析有可调用的模型。",
+    "emptyFiltered": "没有符合这些筛选条件的端点",
+    "toast": {
+      "testOk": "端点 {{name}} 在 {{duration}} 内响应。",
+      "testFailed": "端点 {{name}} 测试失败，用时 {{duration}}。",
+      "testError": "无法测试端点 {{name}}。"
+    }
+  },
+  "requestHistory": {
+    "title": "请求历史",
+    "summary": "服务器捕获的所有 API 请求，包括状态、耗时以及经过脱敏的标头和正文。可以筛选、检查和清除保留的流量。",
+    "kpi": {
+      "inRange": "请求数（{{range}}）",
+      "failures": "失败数",
+      "successRate": "成功率",
+      "avgDuration": "平均耗时",
+      "matching": "符合筛选条件"
+    },
+    "filters": {
+      "method": "方法",
+      "status": "状态码",
+      "statusPlaceholder": "500",
+      "path": "路径包含",
+      "pathPlaceholder": "/v1.0/image",
+      "principal": "主体",
+      "principalPlaceholder": "密钥名称"
+    },
+    "columns": {
+      "time": "时间",
+      "method": "方法",
+      "path": "路径",
+      "status": "状态",
+      "duration": "耗时",
+      "principal": "主体",
+      "sourceIp": "源 IP",
+      "id": "条目",
+      "ago": "时长"
+    },
+    "filterByPath": "按此路径筛选",
+    "deleteMatching": "删除匹配项",
+    "clearAll": "全部清除",
+    "deleteTitle": "删除请求",
+    "deleteMessage": "要删除捕获的 {{method}} {{path}} 请求吗？",
+    "bulkTitle": "删除捕获的请求",
+    "bulkMessageFiltered_other": "要删除符合 {{filters}} 的全部 {{count}} 个请求吗？此操作无法撤销。",
+    "bulkMessageAll_other": "未设置筛选条件。要删除保留的全部 {{count}} 个请求吗？此操作无法撤销。",
+    "filterParts": {
+      "method": "方法 {{value}}",
+      "status": "状态 {{value}}",
+      "path": "路径包含“{{value}}”",
+      "principal": "主体 {{value}}",
+      "from": "从 {{value}} 起",
+      "to": "早于 {{value}}"
+    },
+    "jsonTitle": "请求 JSON",
+    "emptyTitle": "没有保留的流量",
+    "emptyMessage": "服务器处理请求时，请求会显示在此处。如果此处一直为空，请检查“设置”中是否开启了 RequestHistory.Enabled。",
+    "emptyFiltered": "没有符合这些筛选条件的请求",
+    "emptyFilteredMessage": "清除或放宽筛选条件，或选择其他时间范围。",
+    "inspector": {
+      "title": "请求详细信息",
+      "metadata": "元数据",
+      "url": "URL",
+      "requestId": "请求 ID",
+      "created": "接收时间",
+      "completed": "完成时间",
+      "requestHeaders": "请求标头",
+      "requestBody": "请求正文",
+      "responseHeaders": "响应标头",
+      "responseBody": "响应正文",
+      "raw": "原始 JSON",
+      "noHeaders": "未捕获任何标头。",
+      "noBody": "未捕获正文。",
+      "truncated": "已截断（原始大小 {{size}}）"
+    },
+    "toast": {
+      "deleted": "已删除请求。",
+      "bulkDeleted_other": "已删除 {{count}} 个请求。",
+      "loadFailed": "无法加载该请求。"
+    }
+  },
+  "explorer": {
+    "title": "API 浏览器",
+    "summary": "来自服务器实时 OpenAPI 文档的所有路由。请求使用您当前登录的密钥。",
+    "loadingSpec": "正在加载 /openapi.json...",
+    "specMissing": "OpenAPI 文档不可用",
+    "specMissingMessage": "API 浏览器需要从服务器获取 GET /openapi.json。请确认服务器可访问并提供该文档，然后重试。",
+    "viaProxyTitle": "已通过仪表板代理加载 OpenAPI 文档",
+    "viaProxyMessage": "浏览器无法直接从服务器读取 /openapi.json（网络或 CORS 故障），因此改为从仪表板源加载。请求仍会直接发送到您登录的服务器。",
+    "search": "搜索方法、路径或摘要",
+    "noMatches": "没有匹配的操作。",
+    "operations": "操作",
+    "pickOperation": "从上面的列表中选择一个操作。",
+    "resolvedUrl": "解析后的 URL",
+    "copyUrl": "复制 URL",
+    "pathParams": "路径参数",
+    "queryParams": "查询参数",
+    "required": "必填",
+    "headers": "标头",
+    "authInherited": "授权信息会自动从您的会话中添加。",
+    "headerName": "标头名称",
+    "headerValue": "值",
+    "addHeader": "添加标头",
+    "removeHeader": "移除标头",
+    "body": "请求正文",
+    "format": "格式化 JSON",
+    "resetTemplate": "重置为模板",
+    "copyBody": "复制正文",
+    "invalidJson": "无效的 JSON：{{message}}",
+    "missingPath": "请填写：{{names}}",
+    "destructive": "此操作会更改或删除数据。",
+    "execute": "执行",
+    "running": "运行中...",
+    "stop": "停止",
+    "response": "响应",
+    "responseTabs": "响应分区",
+    "noResponse": "执行请求后可查看响应。",
+    "aborted": "请求已停止。",
+    "emptyBody": "响应没有正文。",
+    "streaming": "流式传输",
+    "tabs": {
+      "body": "正文",
+      "headers": "标头",
+      "code": "代码"
+    },
+    "history": "历史记录（{{count}}）",
+    "historyTitle": "最近请求",
+    "noHistory": "您执行的请求会列在此处。绝不会存储密钥。",
+    "load": "加载",
+    "confirmTitle": "要运行破坏性请求吗？",
+    "confirmMessage": "{{method}} {{path}} 会更改或删除服务器上的数据。是否继续？",
+    "pickerLabel": "选择 API 操作",
+    "operationCount_other": "{{count}} 个操作",
+    "binaryTitle": "二进制响应",
+    "binaryMessage": "{{type}}，{{size}}。请下载后打开。",
+    "binaryFilename": "response.bin",
+    "downloadBody": "下载"
+  },
+  "settings": {
+    "title": "设置",
+    "summary": "编辑服务器设置文件。实时设置在保存后立即生效；标记为“重启”的设置在重启后生效。",
+    "file": "设置文件",
+    "notAdminTitle": "设置需要管理员密钥",
+    "notAdminMessage": "您当前使用访问密钥登录，该密钥无法读取或更改服务器设置。请退出登录并使用管理员密钥连接，以编辑设置或重启服务器。",
+    "preferences": "仪表板偏好设置",
+    "preferencesHelp": "仅存储在此浏览器中。",
+    "sections": "设置分区",
+    "showRaw": "查看 JSON",
+    "hideRaw": "隐藏 JSON",
+    "rawTitle": "设置 JSON",
+    "rawHelp": "服务器返回的已保存设置的只读视图，机密信息已遮蔽。",
+    "restart": "重启服务器",
+    "restartNow": "立即重启",
+    "restartTitle": "要重启服务器吗？",
+    "restartMessage": "服务器会完成此响应后退出。在 Docker Compose（restart: unless-stopped）下，服务器会使用已保存的设置重新启动。运行中的任务将被标记为“已中断”。",
+    "restartUnsaved": "您有未保存的更改。除非先保存，否则这些更改将丢失。",
+    "restarting": "正在重启",
+    "restartingMessage": "正在等待服务器恢复。编辑已暂停。",
+    "restartDone": "服务器已恢复。",
+    "restartTimeout": "服务器尚未恢复",
+    "restartTimeoutMessage": "如果服务器不是由带重启策略的容器运行时或服务管理器运行的，请手动重新启动它。",
+    "restartRequired": "需要重启",
+    "restartRequiredMessage": "部分已保存的更改需要在服务器重启后才能生效。",
+    "saveFailed": "服务器拒绝了这些设置。",
+    "unsaved": "未保存的更改",
+    "noChanges": "无更改",
+    "discard": "放弃更改",
+    "range": "范围 {{min}} 到 {{max}}",
+    "unset": "未设置",
+    "noEndpoint": "无",
+    "envOverride": "由环境变量 {{name}} 设置。环境变量的值优先，因此此字段在此处为只读。",
+    "arrayEmpty": "未配置。",
+    "newItem": "新项目",
+    "removeItem": "移除",
+    "badges": {
+      "live": "实时",
+      "liveHelp": "保存后立即生效。",
+      "restart": "重启",
+      "restartHelp": "服务器重启后生效。",
+      "env": "环境变量：{{name}}",
+      "envHelp": "已被 {{name}} 覆盖。"
+    },
+    "secret": {
+      "set": "已设置（末尾为 {{last4}}）",
+      "notSet": "未设置",
+      "change": "更改",
+      "keep": "保留当前值",
+      "clear": "清除"
+    },
+    "errors": {
+      "required": "必填。",
+      "number": "请输入数字。",
+      "duplicateName": "名称必须唯一。",
+      "summary_other": "{{count}} 个字段需要处理。"
+    },
+    "toast": {
+      "savedLive": "设置已保存并应用。",
+      "savedRestart": "设置已保存。请重启服务器以应用所有更改。",
+      "restarted": "服务器已重启。"
+    },
+    "options": {
+      "Sqlite": "SQLite",
+      "Mysql": "MySQL",
+      "Postgresql": "PostgreSQL",
+      "SqlServer": "SQL Server",
+      "grpc": "gRPC",
+      "httpprotobuf": "HTTP (protobuf)",
+      "Completion": "补全",
+      "Transcription": "转录"
+    },
+    "severity": {
+      "0": "0 调试",
+      "1": "1 信息",
+      "2": "2 警告",
+      "3": "3 错误",
+      "4": "4 警报",
+      "5": "5 严重",
+      "6": "6 紧急",
+      "7": "7 最高"
+    },
+    "addItem": {
+      "Auth": {
+        "AccessKeys": "添加访问密钥"
+      },
+      "Inference": {
+        "Endpoints": "添加端点"
+      },
+      "Logging": {
+        "Servers": "添加 syslog 服务器"
+      }
+    },
+    "groups": {
+      "rest": {
+        "title": "REST 服务器",
+        "help": "监听地址和请求大小限制。"
+      },
+      "auth": {
+        "title": "身份验证",
+        "help": "管理员密钥以及调用方使用的命名访问密钥。密钥已遮蔽；仅在确实需要时才更改。"
+      },
+      "database": {
+        "title": "数据库",
+        "help": "任务、结果和请求历史的存储位置。"
+      },
+      "inference": {
+        "title": "推理",
+        "help": "模型端点、默认值、重试和超时。"
+      },
+      "media": {
+        "title": "媒体",
+        "help": "ffmpeg、下载限制和图像尺寸。"
+      },
+      "jobs": {
+        "title": "任务",
+        "help": "视频和音频任务的并发数、队列大小和保留期限。"
+      },
+      "requestHistory": {
+        "title": "请求历史",
+        "help": "为“请求历史”页面捕获请求及其正文。"
+      },
+      "logging": {
+        "title": "日志",
+        "help": "控制台、文件和 syslog 输出。"
+      },
+      "telemetry": {
+        "title": "遥测",
+        "help": "OpenTelemetry 导出、Prometheus 抓取端点和 Loki 日志。"
+      },
+      "analytics": {
+        "title": "统计分析",
+        "help": "“统计分析”页面上显示的每次分析的性能记录，以及这些记录的保留时长。"
+      }
+    },
+    "fields": {
+      "Rest": {
+        "Hostname": "主机名",
+        "Port": "端口",
+        "Ssl": "TLS",
+        "MaxRequestBodyBytes": "最大请求正文"
+      },
+      "Auth": {
+        "RequireAuthentication": "要求身份验证",
+        "AdminApiKey": "管理员 API 密钥",
+        "MaxFailedAttemptsPerMinute": "每分钟最大失败尝试次数",
+        "AccessKeys": {
+          "_": "访问密钥",
+          "Name": "名称",
+          "Key": "密钥",
+          "Active": "启用"
+        }
+      },
+      "Database": {
+        "Type": "类型",
+        "Filename": "文件",
+        "Hostname": "主机名",
+        "Port": "端口",
+        "DatabaseName": "数据库名称",
+        "Username": "用户名",
+        "Password": "密码",
+        "TrustServerCertificate": "信任服务器证书",
+        "CommandTimeoutSeconds": "命令超时（秒）"
+      },
+      "Inference": {
+        "DefaultVision": "默认视觉端点",
+        "DefaultText": "默认文本端点",
+        "DefaultTranscription": "默认转录端点",
+        "MaxRetries": "最大重试次数",
+        "MaxRepairAttempts": "最大 JSON 修复尝试次数",
+        "RetryBackoffMs": "重试退避 (ms)",
+        "RequestTimeoutMs": "请求超时 (ms)",
+        "MaxTranscriptCharacters": "转录文本最大字符数",
+        "Endpoints": {
+          "_": "端点",
+          "Name": "名称",
+          "Provider": "提供商",
+          "Kind": "类型",
+          "Endpoint": "URL",
+          "ApiKey": "API 密钥",
+          "Model": "模型",
+          "MaxConcurrentRequests": "最大并发请求数",
+          "TimeoutMs": "超时 (ms)",
+          "Temperature": "温度",
+          "MaxOutputTokens": "最大输出 Token 数",
+          "Active": "启用"
+        }
+      },
+      "Media": {
+        "TempDirectory": "临时目录",
+        "FfmpegPath": "ffmpeg 路径",
+        "FfprobePath": "ffprobe 路径",
+        "MaxDownloadBytes": "最大下载大小",
+        "DownloadTimeoutMs": "下载超时 (ms)",
+        "AllowPrivateNetworkUrls": "允许私有网络 URL",
+        "ImageMaxEdge": "图像最大边长 (px)",
+        "ThumbnailMaxEdge": "缩略图最大边长 (px)",
+        "JpegQuality": "JPEG 质量（1 最佳，31 最差）",
+        "MaxParallelFfmpeg": "最大并行 ffmpeg 数",
+        "FfmpegTimeoutMs": "ffmpeg 超时 (ms)",
+        "MaxVideoDurationMs": "最大视频时长 (ms)",
+        "TranscriptionChunkSeconds": "转录分块（秒）",
+        "MaxSegmentMs": "最大片段长度 (ms)"
+      },
+      "Jobs": {
+        "MaxConcurrentJobs": "最大并发任务数",
+        "MaxQueuedJobs": "最大排队任务数",
+        "RetentionDays": "保留期限（天）",
+        "MaxWaitTimeoutMs": "最大等待超时 (ms)"
+      },
+      "RequestHistory": {
+        "Enabled": "捕获请求",
+        "MaxRequestBodyBytes": "捕获的最大请求正文",
+        "MaxResponseBodyBytes": "捕获的最大响应正文",
+        "RetentionDays": "保留期限（天）"
+      },
+      "Logging": {
+        "ConsoleLogging": "控制台日志",
+        "EnableColors": "控制台颜色",
+        "LogDirectory": "日志目录",
+        "LogFilename": "日志文件名",
+        "MinimumSeverity": "最低严重级别",
+        "Servers": {
+          "_": "Syslog 服务器",
+          "Hostname": "主机名",
+          "Port": "端口"
+        }
+      },
+      "Telemetry": {
+        "Enable": "遥测",
+        "ServiceName": "服务名称",
+        "OtlpEnable": "OTLP 导出",
+        "OtlpEndpoint": "OTLP 端点",
+        "OtlpProtocol": "OTLP 协议",
+        "PrometheusEnable": "Prometheus 端点",
+        "PrometheusHostname": "Prometheus 主机名",
+        "PrometheusPort": "Prometheus 端口",
+        "PrometheusPath": "Prometheus 路径",
+        "LokiEnable": "Loki 导出",
+        "LokiEndpoint": "Loki 端点",
+        "ExportLogs": "导出日志",
+        "MetricExportIntervalMs": "指标导出间隔 (ms)",
+        "TraceSamplingRatio": "链路追踪采样率"
+      },
+      "Analytics": {
+        "Enabled": "记录统计分析数据",
+        "RetentionDays": "保留期限（天）"
+      }
+    }
+  },
+  "server": {
+    "title": "服务器信息",
+    "summary": "版本、健康状态、您当前登录使用的密钥，以及可复制的服务器 URL。",
+    "health": "健康状态",
+    "status": "状态",
+    "version": "服务器版本",
+    "started": "启动时间",
+    "uptime": "运行时长",
+    "database": "数据库",
+    "jobs": "任务",
+    "jobsValue": "{{active}} 个活动，{{queued}} 个排队中",
+    "ffmpeg": "ffmpeg",
+    "ffmpegMissingHelp": "请在服务器主机上安装 ffmpeg 和 ffprobe，或在“设置”中设置 Media.FfmpegPath。",
+    "endpoints": "端点健康状态",
+    "noEndpoints": "没有活动的端点",
+    "identity": "身份",
+    "principal": "主体",
+    "role": "角色",
+    "authRequired": "需要身份验证",
+    "dashboardVersion": "仪表板版本",
+    "repository": "代码仓库",
+    "copyUrl": "复制{{name}}",
+    "urls": {
+      "title": "服务器 URL",
+      "base": "基础 URL",
+      "health": "健康检查",
+      "openapi": "OpenAPI 文档",
+      "swagger": "Swagger UI",
+      "whoami": "我是谁",
+      "dashboard": "此仪表板"
+    }
+  },
+  "notFound": {
+    "title": "未找到页面",
+    "message": "此仪表板路由不存在。",
+    "home": "返回首页"
+  },
+  "enums": {
+    "jobStatus": {
+      "Queued": "排队中",
+      "Running": "运行中",
+      "Succeeded": "成功",
+      "Failed": "失败",
+      "Canceled": "已取消",
+      "Interrupted": "已中断"
+    },
+    "fieldType": {
+      "Boolean": "布尔值",
+      "String": "字符串",
+      "Integer": "整数",
+      "Number": "数字",
+      "Enum": "枚举",
+      "StringList": "字符串列表",
+      "Object": "对象"
+    },
+    "mediaKind": {
+      "Unknown": "未知",
+      "Image": "图像",
+      "Video": "视频",
+      "Audio": "音频"
+    },
+    "summaryStyle": {
+      "Paragraph": "段落",
+      "Bullets": "要点列表",
+      "Caption": "说明文字"
+    },
+    "extractMode": {
+      "Combined": "合并",
+      "PerField": "逐字段"
+    },
+    "extractModeHelp": {
+      "Combined": "一次模型调用返回所有字段。速度最快，成本最低。",
+      "PerField": "每个字段一次调用，并行运行。成本更高，但可隔离故障并分别统计每个字段的耗时。"
+    },
+    "endpointKind": {
+      "Completion": "补全",
+      "Transcription": "转录"
+    },
+    "provider": {
+      "Mock": "Mock（仅限测试）",
+      "Ollama": "Ollama",
+      "OllamaCloud": "Ollama Cloud",
+      "OpenAi": "OpenAI",
+      "OpenAiCompatible": "OpenAI 兼容",
+      "AzureOpenAi": "Azure OpenAI",
+      "Anthropic": "Anthropic",
+      "Gemini": "Gemini",
+      "VertexAi": "Vertex AI",
+      "Bedrock": "Bedrock",
+      "XAi": "xAI",
+      "Cohere": "Cohere"
+    },
+    "stage": {
+      "Resolve": "解析",
+      "Probe": "探测",
+      "Normalize": "规范化",
+      "SceneDetection": "场景检测",
+      "FrameExtraction": "帧提取",
+      "AudioExtraction": "音频提取",
+      "Transcribe": "转录",
+      "Scenes": "场景",
+      "Summarize": "摘要",
+      "Extract": "提取",
+      "Reduce": "归纳"
+    },
+    "progressStage": {
+      "Queued": "排队中",
+      "Done": "完成",
+      "Resolve": "正在解析媒体",
+      "Probe": "正在探测",
+      "AudioExtraction": "正在提取音频",
+      "Transcribe": "正在转录",
+      "SceneDetection": "正在检测场景",
+      "FrameExtraction": "正在提取帧",
+      "Scenes": "正在分析场景",
+      "Reduce": "正在生成视频摘要",
+      "Summarize": "正在生成摘要",
+      "Extract": "正在提取字段"
+    },
+    "purpose": {
+      "Summarize": "摘要",
+      "Extract": "提取",
+      "SceneSummarize": "场景摘要",
+      "SceneExtract": "场景字段",
+      "Transcribe": "转录"
+    },
+    "health": {
+      "Healthy": "健康",
+      "Degraded": "降级"
+    }
+  },
+  "units": {
+    "tokensPerSecond": "{{value}} tok/s",
+    "realtimeFactor": "{{value}}x"
+  },
+  "appearance": {
+    "title": "外观",
+    "open": "外观：调色板以及浅色或深色模式",
+    "mode": "模式",
+    "palette": "调色板",
+    "modes": {
+      "light": "浅色",
+      "dark": "深色",
+      "system": "跟随系统"
+    },
+    "help": "保存在此浏览器中。“跟随系统”会采用操作系统的浅色或深色设置。",
+    "palettes": {
+      "slate": "石板灰",
+      "indigoNight": "靛蓝之夜",
+      "fjord": "峡湾",
+      "nocturne": "夜曲",
+      "solstice": "至日",
+      "cocoa": "可可",
+      "duskRose": "暮色玫瑰",
+      "metroNight": "都市之夜",
+      "forest": "森林",
+      "ocean": "海洋",
+      "amber": "琥珀",
+      "graphite": "石墨",
+      "lavender": "薰衣草",
+      "mint": "薄荷",
+      "sandstone": "砂岩",
+      "terracotta": "赤陶"
+    }
+  },
+  "analyzeAudio": {
+    "title": "分析音频",
+    "summary": "转录音频文件（或视频的音轨），然后根据转录文本生成摘要并提取类型化字段。以任务形式运行；进度和转录文本显示在下方。",
+    "modelHelp": "转录端点将语音转换为文本（默认 Inference.DefaultTranscription）。文本端点根据转录文本生成摘要和字段（默认 Inference.DefaultText）。",
+    "languageHelp": "可选的 ISO-639 代码。留空则由模型自动检测语言。",
+    "transcribeRequired": "必须进行转录：摘要和字段都根据转录文本生成。",
+    "summaryHelp": "由文本端点根据转录文本生成。",
+    "submit": "提交音频任务",
+    "jobTitle": "任务",
+    "openJob": "打开任务",
+    "polling": "每隔几秒检查一次进度。您可以离开此页面，任务会继续运行。",
+    "emptyTitle": "尚无音频任务",
+    "emptyMessage": "在上方选择文件或 URL 并提交。进度、转录文本和结果将显示在此处。",
+    "toast": {
+      "submitted": "音频任务 {{id}} 已加入队列。",
+      "cancelFailed": "无法取消任务：{{message}}"
+    },
+    "errors": {
+      "notSupported": "此服务器不支持音频分析（未找到 POST /v1.0/audio）。"
+    }
+  },
+  "segments": {
+    "uploadedTitle": "源媒体是上传的",
+    "uploadedMessage": "Keyframe 不保留上传的媒体，因此片段、音频和帧需要再次提供原始文件。从磁盘中选择该文件即可启用下载按钮。",
+    "usingFile": "使用 {{name}}（{{size}}）作为下载来源。",
+    "chooseFile": "选择原始文件",
+    "chooseOther": "选择其他文件",
+    "clearFile": "清除",
+    "reading": "读取中...",
+    "needSource": "请先选择原始文件",
+    "download": {
+      "Video": "下载片段",
+      "Audio": "下载音频",
+      "Frame": "下载帧"
+    },
+    "hint": {
+      "Video": "将此范围剪切为 MP4 片段",
+      "Audio": "将此范围剪切为 MP3 音频",
+      "Frame": "将此场景开始处的帧保存为 JPEG"
+    },
+    "toast": {
+      "downloaded": "已保存 {{name}}。",
+      "failed": "下载失败：{{message}}"
+    }
+  },
+  "analytics": {
+    "title": "统计分析",
+    "summary": "图像、视频和音频分析随时间变化的性能：数量、成功率、延迟百分位数、模型耗时、Token 以及每次分析的详细信息。",
+    "loading": "正在加载统计分析...",
+    "notAdminTitle": "统计分析需要管理员密钥",
+    "notAdminMessage": "请使用管理员密钥登录，以查看所有分析的性能和遥测数据。",
+    "unavailableTitle": "此服务器不提供统计分析",
+    "unavailableMessage": "未找到 GET /v1.0/analytics/summary。请将服务器升级到支持统计分析的版本，并检查“设置”中是否开启了 Analytics.Enabled。",
+    "emptyTitle": "此范围内没有分析",
+    "emptyMessage": "运行一次分析或扩大时间范围。每次完成的图像、视频和音频分析都会记录在此处。",
+    "windowNote": "显示 {{from}} 至 {{to}}，按{{bucket}}分组。",
+    "ranges": {
+      "1h": "1 小时",
+      "24h": "24 小时",
+      "7d": "7 天",
+      "30d": "30 天",
+      "custom": "自定义"
+    },
+    "buckets": {
+      "minute": "分钟",
+      "hour": "小时",
+      "day": "天"
+    },
+    "filters": {
+      "label": "统计分析筛选",
+      "range": "时间范围",
+      "mediaKind": "媒体",
+      "endpoint": "端点",
+      "model": "模型",
+      "modelPlaceholder": "任意模型"
+    },
+    "kpi": {
+      "label": "统计分析指标",
+      "analyses": "分析次数",
+      "analysesSub": "{{ok}} 次成功，{{failed}} 次失败",
+      "successRate": "成功率",
+      "analysisP50": "分析耗时 (p50)",
+      "queueP95": "排队等待 (p95)",
+      "ttftP50": "首个 Token 用时 (p50)",
+      "tokensPerSecond": "每秒 Token 数 (p50)",
+      "modelCalls": "模型调用",
+      "modelCallsSub": "{{failed}} 次失败，{{retries}} 次重试",
+      "totalTokens": "总 Token",
+      "perAnalysis": "平均每次分析 {{value}}",
+      "p95": "p95 {{value}}",
+      "avg": "平均 {{value}}",
+      "generationP50": "生成 p50 {{value}}"
+    },
+    "byKind": {
+      "label": "按媒体类型",
+      "count_other": "{{value}} 次分析",
+      "none": "此范围内没有此类型的分析。",
+      "analysisP50": "分析 p50",
+      "analysisP95": "分析 p95",
+      "realtimeP50": "实时系数 p50",
+      "imagesIn": "输入图像",
+      "mediaSizeP50": "大小 p50",
+      "mediaDurationP50": "时长 p50",
+      "tokens": "Token"
+    },
+    "charts": {
+      "volume": "分析次数趋势",
+      "volumeHint": "点击柱形可在下方列出对应的分析。",
+      "volumeAria_other": "分析次数趋势，范围内共 {{count}} 次分析",
+      "latency": "耗时趋势",
+      "metric": "指标",
+      "latencyAria": "{{metric}} 百分位数趋势",
+      "noSamples": "此范围内没有该指标的样本。",
+      "tokens": "Token 趋势",
+      "successRate": "成功率趋势"
+    },
+    "series": {
+      "succeeded": "成功",
+      "failed": "失败",
+      "promptTokens": "提示 Token",
+      "completionTokens": "补全 Token",
+      "successRate": "成功率"
+    },
+    "stats": {
+      "avg": "平均",
+      "p50": "p50",
+      "p90": "p90",
+      "p95": "p95",
+      "p99": "p99",
+      "max": "最大"
+    },
+    "metrics": {
+      "AnalysisMs": "分析耗时",
+      "QueueWaitMs": "排队等待",
+      "ModelCallMs": "模型调用耗时",
+      "TimeToFirstTokenMs": "首个 Token 用时",
+      "GenerationMs": "生成耗时",
+      "TokensPerSecond": "每秒 Token 数",
+      "TokensPerAnalysis": "每次分析 Token 数",
+      "RealtimeFactor": "实时系数",
+      "MediaDurationMs": "媒体时长",
+      "MediaBytes": "媒体大小"
+    },
+    "columns": {
+      "metric": "指标",
+      "samples": "样本数"
+    },
+    "distributions": {
+      "title": "分布",
+      "help": "模型调用指标按每次调用统计，其他指标按每次分析统计。实时系数为分析耗时除以媒体时长（仅限视频和音频）；小于 1 表示比实时更快。"
+    },
+    "totals": {
+      "title": "Token 和输入",
+      "promptTokens": "提示 Token",
+      "completionTokens": "补全 Token",
+      "cachedTokens": "缓存 Token",
+      "reasoningTokens": "推理 Token",
+      "totalTokens": "总 Token",
+      "tokensPerAnalysisP50": "每次分析 Token 数 (p50)",
+      "tokensPerAnalysisP95": "每次分析 Token 数 (p95)",
+      "modelCalls": "模型调用",
+      "failedModelCalls": "失败的模型调用",
+      "retries": "重试次数",
+      "repairAttempts": "修复尝试次数",
+      "inputImages": "输入图像",
+      "inputImageBytes": "已发送图像字节数",
+      "inputAudioBytes": "已发送音频字节数",
+      "scenes": "场景",
+      "transcriptCharacters": "转录文本字符数"
+    },
+    "byModel": {
+      "title": "按模型",
+      "empty": "此范围内没有模型调用。",
+      "endpoint": "端点",
+      "provider": "提供商",
+      "model": "模型",
+      "calls": "调用次数",
+      "failed": "失败",
+      "durationP50": "耗时 p50",
+      "durationP95": "耗时 p95",
+      "ttftP50": "首个 Token p50",
+      "ttftP95": "首个 Token p95",
+      "generationP50": "生成 p50",
+      "tokensPerSecondP50": "Token/秒 p50",
+      "promptTokens": "提示 Token",
+      "completionTokens": "补全 Token"
+    },
+    "byStage": {
+      "title": "按阶段",
+      "empty": "此范围内没有阶段耗时数据。",
+      "stage": "阶段",
+      "share": "相对 p50"
+    },
+    "byPurpose": {
+      "title": "按用途",
+      "empty": "此范围内没有模型调用。",
+      "purpose": "用途",
+      "calls": "调用次数",
+      "failed": "失败",
+      "durationP50": "耗时 p50",
+      "durationP95": "耗时 p95",
+      "ttftP50": "首个 Token p50"
+    },
+    "list": {
+      "title": "最近分析",
+      "empty": "没有匹配的分析",
+      "emptyMessage": "扩大时间范围或清除筛选条件。",
+      "filterNote": "使用上方的时间范围和媒体筛选。端点和模型筛选仅作用于图表。",
+      "statusFilter": "状态",
+      "started": "开始时间",
+      "kind": "类型",
+      "status": "状态",
+      "analysisTime": "分析耗时",
+      "queueWait": "排队等待",
+      "mediaDuration": "媒体时长",
+      "mediaSize": "媒体大小",
+      "realtimeFactor": "实时系数",
+      "model": "模型",
+      "calls": "调用次数",
+      "tokens": "Token",
+      "principal": "主体",
+      "id": "ID",
+      "bucketTitle": "已筛选为单个图表区间",
+      "bucketMessage": "{{from}} 至 {{to}} 的分析。",
+      "bucketClear": "显示整个范围"
+    },
+    "detail": {
+      "title": "分析详细信息",
+      "subtitle": "{{kind}}分析，{{time}}",
+      "notFound": "此分析记录已不存在。",
+      "error": "错误",
+      "timeline": "时间线",
+      "timelineHelp": "先显示各阶段，再显示每次模型调用尝试。调用条依次表示排队等待（最浅）、等待首个 Token 和生成。",
+      "calls": "模型调用",
+      "jsonTitle": "分析记录",
+      "openJob": "打开任务",
+      "deleteTitle": "删除分析记录",
+      "deleteMessage": "要删除统计分析记录 {{id}} 吗？任务及其结果不受影响。",
+      "callsValue": "{{calls}}（{{failed}} 次失败）",
+      "retriesValue": "{{retries}} 次重试，{{repairs}} 次修复",
+      "imagesValue": "{{count}}（{{size}}）",
+      "fieldsValue": "{{count}}（{{invalid}} 个无效）",
+      "fields": {
+        "kind": "媒体类型",
+        "principal": "主体",
+        "started": "开始时间",
+        "completed": "完成时间",
+        "analysisTime": "分析耗时",
+        "queueWait": "排队等待",
+        "mediaDuration": "媒体时长",
+        "mediaSize": "媒体大小",
+        "realtimeFactor": "实时系数",
+        "visionModel": "视觉模型",
+        "textModel": "文本模型",
+        "transcriptionModel": "转录模型",
+        "modelCalls": "模型调用",
+        "retries": "重试和修复",
+        "promptTokens": "提示 Token",
+        "completionTokens": "补全 Token",
+        "cachedTokens": "缓存 Token",
+        "reasoningTokens": "推理 Token",
+        "totalTokens": "总 Token",
+        "inputImages": "输入图像",
+        "inputAudio": "已发送音频",
+        "scenes": "场景",
+        "transcriptCharacters": "转录文本字符数",
+        "fields": "字段"
+      }
+    },
+    "toast": {
+      "deleted": "已删除分析记录 {{id}}。"
+    }
+  }
+}

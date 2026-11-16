@@ -81,6 +81,7 @@ function AnalyzeImageView() {
   const [response, setResponse] = useState(null);
   const [error, setError] = useState(null);
   const abortRef = useRef(null);
+  const resultRef = useRef(null);
 
   const validation = validateAnalysisForm({ media, summarize, extractEnable, fields, context });
   const noFunction = !summarize.Enable && !extractEnable;
@@ -106,6 +107,8 @@ function AnalyzeImageView() {
     if (validation.any || noFunction) return;
     setRunning(true);
     setError(null);
+    // Results sit below the form on this one-column page; bring them into view.
+    if (resultRef.current && resultRef.current.scrollIntoView) resultRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     const controller = new AbortController();
     abortRef.current = controller;
     try {
@@ -145,7 +148,7 @@ function AnalyzeImageView() {
   };
 
   return (
-    <div className="view">
+    <div className="view view-narrow">
       <PageHeader title={t('analyzeImage.title')} summary={t('analyzeImage.summary')} actions={<PresetBar storageKey={STORAGE_KEYS.imagePresets} current={presetConfig} onLoad={loadPreset} />} />
       <div className="analyze-layout">
         <form
@@ -225,7 +228,7 @@ function AnalyzeImageView() {
           </details>
         </form>
 
-        <section className="panel analyze-result" aria-labelledby="result-title" aria-busy={running}>
+        <section ref={resultRef} className="panel analyze-result" aria-labelledby="result-title" aria-busy={running}>
           <div className="panel-header">
             <h2 id="result-title" className="panel-title">
               {t('results.title')}

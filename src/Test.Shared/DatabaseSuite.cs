@@ -7,6 +7,7 @@ namespace Test.Shared
     using System.Threading.Tasks;
     using Keyframe.Core.Database;
     using Keyframe.Core.Enums;
+    using Keyframe.Core.Helpers;
     using Keyframe.Core.Models;
     using Keyframe.Core.Requests;
     using Keyframe.Core.Responses;
@@ -39,14 +40,18 @@ namespace Test.Shared
                     DatabaseSettings settings = DatabaseTargets.Settings(type);
                     using (DatabaseDriverBase first = await DatabaseDriverFactory.CreateAndInitializeAsync(settings, ct).ConfigureAwait(false))
                     {
-                        Check.Equal(1, first.SchemaVersion, "schema version after first boot");
+                        Check.Equal(2, first.SchemaVersion, "schema version after first boot");
+                        object? tables = await first.ExecuteScalarAsync("SELECT COUNT(*) FROM analyses", null, ct).ConfigureAwait(false);
+                        Check.Equal(0L, Convert.ToInt64(tables), "analyses table exists and is empty");
+                        object? calls = await first.ExecuteScalarAsync("SELECT COUNT(*) FROM modelcalls", null, ct).ConfigureAwait(false);
+                        Check.Equal(0L, Convert.ToInt64(calls), "modelcalls table exists and is empty");
                     }
 
                     using (DatabaseDriverBase second = await DatabaseDriverFactory.CreateAndInitializeAsync(settings, ct).ConfigureAwait(false))
                     {
-                        Check.Equal(1, second.SchemaVersion, "schema version after second boot");
+                        Check.Equal(2, second.SchemaVersion, "schema version after second boot");
                         object? count = await second.ExecuteScalarAsync("SELECT COUNT(*) FROM schema_migrations", null, ct).ConfigureAwait(false);
-                        Check.Equal(1L, Convert.ToInt64(count), "one migration row");
+                        Check.Equal(2L, Convert.ToInt64(count), "two migration rows");
                     }
                 }, new[] { "database" }),
 
@@ -238,6 +243,125 @@ namespace Test.Shared
                         await Task.WhenAll(tasks).ConfigureAwait(false);
                         Check.Equal(40L, (await db.RequestHistory.EnumerateAsync(new RequestHistoryFilter(), ct).ConfigureAwait(false)).TotalCount, "all rows present");
                     }
+                }, new[] { "database" }),
+
+                new TestCaseDescriptor(id, "AnalyticsCrud", "Analyses with model call attempts: create, read, list with filters and paging, delete", async ct =>
+                {
+                    using (DatabaseDriverBase db = await OpenAsync(type, ct).ConfigureAwait(false))
+                    {
+                        DateTime start = DateTime.UtcNow.AddMinutes(-20);
+                        List<AnalysisRecord> created = new List<AnalysisRecord>();
+                        for (int i = 0; i < 7; i++)
+                        {
+                            MediaKindEnum kind = i % 3 == 0 ? MediaKindEnum.Audio : (i % 3 == 1 ? MediaKindEnum.Image : MediaKindEnum.Video);
+                            AnalysisRecord record = Analysis(kind, start.AddMinutes(i), i != 4, 100 + i);
+                            record.Calls = new List<ModelCallRecord> { Attempt(record.Id, 1, false, 50, null), Attempt(record.Id, 2, true, 70, 20.5) };
+                            await db.Analytics.CreateAsync(record, ct).ConfigureAwait(false);
+                            created.Add(record);
+                        }
+
+                        AnalysisRecord first = created[0];
+                        AnalysisRecord? read = await db.Analytics.ReadAsync(first.Id, ct).ConfigureAwait(false);
+                        Check.True(read != null, "read back");
+                        Check.Equal(MediaKindEnum.Audio, read!.MediaKind, "kind");
+                        Check.Equal("kfj_job", read.JobId, "job id");
+                        Check.Equal(25000L, read.MediaDurationMs, "nullable long");
+                        Check.Equal(0.004, read.RealtimeFactor, "nullable double");
+                        Check.Equal(2, read.Stages.Count, "stages JSON");
+                        Check.Equal("Transcribe", read.Stages[1].Name, "stage order");
+                        Check.Equal("whisper", read.TranscriptionEndpoint, "endpoint column");
+                        Check.Equal(3, read.Retries, "counts");
+                        Check.True(Math.Abs((read.CompletedUtc - first.CompletedUtc).TotalMilliseconds) < 5, "timestamp round trip");
+                        Check.Equal(2, read.Calls!.Count, "calls");
+                        Check.True(read.Calls[0].Attempt == 1 && !read.Calls[0].Success && read.Calls[0].TimeToFirstTokenMs == null, "first attempt with null timing");
+                        Check.True(read.Calls[1].Success && read.Calls[1].TimeToFirstTokenMs == 20.5 && read.Calls[1].StatusCode == 200, "second attempt");
+                        Check.Equal(ModelCallPurposeEnum.Summarize, read.Calls[1].Purpose, "purpose enum");
+                        Check.Equal(ProviderTypeEnum.Ollama, read.Calls[1].Provider, "provider enum");
+                        Check.Equal(null, read.Calls[0].PromptTokens, "null tokens stay null");
+
+                        EnumerationResult<AnalysisRecord> all = await db.Analytics.EnumerateAsync(new AnalyticsFilter(), ct).ConfigureAwait(false);
+                        Check.Equal(7L, all.TotalCount, "total");
+                        Check.Equal(created[6].Id, all.Items[0].Id, "newest first");
+                        Check.True(all.Items.All(r => r.Calls == null), "list omits calls");
+
+                        EnumerationResult<AnalysisRecord> audio = await db.Analytics.EnumerateAsync(new AnalyticsFilter { MediaKind = MediaKindEnum.Audio }, ct).ConfigureAwait(false);
+                        Check.Equal(3L, audio.TotalCount, "media kind filter");
+                        EnumerationResult<AnalysisRecord> failed = await db.Analytics.EnumerateAsync(new AnalyticsFilter { Success = false }, ct).ConfigureAwait(false);
+                        Check.Equal(1L, failed.TotalCount, "success filter");
+                        EnumerationResult<AnalysisRecord> page = await db.Analytics.EnumerateAsync(new AnalyticsFilter { Skip = 2, MaxResults = 2 }, ct).ConfigureAwait(false);
+                        Check.Equal(2, page.Items.Count, "page size");
+                        Check.Equal(created[4].Id, page.Items[0].Id, "skip");
+                        Check.Equal(2, page.PageNumber, "page number from skip");
+                        Check.Equal(4, page.TotalPages, "total pages");
+                        EnumerationResult<AnalysisRecord> window = await db.Analytics.EnumerateAsync(new AnalyticsFilter { FromUtc = start.AddMinutes(2), ToUtc = start.AddMinutes(4) }, ct).ConfigureAwait(false);
+                        Check.Equal(2L, window.TotalCount, "time window");
+
+                        Check.True(await db.Analytics.DeleteAsync(first.Id, ct).ConfigureAwait(false), "deleted");
+                        Check.True(!await db.Analytics.DeleteAsync(first.Id, ct).ConfigureAwait(false), "second delete reports missing");
+                        Check.True(await db.Analytics.ReadAsync(first.Id, ct).ConfigureAwait(false) == null, "gone");
+                        object? orphans = await db.ExecuteScalarAsync("SELECT COUNT(*) FROM modelcalls WHERE analysisid = @id", new Dictionary<string, object?> { { "@id", first.Id } }, ct).ConfigureAwait(false);
+                        Check.Equal(0L, Convert.ToInt64(orphans), "calls deleted with the analysis");
+                    }
+                }, new[] { "database" }),
+
+                new TestCaseDescriptor(id, "AnalyticsSummary", "Stored rows summarize with percentiles, gap fill, and endpoint and media filters", async ct =>
+                {
+                    using (DatabaseDriverBase db = await OpenAsync(type, ct).ConfigureAwait(false))
+                    {
+                        DateTime hour = new DateTime(2026, 1, 5, 9, 0, 0, DateTimeKind.Utc);
+                        double[] durations = new double[] { 100, 200, 300, 400, 1000 };
+                        for (int i = 0; i < durations.Length; i++)
+                        {
+                            AnalysisRecord record = Analysis(MediaKindEnum.Image, hour.AddMinutes(10 + i), true, durations[i]);
+                            record.VisionEndpoint = i < 3 ? "ollama-gemma3-4b" : "ollama-qwen3-vl-8b";
+                            record.Calls = new List<ModelCallRecord> { Attempt(record.Id, 1, true, durations[i] / 2, durations[i] / 10) };
+                            record.Calls[0].Endpoint = record.VisionEndpoint;
+                            await db.Analytics.CreateAsync(record, ct).ConfigureAwait(false);
+                        }
+
+                        AnalysisRecord late = Analysis(MediaKindEnum.Audio, hour.AddHours(2).AddMinutes(5), false, 5000);
+                        late.Calls = new List<ModelCallRecord>();
+                        await db.Analytics.CreateAsync(late, ct).ConfigureAwait(false);
+
+                        AnalyticsSummary summary = await db.Analytics.SummarizeAsync(new AnalyticsSummaryFilter { FromUtc = hour, ToUtc = hour.AddHours(3), Bucket = AnalyticsBucketEnum.Hour }, ct).ConfigureAwait(false);
+                        Check.Equal(3, summary.Buckets.Count, "three buckets");
+                        Check.Equal(5L, summary.Buckets[0].Stats.Count, "first hour");
+                        Check.Equal(0L, summary.Buckets[1].Stats.Count, "gap hour present");
+                        Check.Equal(1L, summary.Buckets[2].Stats.Count, "third hour");
+                        Check.Equal(6L, summary.Totals.Count, "total");
+                        Distribution image = summary.ByMediaKind["Image"].AnalysisMs!;
+                        Check.Equal(300.0, image.P50, "median");
+                        Check.Equal(760.0, image.P90, "p90 interpolated");
+                        Check.Equal(400.0, image.Avg, "average");
+                        Check.Equal(5L, summary.ByMediaKind["Image"].TimeToFirstTokenMs!.Count, "ttft samples per call");
+                        Check.Equal(2, summary.ByModel.Count, "two models");
+                        Check.Equal("ollama-gemma3-4b", summary.ByModel[0].Endpoint, "most calls first");
+
+                        AnalyticsSummary filtered = await db.Analytics.SummarizeAsync(new AnalyticsSummaryFilter { FromUtc = hour, ToUtc = hour.AddHours(3), Endpoint = "ollama-qwen3-vl-8b" }, ct).ConfigureAwait(false);
+                        Check.Equal(2L, filtered.Totals.Count, "endpoint filter on analyses");
+                        Check.Equal(1, filtered.ByModel.Count, "endpoint filter on calls");
+                        Check.Equal("ollama-qwen3-vl-8b", filtered.Endpoint, "filter echoed");
+                        Check.Equal("hour", filtered.Bucket, "a 3 hour range defaults to hourly buckets");
+                    }
+                }, new[] { "database" }),
+
+                new TestCaseDescriptor(id, "AnalyticsPrune", "Prune removes analyses and their calls older than the cutoff", async ct =>
+                {
+                    using (DatabaseDriverBase db = await OpenAsync(type, ct).ConfigureAwait(false))
+                    {
+                        AnalysisRecord old = Analysis(MediaKindEnum.Video, DateTime.UtcNow.AddDays(-100), true, 10);
+                        old.Calls = new List<ModelCallRecord> { Attempt(old.Id, 1, true, 5, 1) };
+                        AnalysisRecord fresh = Analysis(MediaKindEnum.Video, DateTime.UtcNow.AddMinutes(-1), true, 10);
+                        fresh.Calls = new List<ModelCallRecord> { Attempt(fresh.Id, 1, true, 5, 1) };
+                        await db.Analytics.CreateAsync(old, ct).ConfigureAwait(false);
+                        await db.Analytics.CreateAsync(fresh, ct).ConfigureAwait(false);
+
+                        Check.Equal(1, await db.Analytics.PruneAsync(DateTime.UtcNow.AddDays(-90), ct).ConfigureAwait(false), "one pruned");
+                        Check.Equal(0, await db.Analytics.PruneAsync(DateTime.UtcNow.AddDays(-90), ct).ConfigureAwait(false), "idempotent");
+                        object? calls = await db.ExecuteScalarAsync("SELECT COUNT(*) FROM modelcalls", null, ct).ConfigureAwait(false);
+                        Check.Equal(1L, Convert.ToInt64(calls), "pruned analysis calls removed");
+                        Check.True(await db.Analytics.ReadAsync(fresh.Id, ct).ConfigureAwait(false) != null, "fresh kept");
+                    }
                 }, new[] { "database" })
             });
         }
@@ -245,6 +369,70 @@ namespace Test.Shared
         private static async Task<DatabaseDriverBase> OpenAsync(DatabaseTypeEnum type, CancellationToken token)
         {
             return await DatabaseDriverFactory.CreateAndInitializeAsync(DatabaseTargets.Settings(type), token).ConfigureAwait(false);
+        }
+
+        private static AnalysisRecord Analysis(MediaKindEnum kind, DateTime completed, bool success, double ms)
+        {
+            return new AnalysisRecord
+            {
+                Id = IdGenerator.GenerateAnalysisId(),
+                RequestId = "rqi_test",
+                JobId = kind == MediaKindEnum.Image ? null : "kfj_job",
+                MediaKind = kind,
+                PrincipalName = "tester",
+                Success = success,
+                Error = success ? null : "failed",
+                StartedUtc = completed.AddMilliseconds(-ms),
+                CompletedUtc = completed,
+                AnalysisMs = ms,
+                QueueWaitMs = kind == MediaKindEnum.Image ? 0 : 12.5,
+                MediaDurationMs = kind == MediaKindEnum.Image ? null : 25000,
+                MediaBytes = 4096,
+                RealtimeFactor = kind == MediaKindEnum.Image ? null : Math.Round(ms / 25000.0, 4),
+                VisionEndpoint = kind == MediaKindEnum.Audio ? null : "ollama-gemma3-4b",
+                VisionModel = kind == MediaKindEnum.Audio ? null : "gemma3:4b",
+                TextEndpoint = "ollama-gpt-oss-20b",
+                TextModel = "gpt-oss:20b",
+                TranscriptionEndpoint = kind == MediaKindEnum.Image ? null : "whisper",
+                TranscriptionModel = kind == MediaKindEnum.Image ? null : "Systran/faster-whisper-small",
+                ModelCalls = 2,
+                FailedModelCalls = success ? 0 : 1,
+                Retries = 3,
+                RepairAttempts = 1,
+                PromptTokens = 100,
+                CompletionTokens = 20,
+                TotalTokens = 120,
+                InputAudioBytes = kind == MediaKindEnum.Image ? 0 : 2048,
+                TranscriptCharacters = kind == MediaKindEnum.Image ? 0 : 300,
+                Stages = new List<StageTiming> { new StageTiming { Name = "Resolve", DurationMs = 1.5 }, new StageTiming { Name = "Transcribe", DurationMs = 40 } }
+            };
+        }
+
+        private static ModelCallRecord Attempt(string analysisId, int attempt, bool success, double ms, double? ttft)
+        {
+            return new ModelCallRecord
+            {
+                Id = IdGenerator.GenerateModelCallId(),
+                AnalysisId = analysisId,
+                Purpose = ModelCallPurposeEnum.Summarize,
+                Endpoint = "ollama-gpt-oss-20b",
+                Provider = ProviderTypeEnum.Ollama,
+                Model = "gpt-oss:20b",
+                Attempt = attempt,
+                StartUtc = DateTime.UtcNow.AddSeconds(attempt),
+                Success = success,
+                Error = success ? null : "transient",
+                StatusCode = success ? 200 : 503,
+                DurationMs = ms,
+                QueueMs = 1.25,
+                TimeToFirstTokenMs = ttft,
+                GenerationMs = ttft.HasValue ? ms - ttft.Value : null,
+                TokensPerSecond = ttft.HasValue ? 42.5 : null,
+                PromptTokens = success ? 100 : null,
+                CompletionTokens = success ? 20 : null,
+                TotalTokens = success ? 120 : null,
+                FinishReason = success ? "stop" : null
+            };
         }
 
         private static RequestHistoryEntry Entry(string method, string path, int status, DateTime created, string? principal, double durationMs = 12.5)

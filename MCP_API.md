@@ -17,7 +17,7 @@ Version 0.1.0 (ALPHA).
 
 ## Authentication
 
-With `RequireAuthentication` true (the default), HTTP and WebSocket clients send the Keyframe access key configured in `Keyframe.AccessKey` as `Authorization: Bearer <key>` (or `x-api-key`). The key is compared in constant time. A missing or wrong key gets HTTP 401 before any MCP processing. The MCP server presents the same key to the REST server, so what an agent can do over MCP is exactly what that key can do over REST. No tool needs the admin key.
+With `RequireAuthentication` true (the default), HTTP and WebSocket clients authenticate with their own Keyframe key, the same access key or admin key they would use for the REST API, sent as `Authorization: Bearer <key>` (or `x-api-key`). The MCP server checks the key with the Keyframe server (`GET /v1.0/whoami`, cached for 60 seconds) and refuses a missing or unknown key with HTTP 401 before any MCP processing. Every tool call is then made to Keyframe with that caller's key, so a key has exactly the same rights over MCP as over REST: an access key can analyze, probe, cut segments, and read jobs and endpoints, and the admin key can also use `keyframe_analytics_summary` and `keyframe_analytics_list` (with an access key those two return a `403` tool error). `Keyframe.AccessKey` in the settings is only a fallback for requests with no authenticated caller: the TCP transport (which has no authentication, so keep it on loopback) and servers run with `RequireAuthentication` false. `--install` also writes it into client configuration.
 
 ## Configuration
 
@@ -143,6 +143,53 @@ When `Scenes` and `Transcribe` are both off and neither `Summarize` nor `Fields`
 }
 ```
 
+### keyframe_audio_analyze
+
+Analyzes an audio file (mp3, wav, flac, m4a or aac, ogg or opus, webm audio) or the audio track of a video file. The recording is transcribed, then the summary and fields run on the transcript with the text model. By default it queues a job and returns `JobResponse` (`MediaKind` `Audio`); poll `keyframe_job_get`, then read `keyframe_job_result`. With `Wait` true it returns the full `AudioAnalysisResponse` when the job finishes in time, or the job when it does not.
+
+| Argument | Type | Required | Notes |
+|---|---|---|---|
+| `Audio` | object | yes | `Url` or `Data`, as above |
+| `Context`, `Summarize`, `Fields`, `Mode` | | no | As in `keyframe_image_analyze`, applied to the transcript |
+| `Transcribe` | object | no | `Enable` (default true; required for `Summarize` and `Fields`), `Language` (ISO 639-1; omit to detect), `Prompt` (vocabulary hints) |
+| `TranscriptionModel` | object | no | `{ "Endpoint", "Name" }` of a transcription endpoint. Default `Inference.DefaultTranscription` |
+| `TextModel` | object | no | Text endpoint for the summary and fields. Default `Inference.DefaultText` |
+| `Wait` | boolean | no | Default false |
+| `WaitTimeoutMs` | integer | no | Default 120000, capped by the server |
+
+Defaults match the REST route: transcription and the summary are on, extraction is off until `Fields` is supplied.
+
+```json
+{
+  "Audio": { "Url": "https://example.com/meeting.mp3" },
+  "Transcribe": { "Language": "en" },
+  "Summarize": { "Enable": true, "Style": "Bullets", "MaxWords": 120 },
+  "Fields": [ { "Key": "speakerCount", "Type": "Integer", "Prompt": "How many distinct speakers are there?" } ],
+  "Wait": true
+}
+```
+
+The result has `Transcript` (`Language`, `Text`, `Segments` with `StartMs` and `EndMs`), `Results`, `Fields`, `Properties`, and `Telemetry` (including `QueueWaitMs` and, per model call, `TimeToFirstTokenMs`, `GenerationMs`, `TokensPerSecond`, and `QueueMs`).
+
+### keyframe_segment
+
+Cuts a time range out of a video or audio source and returns it as a `SegmentResponse` with the media in base64 `Data` (the tool always uses the REST route's `Json` response form). Use `StartMs` and `EndMs` from `Scenes` or `Transcript.Segments` of an analysis result. The source is resolved again from `Url` or `Data`; Keyframe does not keep uploaded media.
+
+| Argument | Type | Required | Notes |
+|---|---|---|---|
+| `Source` | object | yes | `Url` or `Data`, as above |
+| `StartMs` | integer | yes | 0 or more. For `Frame` output, the frame time |
+| `EndMs` | integer | for Video and Audio | Must exceed `StartMs`; values past the end are clamped. Ignored for `Frame` |
+| `Output` | string | no | `Video` (default), `Audio`, or `Frame` |
+| `Format` | string | no | `Video`: `mp4` (default) or `webm`. `Audio`: `mp3` (default), `wav`, `flac`, `m4a`, or `ogg`. `Frame`: `jpg` (default) or `png` |
+| `MaxEdge` | integer | no | Long-edge cap in pixels for video and frame output, 16 to 4096 |
+
+```json
+{ "Source": { "Url": "https://example.com/talk.mp4" }, "StartMs": 12000, "EndMs": 18500, "Output": "Audio" }
+```
+
+Returns `MediaType`, `Filename` (for example `segment-12000-18500.mp3`, or `segment-12000.jpg` for a frame), `StartMs`, `EndMs` (after clamping), `DurationMs` (0 for frames), `SizeBytes`, and `Data`. Segments longer than `Media.MaxSegmentMs` (default 10 minutes) and an invalid range or format fail with `400`; a source without the needed stream (audio for `Audio`, video for `Video` and `Frame`) or a `StartMs` past the end fails with `422`. The base64 payload grows with the clip, so keep ranges short and set `MaxEdge` on MCP transports.
+
 ### keyframe_job_get
 
 | Argument | Type | Required |
@@ -157,7 +204,7 @@ Returns `JobResponse`: `Status` (`Queued`, `Running`, `Succeeded`, `Failed`, `Ca
 |---|---|---|
 | `JobId` | string | yes |
 
-Returns the `VideoAnalysisResponse` of a succeeded job: `Results`, `Fields`, `Scenes` (with `StartMs`, `EndMs`, keyframes, per-scene results), `Transcript`, `Properties`, and `Telemetry`. Fails with `409` until the job has succeeded.
+Returns the result of a succeeded job. For a video job, the `VideoAnalysisResponse`: `Results`, `Fields`, `Scenes` (with `StartMs`, `EndMs`, keyframes, per-scene results), `Transcript`, `Properties`, and `Telemetry`. For an audio job, the `AudioAnalysisResponse`: the same members without `Scenes`. Fails with `409` until the job has succeeded.
 
 ### keyframe_job_list
 
@@ -179,7 +226,36 @@ Cancels a queued or running job and returns it. Fails with `409` when the job al
 
 ### keyframe_endpoints_list
 
-No arguments. Returns the configured model endpoints with API keys masked, whether each provider is available in this build, and last observed health. Use a `Name` from this list in `Model.Endpoint`.
+No arguments. Returns the configured model endpoints with API keys masked, whether each provider is available in this build, its capabilities (`SupportsImages`, `SupportsStructuredOutput`, `SupportsTranscription`), and last observed health. Use a `Name` from this list in `Model.Endpoint`.
+
+### keyframe_analytics_summary
+
+Requires connecting with the admin key (see Authentication). Summarizes stored analyses: `Totals`, `ByMediaKind` (`Image`, `Video`, and `Audio` are always present), gap-filled `Buckets`, `ByModel`, `ByStage`, and `ByPurpose`. Every timing (`AnalysisMs`, `QueueWaitMs`, `ModelCallMs`, `TimeToFirstTokenMs`, `GenerationMs`, `TokensPerSecond`, `RealtimeFactor`, and more) is a distribution with `Count`, `Min`, `Max`, `Avg`, `P50`, `P90`, `P95`, `P99`, `StdDev`, and `Sum`, or null without samples.
+
+| Argument | Type | Required | Notes |
+|---|---|---|---|
+| `FromUtc` | string | no | ISO 8601, inclusive. Default 24 hours before `ToUtc` |
+| `ToUtc` | string | no | ISO 8601, exclusive. Default now |
+| `Bucket` | string | no | `Minute`, `Hour`, or `Day`. Default `Minute` up to 2 hours, `Hour` up to 7 days, otherwise `Day` |
+| `MediaKind` | string | no | `Image`, `Video`, or `Audio` |
+| `Endpoint` | string | no | Endpoint name |
+| `Model` | string | no | Model name |
+
+Returns `AnalyticsSummary` (the `Bucket` member is lowercase). A range with too many buckets fails with `400`.
+
+### keyframe_analytics_list
+
+Requires connecting with the admin key (see Authentication). Lists stored analyses, newest first.
+
+| Argument | Type | Required | Notes |
+|---|---|---|---|
+| `MediaKind` | string | no | `Image`, `Video`, or `Audio` |
+| `Success` | boolean | no | |
+| `FromUtc`, `ToUtc` | string | no | ISO 8601 bounds on completion time |
+| `MaxResults` | integer | no | 1 to 1000, default 50 |
+| `Skip` | integer | no | Default 0 |
+
+Returns `EnumerationResult<AnalysisRecord>`. Each record (`Id` prefix `kfa_`, the same as the analysis response `Id`) carries `AnalysisMs`, `QueueWaitMs`, `MediaDurationMs`, `RealtimeFactor`, the endpoints and models used, model call, retry, repair, and token counts, and `Stages`. `Calls` is null in listings; the REST route `GET /v1.0/analytics/analyses/{id}` returns the model call attempts.
 
 ## Telemetry
 

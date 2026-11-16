@@ -2,8 +2,8 @@
 # Factory reset for the Keyframe Docker stack. DESTRUCTIVE.
 #
 # Stops the stack, deletes its named volumes (database, media temp, logs, Prometheus, Tempo, Loki, Grafana,
-# and Ollama models), removes any local data directories, restores keyframe.json from the factory copy (mock
-# provider, default keys), and brings the stack back up.
+# Whisper and Ollama models), removes any local data directories, restores keyframe.json from the factory copy (Ollama
+# and Whisper endpoints, default keys), and brings the stack back up.
 #
 # Usage: ./reset.sh [-y]    (-y skips the confirmation prompt)
 

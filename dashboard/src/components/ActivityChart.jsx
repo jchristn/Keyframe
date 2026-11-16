@@ -6,7 +6,7 @@ import useElementWidth from '../hooks/useElementWidth';
 import Icon from './Icon';
 import { RANGES } from '../utils/ranges';
 
-const HEIGHT = 200;
+export const DEFAULT_CHART_HEIGHT = 200;
 const PAD = { top: 12, right: 12, bottom: 30, left: 44 };
 
 function niceMax(value) {
@@ -36,20 +36,23 @@ export function RangeSelector({ value, onChange }) {
  * buckets: [{ startUtc, endUtc, success, failure, averageDurationMs }], already normalized.
  * Tooltip renders through a portal so it escapes overflow containers.
  */
-function ActivityChart({ buckets, bucketMinutes, onBucketClick = null, title = null, rangeId, onRangeChange, onRefresh, loading = false, loadedAt = null }) {
+function ActivityChart({ buckets, bucketMinutes, onBucketClick = null, title = null, rangeId, onRangeChange, onRefresh, loading = false, loadedAt = null, height = DEFAULT_CHART_HEIGHT }) {
+  const HEIGHT = height;
   const { t, locale } = useLocale();
   const [ref, width] = useElementWidth();
   const [hover, setHover] = useState(null);
 
   const data = buckets || [];
   const maxTotal = data.reduce((m, b) => Math.max(m, b.success + b.failure), 0);
-  const yMax = niceMax(maxTotal);
+  // Request counts are whole numbers, so the axis is rounded to give whole-number ticks.
+  const tickSteps = height >= 320 ? 4 : 2;
+  const yMax = Math.ceil(niceMax(maxTotal) / tickSteps) * tickSteps;
   const innerW = width - PAD.left - PAD.right;
   const innerH = HEIGHT - PAD.top - PAD.bottom;
   const slot = data.length ? innerW / data.length : innerW;
   const barW = Math.max(1, slot * 0.72);
   const y = (v) => PAD.top + innerH - (v / yMax) * innerH;
-  const ticks = [0, yMax / 2, yMax];
+  const ticks = Array.from({ length: tickSteps + 1 }, (_, i) => (yMax * i) / tickSteps);
   const labelEvery = Math.max(1, Math.ceil(data.length / Math.max(2, Math.floor(innerW / 90))));
   const empty = maxTotal === 0;
 

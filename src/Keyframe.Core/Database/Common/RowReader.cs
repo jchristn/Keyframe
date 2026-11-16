@@ -49,6 +49,32 @@ namespace Keyframe.Core.Database.Common
         }
 
         /// <summary>
+        /// Read a nullable integer column.
+        /// </summary>
+        /// <param name="row">Row.</param>
+        /// <param name="column">Column name.</param>
+        /// <returns>Value or null.</returns>
+        public static long? GetNullableInt64(DataRow row, string column)
+        {
+            object value = row[column];
+            if (value is DBNull) return null;
+            return Convert.ToInt64(value, CultureInfo.InvariantCulture);
+        }
+
+        /// <summary>
+        /// Read a nullable floating point column.
+        /// </summary>
+        /// <param name="row">Row.</param>
+        /// <param name="column">Column name.</param>
+        /// <returns>Value or null.</returns>
+        public static double? GetNullableDouble(DataRow row, string column)
+        {
+            object value = row[column];
+            if (value is DBNull) return null;
+            return Convert.ToDouble(value, CultureInfo.InvariantCulture);
+        }
+
+        /// <summary>
         /// Read a boolean column stored as a boolean, bit, or integer.
         /// </summary>
         /// <param name="row">Row.</param>

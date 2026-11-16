@@ -120,6 +120,21 @@ namespace Keyframe.Sdk.Settings
         }
 
         /// <summary>
+        /// Analytics settings.
+        /// </summary>
+        public AnalyticsSettings Analytics
+        {
+            get
+            {
+                return _Analytics;
+            }
+            set
+            {
+                _Analytics = value ?? new AnalyticsSettings();
+            }
+        }
+
+        /// <summary>
         /// Logging settings.
         /// </summary>
         public LoggingSettings Logging
@@ -160,6 +175,7 @@ namespace Keyframe.Sdk.Settings
         private MediaSettings _Media = new MediaSettings();
         private JobSettings _Jobs = new JobSettings();
         private RequestHistorySettings _RequestHistory = new RequestHistorySettings();
+        private AnalyticsSettings _Analytics = new AnalyticsSettings();
         private LoggingSettings _Logging = new LoggingSettings();
         private TelemetrySettings _Telemetry = new TelemetrySettings();
 

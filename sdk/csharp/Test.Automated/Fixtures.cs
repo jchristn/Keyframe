@@ -32,6 +32,11 @@ namespace Test.Automated
         public string LongVideoPath { get; }
 
         /// <summary>
+        /// 8 second mono MP3 sine tone.
+        /// </summary>
+        public string AudioPath { get; }
+
+        /// <summary>
         /// Whether ffmpeg produced every fixture.
         /// </summary>
         public bool Available { get; private set; } = false;
@@ -51,6 +56,7 @@ namespace Test.Automated
             ImagePath = Path.Combine(Directory, "image.jpg");
             VideoPath = Path.Combine(Directory, "video.mp4");
             LongVideoPath = Path.Combine(Directory, "long.mp4");
+            AudioPath = Path.Combine(Directory, "audio.mp3");
         }
 
         /// <summary>
@@ -66,7 +72,8 @@ namespace Test.Automated
                 await RunAsync(ffmpeg, "-y -loglevel error -f lavfi -i testsrc2=size=640x360 -frames:v 1 \"" + ImagePath + "\"", token).ConfigureAwait(false);
                 await RunAsync(ffmpeg, Video(6, VideoPath), token).ConfigureAwait(false);
                 await RunAsync(ffmpeg, Video(30, LongVideoPath), token).ConfigureAwait(false);
-                Available = File.Exists(ImagePath) && File.Exists(VideoPath) && File.Exists(LongVideoPath);
+                await RunAsync(ffmpeg, "-y -loglevel error -f lavfi -i sine=frequency=330:duration=8 -ac 1 -c:a libmp3lame -b:a 64k \"" + AudioPath + "\"", token).ConfigureAwait(false);
+                Available = File.Exists(ImagePath) && File.Exists(VideoPath) && File.Exists(LongVideoPath) && File.Exists(AudioPath);
                 if (!Available) Reason = "ffmpeg did not produce every fixture.";
             }
             catch (Exception e) when (e is System.ComponentModel.Win32Exception || e is InvalidOperationException)

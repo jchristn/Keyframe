@@ -55,7 +55,25 @@ namespace Keyframe.Core.Analysis
         /// <exception cref="UnsupportedMediaException">Thrown when the media is not an image.</exception>
         /// <exception cref="MediaProcessingException">Thrown when ffmpeg fails.</exception>
         /// <exception cref="OperationCanceledException">Thrown when canceled.</exception>
-        public async Task<ImageAnalysisResponse> AnalyzeAsync(ImageAnalysisRequest request, CancellationToken token = default)
+        public Task<ImageAnalysisResponse> AnalyzeAsync(ImageAnalysisRequest request, CancellationToken token = default)
+        {
+            return AnalyzeAsync(request, null, token);
+        }
+
+        /// <summary>
+        /// Analyze an image, recording where the request came from.
+        /// </summary>
+        /// <param name="request">Request.</param>
+        /// <param name="origin">Request origin for telemetry and analytics, or null.</param>
+        /// <param name="token">Cancellation token.</param>
+        /// <returns>Response. Function failures are reported in the response rather than thrown.</returns>
+        /// <exception cref="RequestValidationException">Thrown when the request is invalid.</exception>
+        /// <exception cref="EndpointNotFoundException">Thrown when the requested or default endpoint is unavailable.</exception>
+        /// <exception cref="MediaResolutionException">Thrown when the image cannot be downloaded or decoded.</exception>
+        /// <exception cref="UnsupportedMediaException">Thrown when the media is not an image.</exception>
+        /// <exception cref="MediaProcessingException">Thrown when ffmpeg fails.</exception>
+        /// <exception cref="OperationCanceledException">Thrown when canceled.</exception>
+        public async Task<ImageAnalysisResponse> AnalyzeAsync(ImageAnalysisRequest request, AnalysisOrigin? origin, CancellationToken token = default)
         {
             List<string> errors = RequestValidator.Validate(request);
             if (errors.Count > 0) throw new RequestValidationException(errors);
@@ -65,10 +83,17 @@ namespace Keyframe.Core.Analysis
             IInferenceClient client = _Services.Clients.GetCompletionClient(endpoint);
             string? model = request.Model?.Name;
 
-            AnalysisContext context = new AnalysisContext(MediaKindEnum.Image);
-            ImageAnalysisResponse response = new ImageAnalysisResponse { MediaKind = MediaKindEnum.Image };
+            AnalysisContext context = new AnalysisContext(MediaKindEnum.Image)
+            {
+                Origin = origin,
+                VisionEndpoint = endpoint.Name,
+                VisionModel = model ?? endpoint.Model
+            };
+            ImageAnalysisResponse response = new ImageAnalysisResponse { MediaKind = MediaKindEnum.Image, RequestId = origin?.RequestId };
             Stopwatch sw = Stopwatch.StartNew();
             string outcome = "failure";
+            string? exception = null;
+            bool canceled = false;
 
             using (Activity? activity = KeyframeTelemetry.Source.StartActivity("analysis:image", ActivityKind.Internal))
             using (MediaWorkspace workspace = new MediaWorkspace(settings.Media.TempDirectory))
@@ -90,6 +115,7 @@ namespace Keyframe.Core.Analysis
                         properties = await _Services.Prober.ProbeAsync(resolved.Path, token).ConfigureAwait(false);
                     }
 
+                    context.MediaBytes = resolved.SizeBytes;
                     if (properties.MediaKind != MediaKindEnum.Image)
                         throw new UnsupportedMediaException("Expected an image but the media is " + properties.MediaKind.ToString().ToLowerInvariant() + ".");
 
@@ -156,8 +182,14 @@ namespace Keyframe.Core.Analysis
                     response.Success = !context.HasErrors();
                     outcome = response.Success ? (response.Fields.TrueForAll(f => f.Valid) ? "success" : "partial") : "failure";
                 }
-                catch (Exception ex) when (!(ex is OperationCanceledException))
+                catch (OperationCanceledException)
                 {
+                    canceled = true;
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    exception = ex.Message;
                     activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
                     KeyframeMetrics.RecordAnalysis("image", "failure", sw.Elapsed.TotalSeconds);
                     throw;
@@ -165,6 +197,7 @@ namespace Keyframe.Core.Analysis
                 finally
                 {
                     context.CompleteInto(response);
+                    _Services.NotifyCompleted(context.BuildCompletion(response, exception, canceled, 0, null));
                 }
             }
 

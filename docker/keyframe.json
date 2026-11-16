@@ -30,9 +30,9 @@
     "CommandTimeoutSeconds": 30
   },
   "Inference": {
-    "DefaultVision": "mock",
-    "DefaultText": null,
-    "DefaultTranscription": "mock-stt",
+    "DefaultVision": "ollama-gemma3-4b",
+    "DefaultText": "ollama-gpt-oss-20b",
+    "DefaultTranscription": "whisper",
     "MaxRetries": 2,
     "MaxRepairAttempts": 1,
     "RetryBackoffMs": 500,
@@ -40,43 +40,56 @@
     "MaxTranscriptCharacters": 60000,
     "Endpoints": [
       {
-        "Name": "mock",
-        "Provider": "Mock",
-        "Kind": "Completion",
-        "Endpoint": null,
-        "ApiKey": null,
-        "Model": "mock-vision",
-        "MaxConcurrentRequests": 4,
-        "TimeoutMs": 120000,
-        "Temperature": null,
-        "MaxOutputTokens": 2048,
-        "Active": true
-      },
-      {
-        "Name": "mock-stt",
-        "Provider": "Mock",
-        "Kind": "Transcription",
-        "Endpoint": null,
-        "ApiKey": null,
-        "Model": "mock-whisper",
-        "MaxConcurrentRequests": 4,
-        "TimeoutMs": 120000,
-        "Temperature": null,
-        "MaxOutputTokens": 2048,
-        "Active": true
-      },
-      {
-        "Name": "local-ollama",
+        "Name": "ollama-gemma3-4b",
         "Provider": "Ollama",
         "Kind": "Completion",
-        "Endpoint": "http://ollama:11434",
+        "Endpoint": "http://host.docker.internal:11434",
+        "ApiKey": null,
+        "Model": "gemma3:4b",
+        "MaxConcurrentRequests": 2,
+        "TimeoutMs": 300000,
+        "Temperature": null,
+        "MaxOutputTokens": 4096,
+        "Active": true
+      },
+      {
+        "Name": "ollama-qwen3-vl-8b",
+        "Provider": "Ollama",
+        "Kind": "Completion",
+        "Endpoint": "http://host.docker.internal:11434",
         "ApiKey": null,
         "Model": "qwen3-vl:8b",
         "MaxConcurrentRequests": 2,
         "TimeoutMs": 300000,
         "Temperature": null,
+        "MaxOutputTokens": 4096,
+        "Active": true
+      },
+      {
+        "Name": "ollama-gpt-oss-20b",
+        "Provider": "Ollama",
+        "Kind": "Completion",
+        "Endpoint": "http://host.docker.internal:11434",
+        "ApiKey": null,
+        "Model": "gpt-oss:20b",
+        "MaxConcurrentRequests": 2,
+        "TimeoutMs": 300000,
+        "Temperature": null,
+        "MaxOutputTokens": 4096,
+        "Active": true
+      },
+      {
+        "Name": "whisper",
+        "Provider": "OpenAiCompatible",
+        "Kind": "Transcription",
+        "Endpoint": "http://keyframe-whisper:8000/v1",
+        "ApiKey": null,
+        "Model": "Systran/faster-whisper-small",
+        "MaxConcurrentRequests": 2,
+        "TimeoutMs": 120000,
+        "Temperature": null,
         "MaxOutputTokens": 2048,
-        "Active": false
+        "Active": true
       }
     ]
   },
@@ -93,6 +106,8 @@
     "MaxParallelFfmpeg": 4,
     "FfmpegTimeoutMs": 600000,
     "MaxVideoDurationMs": 14400000,
+    "MaxAudioDurationMs": 14400000,
+    "MaxSegmentMs": 600000,
     "TranscriptionChunkSeconds": 600
   },
   "Jobs": {
@@ -106,6 +121,10 @@
     "MaxRequestBodyBytes": 65536,
     "MaxResponseBodyBytes": 65536,
     "RetentionDays": 30
+  },
+  "Analytics": {
+    "Enabled": true,
+    "RetentionDays": 90
   },
   "Logging": {
     "ConsoleLogging": true,

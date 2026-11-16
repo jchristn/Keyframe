@@ -4,6 +4,7 @@ namespace Keyframe.Core.Analysis
     using Keyframe.Core.Inference;
     using Keyframe.Core.Inference.Providers;
     using Keyframe.Core.Media;
+    using Keyframe.Core.Observability;
     using Keyframe.Core.Settings;
 
     /// <summary>
@@ -56,6 +57,11 @@ namespace Keyframe.Core.Analysis
         public MediaResolver Resolver { get; }
 
         /// <summary>
+        /// Segment cutter for POST /v1.0/segment.
+        /// </summary>
+        public SegmentExtractor Segments { get; }
+
+        /// <summary>
         /// Inference client factory.
         /// </summary>
         public InferenceClientFactory Clients { get; }
@@ -69,6 +75,18 @@ namespace Keyframe.Core.Analysis
         /// Summarize and extract runner.
         /// </summary>
         public MediaFunctions Functions { get; }
+
+        /// <summary>
+        /// Audio extraction and chunked transcription runner, shared by video and audio analysis.
+        /// </summary>
+        public TranscriptionRunner Transcription { get; }
+
+        /// <summary>
+        /// Invoked once for every analysis that started, after its response is complete: on success, on failure
+        /// (including thrown errors), and on cancellation. The host uses it to persist analytics. Must not block;
+        /// exceptions it throws are swallowed. Null disables the notification.
+        /// </summary>
+        public Action<AnalysisCompletion>? Completed { get; set; } = null;
 
         #endregion
 
@@ -99,6 +117,7 @@ namespace Keyframe.Core.Analysis
             Frames = new FrameExtractor(Ffmpeg);
             Audio = new AudioExtractor(Ffmpeg);
             Resolver = new MediaResolver(current.Media);
+            Segments = new SegmentExtractor(Ffmpeg, Resolver, Prober);
             if (clients == null)
             {
                 clients = new InferenceClientFactory(() => Settings().Inference);
@@ -108,11 +127,35 @@ namespace Keyframe.Core.Analysis
             Clients = clients;
             Invoker = new ModelInvoker(() => Settings().Inference);
             Functions = new MediaFunctions(Invoker);
+            Transcription = new TranscriptionRunner(Audio);
         }
 
         #endregion
 
         #region Public-Methods
+
+        /// <summary>
+        /// Record realtime-factor metrics for a finished analysis and hand it to <see cref="Completed"/>. Never throws.
+        /// </summary>
+        /// <param name="completion">Completion.</param>
+        public void NotifyCompleted(AnalysisCompletion completion)
+        {
+            if (completion == null) return;
+            try
+            {
+                if (completion.MediaDurationMs.HasValue && completion.MediaDurationMs.Value > 0 && !completion.Canceled && completion.Exception == null)
+                {
+                    double factor = completion.Response.Telemetry.TotalMs / completion.MediaDurationMs.Value;
+                    KeyframeMetrics.RecordRealtimeFactor(completion.MediaKind.ToString().ToLowerInvariant(), factor);
+                }
+
+                Action<AnalysisCompletion>? callback = Completed;
+                if (callback != null) callback(completion);
+            }
+            catch (Exception)
+            {
+            }
+        }
 
         /// <summary>
         /// Dispose owned resources.

@@ -15,6 +15,9 @@ namespace Keyframe.Core.Inference
     /// Deterministic offline completion client for tests and demos. Text requests return a synthetic summary.
     /// JSON requests return values generated from the request's JSON Schema, seeded by the field name and the
     /// image hashes so the same input always gives the same output. Failure injection counters support tests.
+    /// Timing fields are simulated and deterministic: with no DelayMs, time to first token is 2ms plus 0.02ms per
+    /// prompt token and generation runs at 500 tokens per second; with DelayMs, a quarter of the delay is reported
+    /// as time to first token and the rest as generation.
     /// Thread safety: safe for concurrent use.
     /// </summary>
     public class MockInferenceClient : IInferenceClient
@@ -176,6 +179,7 @@ namespace Keyframe.Core.Inference
             response.PromptTokens = (request.SystemPrompt.Length + request.UserPrompt.Length) / 4 + 85L * request.Images.Count;
             response.CompletionTokens = Math.Max(1, text.Length / 4);
             response.TotalTokens = response.PromptTokens + response.CompletionTokens;
+            ApplySimulatedTiming(response);
             response.DurationMs = sw.Elapsed.TotalMilliseconds;
             return response;
         }
@@ -183,6 +187,28 @@ namespace Keyframe.Core.Inference
         #endregion
 
         #region Private-Methods
+
+        private void ApplySimulatedTiming(InferenceResponse response)
+        {
+            long prompt = response.PromptTokens ?? 0;
+            long completion = response.CompletionTokens ?? 0;
+            double ttft;
+            double generation;
+            if (_DelayMs > 0)
+            {
+                ttft = _DelayMs * 0.25;
+                generation = _DelayMs * 0.75;
+            }
+            else
+            {
+                ttft = 2.0 + prompt * 0.02;
+                generation = completion * 2.0;
+            }
+
+            response.TimeToFirstTokenMs = Math.Round(ttft, 3);
+            response.GenerationMs = Math.Round(generation, 3);
+            response.TokensPerSecond = completion > 0 && generation > 0 ? Math.Round(completion / (generation / 1000.0), 3) : null;
+        }
 
         private static bool TryConsume(ref int counter)
         {

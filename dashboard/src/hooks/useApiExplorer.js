@@ -8,9 +8,18 @@ import {
   substitutePathParams
 } from '../utils/openApi';
 import { STORAGE_KEYS, readStorage, writeStorage } from '../utils/storage';
+import { filenameFromDisposition } from '../utils/media';
 
 const HISTORY_LIMIT = 12;
 const SENSITIVE_HEADERS = ['authorization', 'x-api-key', 'cookie'];
+
+/** True for content types that should not be decoded as text. */
+export function isBinaryType(contentType) {
+  const type = String(contentType || '').toLowerCase();
+  if (!type) return false;
+  if (type.includes('json') || type.startsWith('text/') || type.includes('xml') || type.includes('javascript') || type.includes('event-stream') || type.includes('x-www-form-urlencoded')) return false;
+  return /^(image|audio|video|font)\//.test(type) || type.includes('octet-stream') || type.includes('pdf') || type.includes('zip');
+}
 
 function stripSensitive(headers) {
   return headers.filter((h) => !SENSITIVE_HEADERS.includes(String(h.name).trim().toLowerCase()));
@@ -133,6 +142,25 @@ export function useApiExplorer(apiClient) {
     const hasBody = operation.requestBody && body.trim();
     if (hasBody && !Object.keys(extra).some((k) => k.toLowerCase() === 'content-type')) extra['Content-Type'] = 'application/json';
     const start = performance.now();
+    const addHistory = (status) => {
+      const entry = {
+        id: Date.now(),
+        operationId: operation.id,
+        method: operation.method,
+        path: resolvedPath,
+        pathParams,
+        queryParams,
+        headers: stripSensitive(headers),
+        body: hasBody ? body : '',
+        status,
+        atUtc: new Date().toISOString()
+      };
+      setHistory((h) => {
+        const next = [entry, ...h].slice(0, HISTORY_LIMIT);
+        writeStorage(STORAGE_KEYS.explorerHistory, next);
+        return next;
+      });
+    };
     try {
       const raw = await apiClient.executeRaw({ method: operation.method, path: resolvedPath, query, headers: extra, body: hasBody ? body : null, signal: controller.signal });
       const headerObj = headersToObject(raw.headers);
@@ -148,6 +176,26 @@ export function useApiExplorer(apiClient) {
           text += decoder.decode(value, { stream: true });
           setResponse({ status: raw.status, statusText: raw.statusText, headers: headerObj, body: text, durationMs: performance.now() - start, bytes: text.length, streaming: true });
         }
+      } else if (isBinaryType(contentType)) {
+        // Media and other binary bodies (for example POST /v1.0/segment) are kept as a Blob
+        // and offered as a download instead of being decoded as text.
+        const blob = await raw.blob();
+        const result = {
+          status: raw.status,
+          statusText: raw.statusText,
+          headers: headerObj,
+          body: '',
+          blob,
+          contentType,
+          filename: filenameFromDisposition(headerObj['content-disposition']),
+          durationMs: performance.now() - start,
+          bytes: blob.size,
+          streaming: false,
+          binary: true
+        };
+        setResponse(result);
+        addHistory(raw.status);
+        return;
       } else {
         text = await raw.text();
       }
@@ -161,23 +209,7 @@ export function useApiExplorer(apiClient) {
         streaming: false
       };
       setResponse(result);
-      const entry = {
-        id: Date.now(),
-        operationId: operation.id,
-        method: operation.method,
-        path: resolvedPath,
-        pathParams,
-        queryParams,
-        headers: stripSensitive(headers),
-        body: hasBody ? body : '',
-        status: raw.status,
-        atUtc: new Date().toISOString()
-      };
-      setHistory((h) => {
-        const next = [entry, ...h].slice(0, HISTORY_LIMIT);
-        writeStorage(STORAGE_KEYS.explorerHistory, next);
-        return next;
-      });
+      addHistory(raw.status);
     } catch (err) {
       if (err && err.name === 'AbortError') setResponse({ aborted: true, durationMs: performance.now() - start });
       else setResponse({ error: err, durationMs: performance.now() - start });

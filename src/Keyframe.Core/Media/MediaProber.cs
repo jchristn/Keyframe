@@ -123,7 +123,8 @@ namespace Keyframe.Core.Media
             ArgumentNullException.ThrowIfNull(output);
 
             List<FfprobeStream> streams = output.Streams ?? new List<FfprobeStream>();
-            FfprobeStream? video = streams.FirstOrDefault(s => s.CodecType == "video");
+            FfprobeStream? video = streams.FirstOrDefault(s => s.CodecType == "video" && !s.IsAttachedPicture);
+            bool coverArtOnly = video == null && streams.Any(s => s.CodecType == "video" && s.IsAttachedPicture);
             FfprobeStream? audio = streams.FirstOrDefault(s => s.CodecType == "audio");
 
             MediaProperties props = new MediaProperties
@@ -141,6 +142,7 @@ namespace Keyframe.Core.Media
 
             double? seconds = ParseDouble(output.Format?.Duration) ?? ParseDouble(video?.Duration) ?? ParseDouble(audio?.Duration);
             props.MediaKind = InferKind(output.Format?.FormatName, video, audio);
+            if (coverArtOnly && audio == null) props.MediaKind = MediaKindEnum.Image;
 
             if (props.MediaKind != MediaKindEnum.Image)
             {

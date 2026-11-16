@@ -1,7 +1,16 @@
 # Keyframe Telemetry
 
-Keyframe reports telemetry on two layers. Each analysis response carries its own `Telemetry` block (stage timings, every model call, token totals), which is described in [REST_API.md](REST_API.md). This document covers the second layer: the operational metrics, traces, and logs the server emits for the observability stack, and the Grafana dashboards built on them.
+Keyframe reports what it does on three layers:
 
+1. **Response telemetry.** Every analysis response carries a `Telemetry` block: stage timings, every model call with its timing and tokens, and totals. The caller gets it with the result.
+2. **Analytics store.** Every finished analysis also writes one row to the `analyses` table and one row per model call attempt to `modelcalls`. The admin-only `/v1.0/analytics` routes turn those rows into percentiles, time buckets, and per-model breakdowns.
+3. **Operational telemetry.** Metrics, traces, and logs for the observability stack (Prometheus, Tempo, Loki, Grafana), with the Grafana dashboards built on them.
+
+This document describes all three: every statistic, where it is stored, and how it is computed. Request and response shapes are in [REST_API.md](REST_API.md).
+
+- [Response telemetry](#response-telemetry)
+- [Analytics store](#analytics-store)
+- [Analytics API and computation](#analytics-api-and-computation)
 - [How it fits together](#how-it-fits-together)
 - [Sources](#sources)
 - [Configuration](#configuration)
@@ -12,6 +21,96 @@ Keyframe reports telemetry on two layers. Each analysis response carries its own
 - [Dashboards](#dashboards)
 - [Viewing telemetry](#viewing-telemetry)
 - [Production notes](#production-notes)
+
+## Response telemetry
+
+`AnalysisResponse.Telemetry` (images, videos, and audio):
+
+| Field | How it is measured |
+| --- | --- |
+| `StartUtc`, `EndUtc` | Wall clock when the analyzer starts work and when it completes the response. |
+| `TotalMs` | Stopwatch from analyzer start to response completion. Excludes queue time. |
+| `QueueWaitMs` | Job queued to job started (`Job.StartedUtc - Job.CreatedUtc`). Always `0` for synchronous image calls. |
+| `QueuedMs` | The same value as `QueueWaitMs` for video and audio jobs, `null` for images. Kept for older clients. |
+| `Stages[]` | One entry per pipeline stage: `Name`, `StartUtc`, `DurationMs` (stopwatch around the stage), `Success` (false when the stage recorded an error). Stages that run in parallel (Summarize and Extract) overlap. |
+| `ModelCalls[]` | One entry per logical model call. A call that was retried or repaired is still one entry; see below. |
+| `Totals` | Sums over `ModelCalls`: `ModelCalls`, `FailedModelCalls`, `ModelMs` (sum of call durations, so parallel calls can exceed `TotalMs`), token counts, `InputImages`, `InputImageBytes`. |
+
+Each `ModelCalls[]` entry:
+
+| Field | How it is measured |
+| --- | --- |
+| `Purpose`, `Target` | Why the call was made (`Summarize`, `Extract`, `SceneSummarize`, `SceneExtract`, `Transcribe`) and the field key, scene, or audio chunk it served. |
+| `Endpoint`, `Provider`, `Model` | The configured endpoint, its provider, and the model the provider reported (or the requested one). |
+| `StartUtc` | Start of the first attempt. |
+| `DurationMs` | Stopwatch around every attempt of the call, including retry backoff and the wait on the endpoint's concurrency gate. |
+| `QueueMs` | Time spent waiting for a slot on the endpoint (`EndpointSettings.MaxConcurrentRequests`), summed over attempts. Measured by the gated client wrapper. |
+| `TimeToFirstTokenMs` | Completion calls stream. Request sent to the first content or reasoning token of the last attempt that produced one. Reasoning models (gpt-oss) count their first reasoning token. `null` for transcription. |
+| `GenerationMs` | First token to last token of that attempt. |
+| `TokensPerSecond` | `CompletionTokens / (GenerationMs / 1000)` for that attempt; `null` when either is unknown or zero. |
+| `Attempts`, `RepairAttempts` | Attempts made (1 means no retry), and how many were repairs of unusable output. Retries are `Attempts - 1 - RepairAttempts`. |
+| `Success`, `Error`, `StatusCode`, `FinishReason` | Outcome of the call and details of the last attempt. |
+| `InputImages`, `InputImageBytes`, `InputAudioBytes` | What was sent. |
+| `PromptTokens`, `CompletionTokens`, `TotalTokens`, `CachedTokens`, `ReasoningTokens` | As reported by the provider, summed over attempts. `null` when the provider reports nothing. |
+
+The mock provider reports simulated, deterministic timing so the analytics pipeline can be tested offline: time to first token is 2 ms plus 0.02 ms per prompt token, and generation runs at 500 tokens per second (with `DelayMs` set, a quarter of the delay is first-token time and the rest generation).
+
+## Analytics store
+
+`AnalysisServices` raises a completion notification at the end of every analysis that started: success, failure (including errors thrown by media handling), and cancellation after start. Requests rejected by validation or endpoint resolution, and jobs canceled while queued, never start an analysis and are not recorded. The server's `AnalyticsService` builds the rows from the completed response and queues them; one background writer inserts each analysis and its calls in a single transaction. The response path never waits for the database. A failed write is logged (`[Analytics] could not write analysis ...`) and counted in `keyframe.analytics.writes`; it never fails the analysis.
+
+| Setting | Default | Range | Applies |
+| --- | --- | --- | --- |
+| `Analytics.Enabled` | `true` | | Live. When false, nothing new is written; stored rows stay readable. |
+| `Analytics.RetentionDays` | `90` | 1 to 3650 | Live. The hourly maintenance pass deletes analyses (and their calls) that completed before the cutoff. |
+
+Schema migration 2 creates both tables on SQLite, MySQL, PostgreSQL, and SQL Server.
+
+`analyses`, one row per analysis (indexes on `completedutc`, `(mediakind, completedutc)`, and `jobid`):
+
+| Column | Meaning |
+| --- | --- |
+| `id` | Analysis id (`kfa_`), the response `Id`. |
+| `requestid`, `jobid`, `principalname` | HTTP request id, job id (null for images), and access key name. |
+| `mediakind`, `success`, `error` | `Image`, `Video`, or `Audio`; success; error summary (the exception message, `Canceled.`, or the response errors; up to 2000 characters). |
+| `startedutc`, `completedutc` | `Telemetry.StartUtc` and `EndUtc`. Analytics filters and buckets use `completedutc`. |
+| `analysisms`, `queuewaitms` | `Telemetry.TotalMs` and `QueueWaitMs`. |
+| `mediadurationms`, `mediabytes` | Probed duration (video and audio) and resolved size. |
+| `realtimefactor` | `analysisms / mediadurationms` for video and audio; below 1 means faster than real time. |
+| `visionendpoint`, `visionmodel`, `textendpoint`, `textmodel`, `transcriptionendpoint`, `transcriptionmodel` | The endpoints and models the analysis resolved, whether or not each was called. |
+| `modelcalls`, `failedmodelcalls` | Logical calls, from `Totals`. |
+| `retries`, `repairattempts` | Summed over calls. |
+| `prompttokens`, `completiontokens`, `totaltokens`, `cachedtokens`, `reasoningtokens` | From `Totals`. |
+| `inputimages`, `inputimagebytes`, `inputaudiobytes` | What was sent to models. |
+| `scenes`, `transcriptcharacters` | Scene count (video) and transcript length. |
+| `fieldcount`, `invalidfields` | Extracted fields, including per-scene fields, and how many failed validation. |
+| `stagesjson` | `Telemetry.Stages` as JSON. |
+
+`modelcalls`, one row per attempt, so a call with one retry and one repair is three rows (indexes on `analysisid`, `startutc`, and `(endpoint, model)`):
+
+| Column | Meaning |
+| --- | --- |
+| `id`, `analysisid` | Row id (`kfc_`) and owning analysis. |
+| `purpose`, `target`, `endpoint`, `provider`, `model` | As in `ModelCalls[]`. |
+| `attempt` | 1-based attempt number within the logical call. |
+| `startutc`, `success`, `error`, `statuscode`, `finishreason` | Per attempt. A provider response whose output could not be used counts as a failed attempt with `Unusable output: ...` as its error. |
+| `durationms`, `queuems`, `ttftms`, `generationms`, `tokenspersecond` | Per attempt, as defined above. |
+| `prompttokens`, `completiontokens`, `totaltokens`, `cachedtokens`, `reasoningtokens` | Per attempt, null when not reported. |
+| `inputimages`, `inputimagebytes`, `inputaudiobytes` | What the call sent. |
+
+## Analytics API and computation
+
+The routes are documented in [REST_API.md](REST_API.md#analytics); all need the admin key.
+
+`GET /v1.0/analytics/summary` loads the analyses that completed in `[fromUtc, toUtc)` and match the filters, plus their model call rows, and aggregates them in memory (the same way request history summaries work), so every database returns identical numbers:
+
+- **Range and buckets.** `toUtc` defaults to now and `fromUtc` to 24 hours earlier. `bucket` defaults to `minute` for ranges up to 2 hours, `hour` up to 7 days, otherwise `day`. `fromUtc` is aligned down to the bucket width (UTC), and every bucket in the range is returned, including empty ones (zero counts, null distributions). A range that needs more than 10000 buckets is a `400`.
+- **Filters.** `mediaKind` matches the analysis. `endpoint` and `model` match an analysis when any of its vision, text, or transcription endpoints (or models) match, and restrict the model call statistics to calls to that endpoint or model.
+- **Distributions.** `Count`, `Min`, `Max`, `Avg`, `Sum`, population `StdDev`, and `P50`, `P90`, `P95`, `P99` computed by linear interpolation between closest ranks (the spreadsheet `PERCENTILE.INC` method). Values are rounded to 3 decimals. A distribution with no samples is `null`.
+- **What each distribution covers.** `AnalysisMs`, `QueueWaitMs`, `MediaDurationMs`, `RealtimeFactor` (video and audio only), `MediaBytes`, and `TokensPerAnalysis` are over analyses. `ModelCallMs`, `TimeToFirstTokenMs`, `GenerationMs`, and `TokensPerSecond` are over model call attempts, skipping attempts that did not report the value. Counts (`ModelCalls`, `Retries`, tokens, `Scenes`, ...) are sums over analyses.
+- **Breakdowns.** `Totals`, `ByMediaKind` (always `Image`, `Video`, `Audio`), and each bucket are full `StatBlock`s. `ByModel` groups attempts by endpoint, provider, and model (most calls first). `ByStage` groups stage timings by name in pipeline order. `ByPurpose` groups attempts by purpose.
+
+`GET /v1.0/analytics/analyses` and `GET /v1.0/analytics/analyses/{id}` return the stored rows; the single read includes every attempt in `Calls`. The delete routes remove analyses with their calls.
 
 ## How it fits together
 
@@ -83,11 +182,20 @@ The Prometheus exporter rewrites instrument names: dots become underscores, seco
 | `keyframe.model.tokens` | `keyframe_model_tokens_total` | Counter | `provider`, `kind` | Tokens reported by the provider. |
 | `keyframe.ffmpeg.invocations` | `keyframe_ffmpeg_invocations_total` | Counter | `operation`, `outcome` | ffmpeg and ffprobe invocations. |
 | `keyframe.ffmpeg.duration` | `keyframe_ffmpeg_duration_seconds_bucket/_sum/_count` | Histogram | `operation` | ffmpeg and ffprobe process duration. |
-| `keyframe.jobs.total` | `keyframe_jobs_total` | Counter | `outcome` | Video jobs finished. |
+| `keyframe.jobs.total` | `keyframe_jobs_total` | Counter | `outcome` | Video and audio jobs finished. |
 | `keyframe.jobs.active` | `keyframe_jobs_active` | Gauge | none | Jobs running now. |
 | `keyframe.jobs.queued` | `keyframe_jobs_queued` | Gauge | none | Jobs waiting for a slot. |
 | `keyframe.auth.requests` | `keyframe_auth_requests_total` | Counter | `result` | Authentication outcomes. |
 | `keyframe.endpoint.healthy` | `keyframe_endpoint_healthy` | Gauge | `endpoint` | 1 when a configured model endpoint is healthy, 0 when not. |
+| `keyframe.model.queue.duration` | `keyframe_model_queue_duration_seconds_bucket/_sum/_count` | Histogram | `purpose`, `provider` | Time each model call attempt waited for a slot on its endpoint. |
+| `keyframe.model.ttft` | `keyframe_model_ttft_seconds_bucket/_sum/_count` | Histogram | `purpose`, `provider` | Time to first token of each completion attempt (streamed). |
+| `keyframe.model.generation.duration` | `keyframe_model_generation_duration_seconds_bucket/_sum/_count` | Histogram | `purpose`, `provider` | First token to last token of each completion attempt. |
+| `keyframe.model.tokens_per_second` | `keyframe_model_tokens_per_second_bucket/_sum/_count` | Histogram | `purpose`, `provider` | Completion tokens per second of generation time. Unit `{token}/s`; uses the default histogram buckets, not the seconds buckets. |
+| `keyframe.jobs.queue.duration` | `keyframe_jobs_queue_duration_seconds_bucket/_sum/_count` | Histogram | `media_kind` | Time a video or audio job waited in the queue before a worker started it. |
+| `keyframe.analysis.realtime_factor` | `keyframe_analysis_realtime_factor_bucket/_sum/_count` | Histogram | `media_kind` | Analysis time divided by media duration for completed video and audio analyses. |
+| `keyframe.analytics.writes` | `keyframe_analytics_writes_total` | Counter | `outcome` | Analytics rows written to the database. |
+
+Audio analyses are counted by the existing `keyframe.analysis.total` and `keyframe.analysis.duration` instruments with `media_kind="audio"`. The seven instruments above were added with audio analysis and streaming model calls; the provisioned Grafana dashboards chart them (Overview, Models, Jobs, Analysis, and Media), broken down by provider and purpose; they carry no endpoint or model label, so per-model views come from the analytics API. They are also queryable directly, for example `histogram_quantile(0.95, sum by (le, provider) (rate(keyframe_model_ttft_seconds_bucket[5m])))`.
 
 ### Label values
 
@@ -95,20 +203,21 @@ Every label has a small, fixed set of values. No ids, paths, prompts, or user in
 
 | Label | Values |
 | --- | --- |
-| `media_kind` | `image`, `video` |
+| `media_kind` | `image`, `video`, `audio` |
 | `outcome` (analysis) | `success`, `partial` (completed, but a field failed validation), `failure` |
 | `stage` | `resolve`, `probe`, `normalize`, `scenedetection`, `frameextraction`, `audioextraction`, `transcribe`, `scenes`, `summarize`, `extract` |
 | `purpose` | `summarize`, `extract`, `scenesummarize`, `sceneextract`, `transcribe` |
 | `provider` | Lowercased provider type: `mock`, `ollama`, `ollamacloud`, `openai`, `openaicompatible`, `azureopenai`, `anthropic`, `gemini`, `vertexai`, `bedrock`, `xai`, `cohere` |
 | `outcome` (model call) | `success`, `failure` |
 | `kind` | `prompt`, `completion` |
-| `operation` | `version`, `probe`, `normalize`, `scene_detect`, `frame_extract`, `audio_extract` |
+| `operation` | `version`, `probe`, `normalize`, `scene_detect`, `frame_extract`, `audio_extract`, `segment_video`, `segment_audio`, `segment_frame` |
 | `outcome` (ffmpeg) | `success`, `failure`, `timeout`, `canceled`, `unavailable` |
 | `outcome` (jobs) | `succeeded`, `failed`, `canceled`, `interrupted` |
 | `result` | `success`, `failure`, `rate_limited` |
+| `outcome` (analytics writes) | `success`, `failure`, `dropped` (the in-memory queue of 10000 rows was full) |
 | `endpoint` | Endpoint names from `Inference.Endpoints` in settings (operator defined, few) |
 
-Whole-video summary and extraction record their time under the `summarize` and `extract` stages.
+Whole-video summary and extraction, and audio summary and extraction, record their time under the `summarize` and `extract` stages.
 
 ## Built-in metrics from Watson and .NET
 
@@ -129,17 +238,18 @@ These come with no Keyframe code and feed the Overview and HTTP dashboards.
 
 ## Spans
 
-All Keyframe spans come from the `Keyframe` ActivitySource and nest under Watson's `{method} {route}` server span, so one trace runs from the HTTP request down to each model call and ffmpeg process. Video jobs run in the background, so `job video` starts its own trace.
+All Keyframe spans come from the `Keyframe` ActivitySource and nest under Watson's `{method} {route}` server span, so one trace runs from the HTTP request down to each model call and ffmpeg process. Video and audio jobs run in the background, so `job video` and `job audio` start their own traces.
 
 | Span | Kind | Parent | Attributes |
 | --- | --- | --- | --- |
 | `analysis:image` | Internal | Watson request span | `keyframe.analysis_id`, `keyframe.endpoint` |
 | `analysis:video` | Internal | Request span or `job video` | `keyframe.analysis_id`, `keyframe.endpoint` |
+| `analysis:audio` | Internal | `job audio` | `keyframe.analysis_id` |
 | `stage:<Name>` | Internal | Analysis span | `keyframe.media_kind`; the stage is in the span name (`stage:Probe`, `stage:SceneDetection`, `stage:Summarize`, ...) |
 | `inference <Purpose>` | Client | Stage span | `keyframe.purpose`, `keyframe.endpoint`, `keyframe.provider`, `keyframe.model`, `keyframe.input_images`, `keyframe.attempts`, `keyframe.prompt_tokens`, `keyframe.completion_tokens` |
 | `inference Transcribe` | Client | Transcribe stage | `keyframe.endpoint`, `keyframe.provider` |
 | `ffmpeg <operation>` | Internal | Stage span | `keyframe.ffmpeg.operation`, `keyframe.ffmpeg.exit_code` |
-| `job video` | Internal | none (root) | `keyframe.job_id`, `keyframe.job_status` |
+| `job video`, `job audio` | Internal | none (root) | `keyframe.job_id`, `keyframe.job_status` |
 
 Spans set `Error` status on caught failures (a failed model call after retries, a failed or timed-out ffmpeg process, a failed analysis or job), so Tempo's `status = error` filter finds them.
 

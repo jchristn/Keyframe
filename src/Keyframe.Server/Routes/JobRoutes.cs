@@ -45,9 +45,9 @@ namespace Keyframe.Server.Routes
         public void Register(RouteRegistrar routes)
         {
             routes.Add(HttpMethod.GET, "/v1.0/jobs", RouteAuthEnum.Key, ListAsync,
-                RouteRegistrar.Meta("listJobs", "List jobs", "Jobs", "Newest first. Filters: status, mediaKind, principalName, fromUtc, toUtc. Paging: pageNumber (from 1), pageSize (1 to 1000, default 25).")
+                RouteRegistrar.Meta("listJobs", "List jobs", "Jobs", "Newest first. Filters: status, mediaKind (Video or Audio), principalName, fromUtc, toUtc. Paging: pageNumber (from 1), pageSize (1 to 1000, default 25).")
                     .WithParameter(OpenApiParameterMetadata.Query("status", "Queued, Running, Succeeded, Failed, Canceled, or Interrupted.", false, OpenApiSchemaMetadata.String()))
-                    .WithParameter(OpenApiParameterMetadata.Query("mediaKind", "Image or Video.", false, OpenApiSchemaMetadata.String()))
+                    .WithParameter(OpenApiParameterMetadata.Query("mediaKind", "Video or Audio.", false, OpenApiSchemaMetadata.String()))
                     .WithParameter(OpenApiParameterMetadata.Query("principalName", "Submitting key name.", false, OpenApiSchemaMetadata.String()))
                     .WithParameter(OpenApiParameterMetadata.Query("fromUtc", "Inclusive lower bound (ISO 8601).", false, OpenApiSchemaMetadata.String("date-time")))
                     .WithParameter(OpenApiParameterMetadata.Query("toUtc", "Exclusive upper bound (ISO 8601).", false, OpenApiSchemaMetadata.String("date-time")))
@@ -62,7 +62,7 @@ namespace Keyframe.Server.Routes
                     .WithResponse(404, RouteRegistrar.Error("Job not found.")));
 
             routes.Add(HttpMethod.GET, "/v1.0/jobs/{id}/result", RouteAuthEnum.Key, ResultAsync,
-                RouteRegistrar.Meta("getJobResult", "Get job result", "Jobs", "The VideoAnalysisResponse of a succeeded job. Returns 409 while the job is not finished or did not succeed.")
+                RouteRegistrar.Meta("getJobResult", "Get job result", "Jobs", "The VideoAnalysisResponse (video job) or AudioAnalysisResponse (audio job) of a succeeded job. Returns 409 while the job is not finished or did not succeed.")
                     .WithResponse(200, RouteRegistrar.Json("Result.", typeof(VideoAnalysisResponse)))
                     .WithResponse(404, RouteRegistrar.Error("Job not found."))
                     .WithResponse(409, RouteRegistrar.Error("The job has no result yet.")));

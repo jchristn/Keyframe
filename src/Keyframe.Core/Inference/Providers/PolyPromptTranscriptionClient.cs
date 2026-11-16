@@ -2,6 +2,7 @@ namespace Keyframe.Core.Inference.Providers
 {
     using System;
     using System.Diagnostics;
+    using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
     using Keyframe.Core.Enums;
@@ -24,6 +25,37 @@ namespace Keyframe.Core.Inference.Providers
     public class PolyPromptTranscriptionClient : ITranscriptionClient, IDisposable
     {
         #region Public-Members
+
+        /// <summary>
+        /// Segments whose no-speech probability is above this value and whose average log probability is below
+        /// <see cref="SilenceLogProbabilityThreshold"/> are treated as silence and dropped. Default 0.6. Minimum 0, maximum 1.
+        /// </summary>
+        public double NoSpeechThreshold
+        {
+            get
+            {
+                return _NoSpeechThreshold;
+            }
+            set
+            {
+                _NoSpeechThreshold = Math.Clamp(value, 0.0, 1.0);
+            }
+        }
+
+        /// <summary>
+        /// Average log probability below which a likely-silent segment is dropped. Default -0.7. Minimum -10, maximum 0.
+        /// </summary>
+        public double SilenceLogProbabilityThreshold
+        {
+            get
+            {
+                return _SilenceLogProbabilityThreshold;
+            }
+            set
+            {
+                _SilenceLogProbabilityThreshold = Math.Clamp(value, -10.0, 0.0);
+            }
+        }
 
         /// <summary>
         /// Endpoint name from settings.
@@ -65,6 +97,8 @@ namespace Keyframe.Core.Inference.Providers
         private readonly EndpointSettings _Endpoint;
         private readonly ProviderClientBase _Client;
         private bool _Disposed = false;
+        private double _NoSpeechThreshold = 0.6;
+        private double _SilenceLogProbabilityThreshold = -0.7;
 
         #endregion
 
@@ -135,9 +169,16 @@ namespace Keyframe.Core.Inference.Providers
                     result.Retryable = PolyPromptClientBuilder.IsRetryable(response.StatusCode);
                 }
 
+                int dropped = 0;
                 foreach (PpTranscriptionSegment segment in response.Segments)
                 {
                     if (String.IsNullOrWhiteSpace(segment.Text)) continue;
+                    if (IsLikelySilence(segment))
+                    {
+                        dropped++;
+                        continue;
+                    }
+
                     result.Segments.Add(new KfTranscriptionSegment
                     {
                         StartMs = (long)Math.Round(segment.StartSeconds * 1000.0),
@@ -145,6 +186,9 @@ namespace Keyframe.Core.Inference.Providers
                         Text = segment.Text.Trim()
                     });
                 }
+
+                // Whisper invents short phrases ("You", "Thank you.") over silence and noise; drop them from the text too.
+                if (dropped > 0) result.Text = String.Join(" ", result.Segments.Select(seg => seg.Text));
             }
             catch (OperationCanceledException)
             {
@@ -198,6 +242,13 @@ namespace Keyframe.Core.Inference.Providers
         #endregion
 
         #region Private-Methods
+
+        private bool IsLikelySilence(PpTranscriptionSegment segment)
+        {
+            if (!segment.NoSpeechProbability.HasValue) return false;
+            if (segment.NoSpeechProbability.Value <= _NoSpeechThreshold) return false;
+            return !segment.AverageLogProbability.HasValue || segment.AverageLogProbability.Value < _SilenceLogProbabilityThreshold;
+        }
 
         private bool IsTextOnlyModel(string? model)
         {

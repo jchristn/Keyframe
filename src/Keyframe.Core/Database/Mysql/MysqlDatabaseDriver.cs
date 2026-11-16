@@ -61,6 +61,7 @@ namespace Keyframe.Core.Database.Mysql
 
             RequestHistory = new RequestHistoryMethods(this);
             Jobs = new JobMethods(this);
+            Analytics = new AnalyticsMethods(this);
         }
 
         #endregion

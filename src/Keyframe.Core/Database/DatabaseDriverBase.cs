@@ -40,6 +40,11 @@ namespace Keyframe.Core.Database
         public IJobMethods Jobs { get; protected set; } = null!;
 
         /// <summary>
+        /// Analytics methods. Set by the provider constructor.
+        /// </summary>
+        public IAnalyticsMethods Analytics { get; protected set; } = null!;
+
+        /// <summary>
         /// Highest schema version applied, available after <see cref="InitializeAsync"/>.
         /// </summary>
         public int SchemaVersion { get; private set; } = 0;

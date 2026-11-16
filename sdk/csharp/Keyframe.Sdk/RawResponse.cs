@@ -1,6 +1,7 @@
 namespace Keyframe.Sdk
 {
     using System;
+    using System.Collections.Generic;
 
     /// <summary>
     /// Status code, body, and selected headers of one HTTP exchange.
@@ -31,5 +32,32 @@ namespace Keyframe.Sdk
         /// Value of the Location response header, or null.
         /// </summary>
         public string? Location { get; set; } = null;
+
+        /// <summary>
+        /// Value of the Content-Type response header, or null.
+        /// </summary>
+        public string? ContentType { get; set; } = null;
+
+        /// <summary>
+        /// Response body bytes, set only for binary exchanges (for example a segment); null otherwise.
+        /// </summary>
+        public byte[]? Data { get; set; } = null;
+
+        /// <summary>
+        /// Every response header, keyed case-insensitively. Never null.
+        /// </summary>
+        public Dictionary<string, string> Headers
+        {
+            get
+            {
+                return _Headers;
+            }
+            set
+            {
+                _Headers = value ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            }
+        }
+
+        private Dictionary<string, string> _Headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
     }
 }

@@ -1,0 +1,1534 @@
+{
+  "app": {
+    "name": "Keyframe",
+    "documentTitle": "{{page}} | Keyframe",
+    "versionLabel": "v{{version}}",
+    "alpha": "アルファ版"
+  },
+  "common": {
+    "actions": "操作",
+    "any": "すべて",
+    "cancel": "キャンセル",
+    "close": "閉じる",
+    "confirm": "確認",
+    "copied": "コピーしました",
+    "copy": "コピー",
+    "copyId": "ID をコピー",
+    "delete": "削除",
+    "disabled": "無効",
+    "dismiss": "閉じる",
+    "download": "JSON をダウンロード",
+    "empty": "表示する項目はありません。",
+    "emptyList": "空のリスト",
+    "enabled": "有効",
+    "false": "False",
+    "true": "True",
+    "language": "言語",
+    "loading": "読み込み中...",
+    "never": "なし",
+    "no": "いいえ",
+    "yes": "はい",
+    "none": "なし",
+    "notAvailable": "該当なし",
+    "notYet": "未実行",
+    "null": "null",
+    "refresh": "更新",
+    "retry": "再試行",
+    "save": "保存",
+    "saving": "保存中...",
+    "unknown": "不明",
+    "updatedAt": "{{time}} に更新",
+    "view": "表示",
+    "viewJson": "JSON を表示",
+    "working": "処理中..."
+  },
+  "nav": {
+    "label": "メインナビゲーション",
+    "home": "ホーム",
+    "image": "画像",
+    "video": "動画",
+    "jobs": "ジョブ",
+    "endpoints": "エンドポイント",
+    "requestHistory": "リクエスト履歴",
+    "apiExplorer": "API エクスプローラー",
+    "settings": "設定",
+    "server": "サーバー情報",
+    "adminOnly": "管理者キーが必要です",
+    "groups": {
+      "analyze": "分析",
+      "operate": "運用",
+      "observability": "オブザーバビリティ",
+      "system": "システム"
+    },
+    "audio": "音声",
+    "analytics": "アナリティクス"
+  },
+  "roles": {
+    "admin": "管理者",
+    "accessKey": "アクセスキー"
+  },
+  "status": {
+    "active": "有効",
+    "inactive": "無効",
+    "available": "利用可能",
+    "missing": "見つかりません",
+    "checking": "確認中",
+    "failed": "失敗",
+    "succeeded": "成功",
+    "partial": "一部成功",
+    "healthy": "正常",
+    "unhealthy": "異常",
+    "unreachable": "到達不能",
+    "valid": "有効",
+    "invalid": "無効"
+  },
+  "topbar": {
+    "toggleNav": "ナビゲーションの切り替え",
+    "copyServerUrl": "サーバー URL をコピー",
+    "health": "サーバーの状態",
+    "principal": "サインイン中のキー",
+    "anonymous": "匿名",
+    "repository": "GitHub の Keyframe",
+    "lightMode": "ライトテーマに切り替え",
+    "darkMode": "ダークテーマに切り替え",
+    "logout": "サインアウト"
+  },
+  "login": {
+    "title": "サーバーに接続",
+    "tagline": "画像と動画から要約と型付きメタデータを生成します。",
+    "serverUrl": "サーバー URL",
+    "serverUrlHelp": "Keyframe REST サーバーの URL (例: http://127.0.0.1:8700)。このデバイスに記憶されます。",
+    "apiKey": "API キー",
+    "apiKeyPlaceholder": "アクセスキーまたは管理者キー",
+    "showKey": "キーを表示",
+    "hideKey": "キーを隠す",
+    "remember": "このデバイスにキーを記憶する",
+    "rememberHelp": "オフにすると、キーはメモリ上にのみ保持され、再読み込み後に再度サインインが必要になります。",
+    "connect": "接続",
+    "connecting": "接続中...",
+    "restoring": "セッションを復元しています...",
+    "retrySaved": "保存済みセッションを再試行",
+    "localDefaults": "新規のローカル環境では、アクセスキー \"default\" と管理者キー \"keyframeadmin\" が使用されます。サーバーを共有する前に両方を変更してください。",
+    "errors": {
+      "badUrl": "http または https の絶対 URL を入力してください。",
+      "unreachable": "{{url}} に接続できませんでした。サーバーが起動していること、URL とポートが正しいこと、ブラウザーから到達できることを確認してください。",
+      "badKey": "サーバーがこのキーを拒否しました。キーを確認して再試行してください。",
+      "rateLimited": "このアドレスからの失敗した試行が多すぎます。1 分待ってから再試行してください。",
+      "notKeyframe": "サーバーは応答しましたが、Keyframe ではないようです (/v1.0/whoami がありません)。URL を確認してください。",
+      "unexpected": "サーバーが予期しないエラーを返しました。",
+      "savedKeyRejected": "保存されたキーは {{url}} で受け付けられなくなりました。再度サインインしてください。",
+      "restoreUnreachable": "セッションを復元するために {{url}} に接続できませんでした。",
+      "sessionExpired": "サーバーがキーを拒否しました。再度サインインしてください。"
+    }
+  },
+  "errors": {
+    "network": "サーバーに接続できませんでした。",
+    "badRequest": "サーバーがリクエストを無効として拒否しました。",
+    "unauthorized": "キーがないか、無効です。",
+    "forbidden": "この操作には管理者キーが必要です。",
+    "notFound": "見つかりません。",
+    "conflict": "リクエストが現在の状態と競合しています。",
+    "unprocessable": "メディアをダウンロードまたはデコードできませんでした。",
+    "tooManyRequests": "しばらく待ってから再試行してください。動画や音声のジョブでは、キューが満杯の可能性があります。実行中のジョブをキャンセルするか、完了を待ってください。",
+    "badGateway": "モデルエンドポイントに到達できません。",
+    "timeout": "リクエストがタイムアウトしました。",
+    "server": "サーバーで内部エラーが発生しました (HTTP {{status}})。",
+    "unknown": "問題が発生しました (HTTP {{status}})。",
+    "requestId": "リクエスト ID",
+    "hints": {
+      "network": "サーバーが起動していて、このブラウザーから到達できることを確認してから再試行してください。",
+      "badRequest": "上記の問題を修正して、再度送信してください。",
+      "forbidden": "この操作を行うには、管理者キーでサインインしてください。",
+      "unprocessable": "URL がサーバーから到達可能で、対応している画像または動画を指していることを確認するか、代わりにファイルをアップロードしてください。",
+      "tooManyRequests": "しばらく待ってから再試行してください。動画のジョブでは、キューが満杯の可能性があります。実行中のジョブをキャンセルするか、完了を待ってください。",
+      "badGateway": "エンドポイントページで接続をテストするか、別のエンドポイントを選択して再試行してください。",
+      "timeout": "再試行するか、より小さい入力を試すか、設定でタイムアウトを延ばしてください。"
+    }
+  },
+  "pagination": {
+    "label": "ページ送り",
+    "showing": "{{total}} 件中 {{from}}-{{to}} 件を表示",
+    "pageOf": "{{page}} / {{pages}} ページ",
+    "first": "最初のページ",
+    "previous": "前のページ",
+    "next": "次のページ",
+    "last": "最後のページ",
+    "jump": "ページへ移動",
+    "pageSize": "表示件数"
+  },
+  "table": {
+    "empty": "レコードがありません",
+    "selectColumns": "列を選択",
+    "showAllColumns": "すべての列を表示",
+    "sortBy": "{{column}} で並べ替え",
+    "sortPage": "並べ替えはこのページの行にのみ適用されます。サーバーは新しい順に返します。",
+    "sortLocal": "並べ替えは表示中の行に適用されます。",
+    "selectAll": "このページのすべての行を選択",
+    "selectRow": "行を選択",
+    "selectedCount_other": "{{count}} 件選択中",
+    "clearSelection": "選択を解除",
+    "bulkActions": "一括操作"
+  },
+  "filters": {
+    "from": "開始",
+    "to": "終了",
+    "apply": "適用",
+    "clear": "フィルターをクリア"
+  },
+  "chart": {
+    "title": "リクエストアクティビティ",
+    "range": "期間",
+    "refresh": "グラフを更新",
+    "success": "成功",
+    "failure": "失敗",
+    "noData": "この期間のリクエストはまだありません。",
+    "ariaSummary_other": "リクエストアクティビティのグラフ、期間内のリクエスト {{count}} 件",
+    "ranges": {
+      "hour": "過去 1 時間",
+      "day": "過去 1 日",
+      "week": "過去 1 週間",
+      "month": "過去 1 か月"
+    },
+    "tooltip": {
+      "total": "合計: {{value}}",
+      "success": "成功: {{value}}",
+      "failure": "失敗: {{value}}",
+      "avg": "平均所要時間: {{value}}"
+    }
+  },
+  "telemetry": {
+    "totalTime": "合計時間",
+    "queued": "キュー待ち",
+    "modelTime": "モデル時間",
+    "modelCalls": "モデル呼び出し",
+    "failedCalls": "失敗した呼び出し",
+    "promptTokens": "プロンプトトークン",
+    "completionTokens": "補完トークン",
+    "totalTokens": "合計トークン",
+    "inputImages": "入力画像",
+    "noCalls": "モデル呼び出しは行われませんでした。",
+    "waterfallAria": "{{stages}} 個のステージと {{calls}} 回のモデル呼び出しを示すテレメトリのウォーターフォール",
+    "showAll": "{{count}} 件のモデル呼び出しをすべて表示",
+    "showFewer": "モデル呼び出しの表示を減らす",
+    "tooltip": {
+      "start": "開始 {{value}}",
+      "duration": "所要時間 {{value}}",
+      "model": "{{endpoint}} {{model}}",
+      "tokens": "トークン {{value}}",
+      "attempts": "試行回数 {{value}}",
+      "queue": "キュー待ち {{value}}",
+      "ttft": "最初のトークンまで {{value}}",
+      "generation": "生成 {{value}}",
+      "tokensPerSecond": "毎秒 {{value}} トークン"
+    },
+    "columns": {
+      "purpose": "目的",
+      "target": "対象",
+      "endpoint": "エンドポイント",
+      "model": "モデル",
+      "duration": "所要時間",
+      "attempts": "試行回数",
+      "promptTokens": "プロンプトトークン",
+      "completionTokens": "補完トークン",
+      "totalTokens": "合計トークン",
+      "finishReason": "終了理由",
+      "status": "ステータス",
+      "queue": "キュー",
+      "ttft": "最初のトークン",
+      "generation": "生成",
+      "tokensPerSecond": "トークン/秒",
+      "cachedTokens": "キャッシュ済みトークン",
+      "reasoningTokens": "推論トークン"
+    },
+    "avgTtft": "最初のトークンまでの平均時間",
+    "avgTokensPerSecond": "平均トークン/秒",
+    "cachedTokens": "キャッシュ済みトークン",
+    "reasoningTokens": "推論トークン"
+  },
+  "fieldBuilder": {
+    "title": "フィールド",
+    "empty": "フィールドはまだありません。型付きの値を抽出するにはフィールドを追加してください。",
+    "fieldNumber": "フィールド {{n}}",
+    "key": "キー",
+    "keyPlaceholder": "dogCount",
+    "type": "型",
+    "prompt": "プロンプト",
+    "promptPlaceholder": "このフィールドについてモデルが答える質問",
+    "options": "選択肢",
+    "optionsPlaceholder": "選択肢を入力して Enter キーを押します",
+    "removeOption": "選択肢 {{option}} を削除",
+    "minimum": "最小値",
+    "maximum": "最大値",
+    "maxLength": "最大長",
+    "maxItems": "最大項目数",
+    "schema": "JSON Schema",
+    "schemaPlaceholder": "{\"type\": \"object\", \"properties\": {}}",
+    "default": "既定値",
+    "noDefault": "既定値なし",
+    "defaultListPlaceholder": "カンマ区切りの値",
+    "optional": "任意",
+    "required": "必須",
+    "add": "フィールドを追加",
+    "newFieldType": "新しいフィールドの型",
+    "moveUp": "上へ移動",
+    "moveDown": "下へ移動",
+    "duplicate": "フィールドを複製",
+    "remove": "フィールドを削除",
+    "dragToReorder": "ドラッグして並べ替え",
+    "errors": {
+      "keyInvalid": "英字、数字、アンダースコア、ハイフン、ピリオドを 1 から 64 文字で使用してください。",
+      "keyDuplicate": "キー \"{{key}}\" が複数回使用されています。",
+      "keySummary": "キー \"{{key}}\" が要約のキーと重複しています。",
+      "promptRequired": "プロンプトは必須です。",
+      "promptTooLong": "プロンプトは {{max}} 文字までです。",
+      "optionsRequired": "Enum フィールドには少なくとも 1 つの選択肢が必要です。",
+      "optionsTooMany": "選択肢は最大 {{max}} 個までです。",
+      "notNumber": "数値を入力してください。",
+      "minAboveMax": "最小値は最大値以下にしてください。",
+      "atLeastOne": "1 以上である必要があります。",
+      "schemaJson": "スキーマが有効な JSON ではありません。",
+      "defaultJson": "既定値が有効な JSON ではありません。",
+      "defaultNotOption": "既定値は選択肢のいずれかである必要があります。"
+    }
+  },
+  "context": {
+    "help": "リクエスト内のすべてのプロンプト (要約、各フィールド、動画では各シーン) で共有される背景情報です。コンテキストは指示ではなくデータとして扱われます。",
+    "label": "ラベル",
+    "labelPlaceholder": "出典",
+    "text": "テキスト",
+    "textPlaceholder": "譲渡ボランティアが投稿した写真。",
+    "add": "コンテキストを追加",
+    "remove": "コンテキスト項目 {{n}} を削除",
+    "errors": {
+      "tooMany": "コンテキスト項目は最大 {{max}} 個までです。",
+      "textRequired": "コンテキスト項目 {{n}} にはテキストが必要です。",
+      "labelTooLong": "コンテキスト項目 {{n}} のラベルが {{max}} 文字を超えています。",
+      "tooLong": "コンテキストの合計が {{max}} 文字を超えています。"
+    }
+  },
+  "media": {
+    "source": "メディアソース",
+    "upload": "アップロード",
+    "url": "URL",
+    "dropImage": "ここに画像をドロップするか、ファイルを選択してください。",
+    "dropVideo": "ここに動画をドロップするか、ファイルを選択してください。",
+    "chooseFile": "ファイルを選択",
+    "chooseAnother": "別のファイルを選択",
+    "previewAlt": "選択した画像のプレビュー",
+    "imageUrl": "画像 URL",
+    "videoUrl": "動画 URL",
+    "urlHint": "URL はサーバー自身がダウンロードするため、サーバーから到達できる必要があります。Media.AllowPrivateNetworkUrls がオンでない限り、プライベートネットワークのアドレスはブロックされます。",
+    "videoUploadHint": "アップロードはリクエスト本文に base64 で送信されるため、サイズが約 3 分の 1 増えます。大きな動画には URL の使用をおすすめします。",
+    "errors": {
+      "fileRequired": "分析するファイルを選択してください。",
+      "urlInvalid": "http または https の絶対 URL を入力してください。"
+    },
+    "dropAudio": "ここに音声または動画ファイルをドロップするか、ファイルを選択してください。",
+    "audioUrl": "音声または動画の URL",
+    "audioUploadHint": "MP3、WAV、FLAC、M4A、OGG、Opus、WebM の音声に対応しています。動画ファイルの場合は音声トラックのみが使用されます。アップロードは base64 で送信されるため、サイズが約 3 分の 1 増えます。"
+  },
+  "model": {
+    "endpoint": "エンドポイント",
+    "visionEndpoint": "ビジョンエンドポイント",
+    "textEndpoint": "テキストエンドポイント",
+    "useDefault": "サーバーの既定値",
+    "name": "モデルの上書き",
+    "namePlaceholder": "エンドポイントの既定モデル",
+    "textHelp": "テキストエンドポイントは、動画全体の要約などテキストのみの処理を担当します。既定では Inference.DefaultText、次にビジョンエンドポイントが使用されます。",
+    "transcriptionEndpoint": "文字起こしエンドポイント"
+  },
+  "summarize": {
+    "enable": "要約",
+    "key": "結果キー",
+    "keyInvalid": "英字、数字、アンダースコア、ハイフン、ピリオドを 1 から 64 文字で使用してください。",
+    "maxWords": "最大語数",
+    "style": "スタイル",
+    "instructions": "指示",
+    "instructionsPlaceholder": "任意の指示 (例: 場所と動物について触れる)。"
+  },
+  "extract": {
+    "enable": "型付きフィールドを抽出",
+    "mode": "抽出モード"
+  },
+  "results": {
+    "title": "結果",
+    "noResults": "結果は返されませんでした。",
+    "noFields": "フィールドは要求されていません。",
+    "noProperties": "メディアのプロパティは要求されていません。",
+    "copyValue": "{{key}} の値をコピー",
+    "errors_other": "{{count}} 件のエラー",
+    "errorsHint": "再試行後もモデル呼び出しが失敗しました。部分的な結果を表示しています。再試行するか、エンドポイントページでエンドポイントをテストしてください。",
+    "warnings_other": "{{count}} 件の警告",
+    "tabs": {
+      "results": "結果",
+      "fields": "フィールド",
+      "telemetry": "テレメトリ",
+      "properties": "プロパティ",
+      "raw": "Raw JSON"
+    },
+    "columns": {
+      "key": "キー",
+      "type": "型",
+      "value": "値",
+      "valid": "有効",
+      "raw": "モデルの生出力",
+      "notes": "エラーと警告"
+    }
+  },
+  "properties": {
+    "mediaKind": "メディアの種類",
+    "contentType": "コンテンツタイプ",
+    "format": "形式",
+    "size": "サイズ",
+    "dimensions": "寸法",
+    "duration": "長さ",
+    "frameRate": "フレームレート",
+    "bitRate": "ビットレート",
+    "videoCodec": "動画コーデック",
+    "hasAudio": "音声あり",
+    "audioCodec": "音声コーデック",
+    "audioChannels": "音声チャンネル数",
+    "audioSampleRate": "音声サンプルレート",
+    "sha256": "SHA-256",
+    "tags": "タグ"
+  },
+  "snippets": {
+    "title": "コードとしてコピー",
+    "keyNote": "スニペットはキーを KEYFRAME_API_KEY 環境変数から読み取り、キー自体は含みません。アップロードしたメディアはプレースホルダーとして表示されます。",
+    "languages": {
+      "curl": "cURL",
+      "fetch": "JavaScript",
+      "python": "Python",
+      "csharp": "C#"
+    }
+  },
+  "presets": {
+    "label": "プリセット",
+    "choose": "プリセットを読み込む",
+    "none": "保存済みのプリセットはありません",
+    "save": "プリセットを保存",
+    "saveTitle": "プリセットを保存",
+    "name": "プリセット名",
+    "saveHelp": "コンテキスト、モデル、機能、フィールドをこのブラウザーに保存します。メディアとキーは保存されません。",
+    "delete": "プリセットを削除",
+    "deleteTitle": "プリセットを削除",
+    "deleteMessage": "このブラウザーからプリセット \"{{name}}\" を削除しますか?"
+  },
+  "analyze": {
+    "sections": {
+      "media": "メディア",
+      "context": "コンテキスト",
+      "model": "モデル",
+      "summary": "要約",
+      "fields": "型付きフィールド"
+    },
+    "includeProperties": "レスポンスにメディアのプロパティを含める",
+    "run": "分析",
+    "running": "分析中...",
+    "errors": {
+      "fixFields": "先に強調表示された問題を修正してください。",
+      "noFields": "フィールドを 1 つ以上追加するか、抽出をオフにしてください。",
+      "noFunction": "要約または抽出を有効にしてください。"
+    },
+    "toast": {
+      "done": "分析が {{duration}} で完了しました。",
+      "partial": "分析は {{duration}} で完了しましたが、エラーがあります。結果を確認してください。",
+      "canceled": "分析をキャンセルしました。"
+    }
+  },
+  "analyzeImage": {
+    "title": "画像を分析",
+    "summary": "画像を要約し、型付きフィールドを抽出します。結果にはフィールドごとの検証結果と所要時間の内訳が含まれます。",
+    "emptyTitle": "分析はまだありません",
+    "emptyMessage": "画像を選択し、フィールドを調整して「分析」を選択してください。結果、フィールドの検証、テレメトリ、Raw JSON がここに表示されます。"
+  },
+  "analyzeVideo": {
+    "title": "動画を分析",
+    "summary": "動画ジョブを送信します: シーン検出、シーンごとの要約とフィールド、文字起こし、動画全体の結果。受け付けられるとジョブのページに移動します。",
+    "sections": {
+      "whole": "動画全体",
+      "scenes": "シーン",
+      "transcribe": "文字起こし"
+    },
+    "wholeHelp": "動画全体に対する要約とフィールド。",
+    "sampleFrames": "サンプルフレーム数",
+    "sampleFramesHelp": "シーンがオフのときに動画全体からサンプリングするフレーム数 (1 から 64)。",
+    "scenesEnable": "シーンを検出して各シーンを分析",
+    "threshold": "シーンのしきい値",
+    "thresholdHelp": "ffmpeg のシーンスコア (0.01 から 1)。低いほど多くのカットを検出します。",
+    "minSceneMs": "最小シーン長 (ms)",
+    "maxSceneMs": "最大シーン長 (ms)",
+    "maxScenes": "最大シーン数",
+    "maxScenesHelp": "コストを抑えます。超過したシーンは結合されます。",
+    "framesPerScene": "シーンあたりのフレーム数",
+    "sceneSummary": "シーンごとの要約",
+    "sceneExtract": "シーンごとにフィールドを抽出",
+    "includeKeyframeData": "キーフレームのサムネイルを含める (シーンタイムラインで使用)",
+    "transcribeEnable": "音声トラックを文字起こし",
+    "transcribeEndpoint": "文字起こしエンドポイント",
+    "language": "言語",
+    "transcribePrompt": "文字起こしプロンプト",
+    "transcribePromptPlaceholder": "任意の語彙や表記のヒント",
+    "submit": "ジョブを送信",
+    "submitting": "送信中...",
+    "errors": {
+      "sceneRange": "最小シーン長は最大シーン長より小さくしてください。",
+      "language": "en や pt-BR などの ISO-639 コードを使用してください。",
+      "noFunction": "要約、抽出、シーン、文字起こしのうち少なくとも 1 つを有効にしてください。",
+      "queueFull": "ジョブキューが満杯です。"
+    },
+    "toast": {
+      "submitted": "ジョブ {{id}} を受け付けました。"
+    },
+    "languagePlaceholder": "en"
+  },
+  "samples": {
+    "image": {
+      "hasPeople": "この画像に人は写っていますか?",
+      "objects": "見える主な物体を列挙してください。",
+      "setting": "これはどこで撮影されましたか?",
+      "indoors": "屋内",
+      "outdoors": "屋外",
+      "unknown": "不明"
+    },
+    "video": {
+      "topics": "扱われている主なトピックを列挙してください。",
+      "showsText": "画面上に目立つテキストは表示されていますか?"
+    },
+    "audio": {
+      "speakerCount": "異なる話者は何人いますか?"
+    }
+  },
+  "home": {
+    "title": "ホーム",
+    "summary": "Keyframe の現在の状況: サーバーの状態、リクエストのトラフィック、分析ジョブ、モデルエンドポイント。",
+    "ctaLabel": "よく使うワークフロー",
+    "cta": {
+      "image": "画像を分析",
+      "imageSub": "要約と型付きフィールドを 1 回の呼び出しで",
+      "video": "動画を分析",
+      "videoSub": "シーン、文字起こし、フィールドをジョブとして",
+      "explorer": "API エクスプローラーを開く",
+      "explorerSub": "ブラウザーから任意のルートを呼び出す",
+      "audio": "音声を分析",
+      "audioSub": "文字起こし、要約、フィールドをジョブとして"
+    },
+    "kpiLabel": "主要指標",
+    "kpi": {
+      "requests": "リクエスト ({{range}})",
+      "successRate": "成功率",
+      "failures_other": "失敗 {{value}} 件",
+      "avgLatency": "平均レイテンシ",
+      "jobs": "アクティブなジョブ",
+      "queued": "{{value}} 件キュー待ち",
+      "endpoints": "正常なエンドポイント",
+      "healthyOf": "{{total}} 中 {{healthy}}",
+      "server": "サーバー",
+      "ffmpegAvailable": "ffmpeg 利用可能",
+      "ffmpegMissing": "ffmpeg なし"
+    },
+    "attention": {
+      "title": "要対応",
+      "none": "対応が必要な項目はありません。",
+      "open": "開く",
+      "unreachable": "ヘルスエンドポイントが応答していません。",
+      "ffmpegMissing": "サーバーで ffmpeg が利用できません。インストールされるまで、動画の分析と画像の正規化は失敗します。",
+      "endpointUnhealthy": "エンドポイント {{name}} が異常です。{{message}}",
+      "noActiveEndpoints": "有効なモデルエンドポイントがありません。設定で追加するか、有効にしてください。",
+      "failedJobs_other": "{{count}} 件のジョブが失敗しました。",
+      "failedRequests_other": "この期間に {{count}} 件のリクエストが失敗しました。",
+      "authDisabled": "認証がオフになっています。サーバーに到達できる人は誰でも利用できます。"
+    },
+    "activityTitle": "リクエストアクティビティ",
+    "noTraffic": {
+      "title": "トラフィックはまだありません",
+      "message": "分析を実行するか API を呼び出すと、リクエストがここに表示されます。"
+    },
+    "recentJobs": "最近のジョブ",
+    "viewAllJobs": "すべてのジョブを表示",
+    "noJobs": "ジョブはまだありません。"
+  },
+  "externalServices": {
+    "title": "外部サービス",
+    "summary": "Docker Compose スタックに同梱されているオブザーバビリティツールです。リンクには接続先のホストが使用されます。",
+    "credentials": "既定のログイン情報",
+    "noLogin": "ログイン不要",
+    "copyUrl": "URL をコピー",
+    "note": "これらはローカル開発用の既定値です。スタックを公開する前に Grafana のパスワードを変更し、Prometheus と Tempo はパブリックなインターフェースに公開しないでください。このデプロイに含まれていないサービスは読み込まれません。",
+    "services": {
+      "grafana": {
+        "name": "Grafana",
+        "purpose": "トラフィック、パイプラインのステージ、モデル呼び出しのダッシュボード"
+      },
+      "prometheus": {
+        "name": "Prometheus",
+        "purpose": "メトリクスストアとクエリ UI"
+      },
+      "tempo": {
+        "name": "Tempo",
+        "purpose": "トレースストア (readiness エンドポイント)"
+      }
+    }
+  },
+  "jobs": {
+    "title": "ジョブ",
+    "summary": "進捗をリアルタイムで確認できる動画・音声分析ジョブです。ジョブを開くとシーン、文字起こし、テレメトリを確認できます。実行中のジョブはキャンセル、完了したジョブは削除できます。",
+    "newJob": "新しい動画ジョブ",
+    "upload": "アップロードされたデータ",
+    "columns": {
+      "id": "ジョブ",
+      "status": "ステータス",
+      "progress": "進捗",
+      "kind": "種類",
+      "principal": "送信者",
+      "source": "ソース",
+      "size": "サイズ",
+      "duration": "メディアの長さ",
+      "created": "作成日時",
+      "completed": "完了日時",
+      "error": "エラー"
+    },
+    "filters": {
+      "status": "ステータス",
+      "kind": "種類",
+      "principal": "送信者",
+      "principalPlaceholder": "キー名"
+    },
+    "cancel": "ジョブをキャンセル",
+    "cancelTitle": "ジョブをキャンセル",
+    "cancelMessage": "ジョブ {{id}} をキャンセルしますか? 処理中の作業は破棄されます。",
+    "deleteTitle_other": "{{count}} 件のジョブを削除",
+    "deleteMessage_other": "完了した {{count}} 件のジョブと保存された結果を削除しますか? この操作は元に戻せません。",
+    "deleteSelected_other": "完了した {{count}} 件のジョブを削除",
+    "jsonTitle": "ジョブ JSON",
+    "autoRefresh": "ジョブがキュー待ちまたは実行中の間は、数秒ごとに更新されます。",
+    "emptyTitle": "ジョブはまだありません",
+    "emptyMessage": "動画の分析はジョブとして実行されます。「動画を分析」から送信してください。",
+    "emptyFiltered": "これらのフィルターに一致するジョブはありません",
+    "emptyFilteredMessage": "フィルターをクリアまたは変更すると、さらにジョブが表示されます。",
+    "toast": {
+      "canceled": "ジョブ {{id}} をキャンセルしました。",
+      "deleted_other": "{{count}} 件のジョブを削除しました。"
+    }
+  },
+  "jobDetail": {
+    "title": "ジョブ",
+    "summary": "1 つの分析ジョブのステータス、進捗、結果。",
+    "back": "すべてのジョブ",
+    "jobJson": "ジョブ JSON",
+    "download": "結果をダウンロード",
+    "notFound": "このジョブは存在しないか、削除されました。",
+    "progress": "進捗",
+    "progressCount": "{{total}} ステップ中 {{completed}} 完了",
+    "liveNote": "このページはジョブが完了するまでリアルタイムで更新されます。",
+    "failedTitle": "ジョブが失敗しました",
+    "noErrorDetail": "サーバーからエラーメッセージは報告されませんでした。",
+    "failedHint": "メディアの URL とエンドポイントを確認してから、ジョブを再送信してください。",
+    "interruptedTitle": "ジョブが中断されました",
+    "interruptedMessage": "このジョブの実行中にサーバーが再起動したため、完了しませんでした。再送信してください。",
+    "canceledTitle": "ジョブはキャンセルされました",
+    "canceledMessage": "キャンセルされたジョブの結果は保存されません。",
+    "details": "詳細",
+    "meta": {
+      "kind": "種類",
+      "principal": "送信者",
+      "source": "ソース",
+      "size": "サイズ",
+      "duration": "メディアの長さ",
+      "created": "作成日時",
+      "started": "開始日時",
+      "completed": "完了日時"
+    },
+    "loadingResult": "結果を読み込んでいます...",
+    "resultTabs": "結果のセクション",
+    "tabs": {
+      "overview": "概要",
+      "scenes": "シーン",
+      "transcript": "文字起こし",
+      "telemetry": "テレメトリ",
+      "raw": "Raw JSON"
+    },
+    "wholeResults": "動画全体の結果",
+    "noScenes": "シーン検出がオフだったか、シーンが見つかりませんでした。",
+    "sceneStrip": "シーンタイムライン",
+    "sceneTitle": "シーン {{n}}: {{start}} から {{end}}",
+    "sceneHeading": "シーン {{n}} / {{count}}",
+    "prevScene": "前のシーン",
+    "nextScene": "次のシーン",
+    "keyframeAlt": "{{time}} のキーフレーム",
+    "noThumbnail": "サムネイルなし",
+    "sceneResults": "シーンの結果",
+    "sceneFields": "シーンのフィールド",
+    "sceneTranscript": "このシーン中の文字起こし",
+    "noTranscript": "文字起こしがオフだったか、動画に音声がありません。",
+    "noTranscriptMatches": "一致する文字起こしのセグメントはありません。",
+    "transcriptLanguage": "言語: {{language}}",
+    "searchTranscript": "文字起こしを検索"
+  },
+  "endpoints": {
+    "title": "エンドポイント",
+    "summary": "サーバーに設定されたモデルエンドポイントと、そのプロバイダー、モデル、最後に確認した状態です。管理者は接続をテストできます。",
+    "add": "エンドポイントを追加",
+    "readOnlyNote": "エンドポイントは管理者キーで設定から編集します。テストにも管理者キーが必要です。",
+    "columns": {
+      "name": "名前",
+      "health": "状態",
+      "kind": "種類",
+      "provider": "プロバイダー",
+      "model": "モデル",
+      "url": "URL",
+      "default": "既定",
+      "concurrency": "最大同時実行数",
+      "timeout": "タイムアウト",
+      "apiKey": "API キー",
+      "lastChecked": "最終確認",
+      "test": "テスト"
+    },
+    "filters": {
+      "kind": "種類",
+      "search": "検索",
+      "searchPlaceholder": "名前、プロバイダー、モデル"
+    },
+    "localFilterNote": "{{total}} 件中 {{shown}} 件を表示。フィルターはローカルで適用され、サーバーはすべてのエンドポイントを返します。",
+    "default": "既定",
+    "noUrl": "プロバイダーの既定値",
+    "keySet": "設定済み (末尾 {{last4}})",
+    "keyNotSet": "未設定",
+    "test": "テスト",
+    "testing": "テスト中...",
+    "detailSubtitle": "エンドポイントの設定と状態",
+    "editInSettings": "設定で編集",
+    "providerUnavailable": "このビルドでは利用できないプロバイダーです",
+    "healthMessage": "状態メッセージ",
+    "testPassed": "テスト成功",
+    "testFailedTitle": "テスト失敗",
+    "testDetail": "所要時間 {{duration}}。モデル: {{model}}",
+    "jsonTitle": "エンドポイント JSON",
+    "emptyTitle": "エンドポイントが設定されていません",
+    "emptyMessage": "分析で呼び出すモデルを用意するため、設定の Inference でモデルエンドポイントを追加してください。",
+    "emptyFiltered": "これらのフィルターに一致するエンドポイントはありません",
+    "toast": {
+      "testOk": "エンドポイント {{name}} が {{duration}} で応答しました。",
+      "testFailed": "エンドポイント {{name}} は {{duration}} 後にテストに失敗しました。",
+      "testError": "エンドポイント {{name}} をテストできませんでした。"
+    }
+  },
+  "requestHistory": {
+    "title": "リクエスト履歴",
+    "summary": "サーバーが記録したすべての API リクエストを、ステータス、所要時間、秘匿化されたヘッダーと本文とともに表示します。保持されたトラフィックの絞り込み、確認、消去ができます。",
+    "kpi": {
+      "inRange": "リクエスト ({{range}})",
+      "failures": "失敗",
+      "successRate": "成功率",
+      "avgDuration": "平均所要時間",
+      "matching": "フィルターに一致"
+    },
+    "filters": {
+      "method": "メソッド",
+      "status": "ステータスコード",
+      "statusPlaceholder": "500",
+      "path": "パスに含む",
+      "pathPlaceholder": "/v1.0/image",
+      "principal": "プリンシパル",
+      "principalPlaceholder": "キー名"
+    },
+    "columns": {
+      "time": "時刻",
+      "method": "メソッド",
+      "path": "パス",
+      "status": "ステータス",
+      "duration": "所要時間",
+      "principal": "プリンシパル",
+      "sourceIp": "送信元 IP",
+      "id": "エントリ",
+      "ago": "経過時間"
+    },
+    "filterByPath": "このパスで絞り込む",
+    "deleteMatching": "一致するものを削除",
+    "clearAll": "すべて消去",
+    "deleteTitle": "リクエストを削除",
+    "deleteMessage": "記録された {{method}} {{path}} リクエストを削除しますか?",
+    "bulkTitle": "記録されたリクエストを削除",
+    "bulkMessageFiltered_other": "{{filters}} に一致する {{count}} 件のリクエストをすべて削除しますか? この操作は元に戻せません。",
+    "bulkMessageAll_other": "フィルターが設定されていません。保持されている {{count}} 件のリクエストをすべて削除しますか? この操作は元に戻せません。",
+    "filterParts": {
+      "method": "メソッド {{value}}",
+      "status": "ステータス {{value}}",
+      "path": "パスに \"{{value}}\" を含む",
+      "principal": "プリンシパル {{value}}",
+      "from": "{{value}} 以降",
+      "to": "{{value}} より前"
+    },
+    "jsonTitle": "リクエスト JSON",
+    "emptyTitle": "保持されたトラフィックはありません",
+    "emptyMessage": "サーバーがリクエストを処理すると、ここに表示されます。空のままの場合は、設定で RequestHistory.Enabled がオンになっていることを確認してください。",
+    "emptyFiltered": "これらのフィルターに一致するリクエストはありません",
+    "emptyFilteredMessage": "フィルターをクリアまたは緩めるか、別の期間を選択してください。",
+    "inspector": {
+      "title": "リクエストの詳細",
+      "metadata": "メタデータ",
+      "url": "URL",
+      "requestId": "リクエスト ID",
+      "created": "受信日時",
+      "completed": "完了日時",
+      "requestHeaders": "リクエストヘッダー",
+      "requestBody": "リクエスト本文",
+      "responseHeaders": "レスポンスヘッダー",
+      "responseBody": "レスポンス本文",
+      "raw": "Raw JSON",
+      "noHeaders": "ヘッダーは記録されていません。",
+      "noBody": "本文は記録されていません。",
+      "truncated": "切り詰め済み (元のサイズ {{size}})"
+    },
+    "toast": {
+      "deleted": "リクエストを削除しました。",
+      "bulkDeleted_other": "{{count}} 件のリクエストを削除しました。",
+      "loadFailed": "リクエストを読み込めませんでした。"
+    }
+  },
+  "explorer": {
+    "title": "API エクスプローラー",
+    "summary": "サーバーのライブ OpenAPI ドキュメントに含まれるすべてのルートです。リクエストにはサインイン中のキーが使用されます。",
+    "loadingSpec": "/openapi.json を読み込んでいます...",
+    "specMissing": "OpenAPI ドキュメントを利用できません",
+    "specMissingMessage": "エクスプローラーにはサーバーの GET /openapi.json が必要です。サーバーに到達でき、ドキュメントが提供されていることを確認してから再試行してください。",
+    "viaProxyTitle": "OpenAPI ドキュメントをダッシュボードのプロキシ経由で読み込みました",
+    "viaProxyMessage": "ブラウザーがサーバーから直接 /openapi.json を読み取れなかったため (ネットワークまたは CORS の失敗)、ダッシュボードのオリジンから読み込みました。リクエストは引き続きサインインしたサーバーに直接送信されます。",
+    "search": "メソッド、パス、概要で検索",
+    "noMatches": "一致する操作はありません。",
+    "operations": "操作",
+    "pickOperation": "上の一覧から操作を選択してください。",
+    "resolvedUrl": "解決済み URL",
+    "copyUrl": "URL をコピー",
+    "pathParams": "パスパラメーター",
+    "queryParams": "クエリパラメーター",
+    "required": "必須",
+    "headers": "ヘッダー",
+    "authInherited": "Authorization はセッションから自動的に追加されます。",
+    "headerName": "ヘッダー名",
+    "headerValue": "値",
+    "addHeader": "ヘッダーを追加",
+    "removeHeader": "ヘッダーを削除",
+    "body": "リクエスト本文",
+    "format": "JSON を整形",
+    "resetTemplate": "テンプレートに戻す",
+    "copyBody": "本文をコピー",
+    "invalidJson": "無効な JSON: {{message}}",
+    "missingPath": "入力してください: {{names}}",
+    "destructive": "この操作はデータを変更または削除します。",
+    "execute": "実行",
+    "running": "実行中...",
+    "stop": "停止",
+    "response": "レスポンス",
+    "responseTabs": "レスポンスのセクション",
+    "noResponse": "リクエストを実行するとレスポンスが表示されます。",
+    "aborted": "リクエストを停止しました。",
+    "emptyBody": "レスポンスに本文はありません。",
+    "streaming": "ストリーミング",
+    "tabs": {
+      "body": "本文",
+      "headers": "ヘッダー",
+      "code": "コード"
+    },
+    "history": "履歴 ({{count}})",
+    "historyTitle": "最近のリクエスト",
+    "noHistory": "実行したリクエストがここに一覧表示されます。キーは保存されません。",
+    "load": "読み込む",
+    "confirmTitle": "破壊的なリクエストを実行しますか?",
+    "confirmMessage": "{{method}} {{path}} はサーバー上のデータを変更または削除します。続行しますか?",
+    "pickerLabel": "API 操作を選択",
+    "operationCount_other": "{{count}} 件の操作",
+    "binaryTitle": "バイナリレスポンス",
+    "binaryMessage": "{{type}}、{{size}}。開くにはダウンロードしてください。",
+    "binaryFilename": "response.bin",
+    "downloadBody": "ダウンロード"
+  },
+  "settings": {
+    "title": "設定",
+    "summary": "サーバーの設定ファイルを編集します。「ライブ」の設定は保存時に適用され、「再起動」と表示された設定は再起動後に有効になります。",
+    "file": "設定ファイル",
+    "notAdminTitle": "設定には管理者キーが必要です",
+    "notAdminMessage": "アクセスキーでサインインしているため、サーバー設定の読み取りや変更はできません。設定の編集やサーバーの再起動を行うには、サインアウトして管理者キーで接続してください。",
+    "preferences": "ダッシュボードの環境設定",
+    "preferencesHelp": "このブラウザーにのみ保存されます。",
+    "sections": "設定のセクション",
+    "showRaw": "JSON を表示",
+    "hideRaw": "JSON を隠す",
+    "rawTitle": "設定 JSON",
+    "rawHelp": "サーバーが返す保存済み設定の読み取り専用ビューです。シークレットはマスクされています。",
+    "restart": "サーバーを再起動",
+    "restartNow": "今すぐ再起動",
+    "restartTitle": "サーバーを再起動しますか?",
+    "restartMessage": "サーバーはこのレスポンスを完了してから終了します。Docker Compose (restart: unless-stopped) 環境では、保存済みの設定で再起動します。実行中のジョブは Interrupted (中断) としてマークされます。",
+    "restartUnsaved": "保存されていない変更があります。先に保存しないと失われます。",
+    "restarting": "再起動中",
+    "restartingMessage": "サーバーの復帰を待っています。編集は一時停止しています。",
+    "restartDone": "サーバーが復帰しました。",
+    "restartTimeout": "サーバーが復帰していません",
+    "restartTimeoutMessage": "サーバーが再起動ポリシーを持つコンテナランタイムやサービスマネージャーで実行されていない場合は、手動で再度起動してください。",
+    "restartRequired": "再起動が必要です",
+    "restartRequiredMessage": "保存された変更の一部は、サーバーの再起動後に有効になります。",
+    "saveFailed": "サーバーが設定を拒否しました。",
+    "unsaved": "未保存の変更",
+    "noChanges": "変更なし",
+    "discard": "変更を破棄",
+    "range": "範囲 {{min}} から {{max}}",
+    "unset": "未設定",
+    "noEndpoint": "なし",
+    "envOverride": "環境変数 {{name}} で設定されています。環境変数の値が優先されるため、ここでは読み取り専用です。",
+    "arrayEmpty": "設定されていません。",
+    "newItem": "新しい項目",
+    "removeItem": "削除",
+    "badges": {
+      "live": "ライブ",
+      "liveHelp": "保存するとすぐに適用されます。",
+      "restart": "再起動",
+      "restartHelp": "サーバーの再起動後に有効になります。",
+      "env": "環境変数: {{name}}",
+      "envHelp": "{{name}} で上書きされています。"
+    },
+    "secret": {
+      "set": "設定済み (末尾 {{last4}})",
+      "notSet": "未設定",
+      "change": "変更",
+      "keep": "現在の値を維持",
+      "clear": "クリア"
+    },
+    "errors": {
+      "required": "必須です。",
+      "number": "数値を入力してください。",
+      "duplicateName": "名前は一意にしてください。",
+      "summary_other": "{{count}} 個のフィールドに対応が必要です。"
+    },
+    "toast": {
+      "savedLive": "設定を保存して適用しました。",
+      "savedRestart": "設定を保存しました。すべての変更を適用するにはサーバーを再起動してください。",
+      "restarted": "サーバーが再起動しました。"
+    },
+    "options": {
+      "Sqlite": "SQLite",
+      "Mysql": "MySQL",
+      "Postgresql": "PostgreSQL",
+      "SqlServer": "SQL Server",
+      "grpc": "gRPC",
+      "httpprotobuf": "HTTP (protobuf)",
+      "Completion": "補完",
+      "Transcription": "文字起こし"
+    },
+    "severity": {
+      "0": "0 デバッグ",
+      "1": "1 情報",
+      "2": "2 警告",
+      "3": "3 エラー",
+      "4": "4 アラート",
+      "5": "5 重大",
+      "6": "6 緊急",
+      "7": "7 最高"
+    },
+    "addItem": {
+      "Auth": {
+        "AccessKeys": "アクセスキーを追加"
+      },
+      "Inference": {
+        "Endpoints": "エンドポイントを追加"
+      },
+      "Logging": {
+        "Servers": "syslog サーバーを追加"
+      }
+    },
+    "groups": {
+      "rest": {
+        "title": "REST サーバー",
+        "help": "待ち受けアドレスとリクエストサイズの上限。"
+      },
+      "auth": {
+        "title": "認証",
+        "help": "管理者キーと、呼び出し元が使用する名前付きアクセスキー。キーはマスクされています。変更は必要な場合にのみ行ってください。"
+      },
+      "database": {
+        "title": "データベース",
+        "help": "ジョブ、結果、リクエスト履歴の保存先。"
+      },
+      "inference": {
+        "title": "推論",
+        "help": "モデルエンドポイント、既定値、再試行、タイムアウト。"
+      },
+      "media": {
+        "title": "メディア",
+        "help": "ffmpeg、ダウンロードの上限、画像サイズ。"
+      },
+      "jobs": {
+        "title": "ジョブ",
+        "help": "動画と音声のジョブの同時実行数、キューのサイズ、保持期間。"
+      },
+      "requestHistory": {
+        "title": "リクエスト履歴",
+        "help": "リクエスト履歴ページ用のリクエストと本文の記録。"
+      },
+      "logging": {
+        "title": "ログ",
+        "help": "コンソール、ファイル、syslog への出力。"
+      },
+      "telemetry": {
+        "title": "テレメトリ",
+        "help": "OpenTelemetry のエクスポート、Prometheus のスクレイプエンドポイント、Loki のログ。"
+      },
+      "analytics": {
+        "title": "アナリティクス",
+        "help": "アナリティクスページに表示される分析ごとのパフォーマンス記録と、その保持期間。"
+      }
+    },
+    "fields": {
+      "Rest": {
+        "Hostname": "ホスト名",
+        "Port": "ポート",
+        "Ssl": "TLS",
+        "MaxRequestBodyBytes": "リクエスト本文の最大サイズ"
+      },
+      "Auth": {
+        "RequireAuthentication": "認証を必須にする",
+        "AdminApiKey": "管理者 API キー",
+        "MaxFailedAttemptsPerMinute": "1 分あたりの最大失敗試行回数",
+        "AccessKeys": {
+          "_": "アクセスキー",
+          "Name": "名前",
+          "Key": "キー",
+          "Active": "有効"
+        }
+      },
+      "Database": {
+        "Type": "種類",
+        "Filename": "ファイル",
+        "Hostname": "ホスト名",
+        "Port": "ポート",
+        "DatabaseName": "データベース名",
+        "Username": "ユーザー名",
+        "Password": "パスワード",
+        "TrustServerCertificate": "サーバー証明書を信頼する",
+        "CommandTimeoutSeconds": "コマンドのタイムアウト (秒)"
+      },
+      "Inference": {
+        "DefaultVision": "既定のビジョンエンドポイント",
+        "DefaultText": "既定のテキストエンドポイント",
+        "DefaultTranscription": "既定の文字起こしエンドポイント",
+        "MaxRetries": "最大再試行回数",
+        "MaxRepairAttempts": "JSON 修復の最大試行回数",
+        "RetryBackoffMs": "再試行のバックオフ (ms)",
+        "RequestTimeoutMs": "リクエストのタイムアウト (ms)",
+        "MaxTranscriptCharacters": "文字起こしの最大文字数",
+        "Endpoints": {
+          "_": "エンドポイント",
+          "Name": "名前",
+          "Provider": "プロバイダー",
+          "Kind": "種類",
+          "Endpoint": "URL",
+          "ApiKey": "API キー",
+          "Model": "モデル",
+          "MaxConcurrentRequests": "最大同時リクエスト数",
+          "TimeoutMs": "タイムアウト (ms)",
+          "Temperature": "Temperature",
+          "MaxOutputTokens": "最大出力トークン数",
+          "Active": "有効"
+        }
+      },
+      "Media": {
+        "TempDirectory": "一時ディレクトリ",
+        "FfmpegPath": "ffmpeg のパス",
+        "FfprobePath": "ffprobe のパス",
+        "MaxDownloadBytes": "最大ダウンロードサイズ",
+        "DownloadTimeoutMs": "ダウンロードのタイムアウト (ms)",
+        "AllowPrivateNetworkUrls": "プライベートネットワークの URL を許可",
+        "ImageMaxEdge": "画像の最大辺 (px)",
+        "ThumbnailMaxEdge": "サムネイルの最大辺 (px)",
+        "JpegQuality": "JPEG 品質 (1 が最高、31 が最低)",
+        "MaxParallelFfmpeg": "ffmpeg の最大並列数",
+        "FfmpegTimeoutMs": "ffmpeg のタイムアウト (ms)",
+        "MaxVideoDurationMs": "動画の最大長 (ms)",
+        "TranscriptionChunkSeconds": "文字起こしのチャンク (秒)",
+        "MaxSegmentMs": "セグメントの最大長 (ms)"
+      },
+      "Jobs": {
+        "MaxConcurrentJobs": "最大同時ジョブ数",
+        "MaxQueuedJobs": "最大キュー待ちジョブ数",
+        "RetentionDays": "保持期間 (日)",
+        "MaxWaitTimeoutMs": "最大待機タイムアウト (ms)"
+      },
+      "RequestHistory": {
+        "Enabled": "リクエストを記録",
+        "MaxRequestBodyBytes": "記録するリクエスト本文の最大サイズ",
+        "MaxResponseBodyBytes": "記録するレスポンス本文の最大サイズ",
+        "RetentionDays": "保持期間 (日)"
+      },
+      "Logging": {
+        "ConsoleLogging": "コンソールログ",
+        "EnableColors": "コンソールの色付け",
+        "LogDirectory": "ログディレクトリ",
+        "LogFilename": "ログファイル名",
+        "MinimumSeverity": "最小重大度",
+        "Servers": {
+          "_": "syslog サーバー",
+          "Hostname": "ホスト名",
+          "Port": "ポート"
+        }
+      },
+      "Telemetry": {
+        "Enable": "テレメトリ",
+        "ServiceName": "サービス名",
+        "OtlpEnable": "OTLP エクスポート",
+        "OtlpEndpoint": "OTLP エンドポイント",
+        "OtlpProtocol": "OTLP プロトコル",
+        "PrometheusEnable": "Prometheus エンドポイント",
+        "PrometheusHostname": "Prometheus のホスト名",
+        "PrometheusPort": "Prometheus のポート",
+        "PrometheusPath": "Prometheus のパス",
+        "LokiEnable": "Loki エクスポート",
+        "LokiEndpoint": "Loki エンドポイント",
+        "ExportLogs": "ログをエクスポート",
+        "MetricExportIntervalMs": "メトリクスのエクスポート間隔 (ms)",
+        "TraceSamplingRatio": "トレースのサンプリング率"
+      },
+      "Analytics": {
+        "Enabled": "アナリティクスを記録",
+        "RetentionDays": "保持期間 (日)"
+      }
+    }
+  },
+  "server": {
+    "title": "サーバー情報",
+    "summary": "バージョン、状態、サインイン中のキー、コピー可能なサーバー URL。",
+    "health": "状態",
+    "status": "ステータス",
+    "version": "サーバーのバージョン",
+    "started": "起動日時",
+    "uptime": "稼働時間",
+    "database": "データベース",
+    "jobs": "ジョブ",
+    "jobsValue": "実行中 {{active}} 件、キュー待ち {{queued}} 件",
+    "ffmpeg": "ffmpeg",
+    "ffmpegMissingHelp": "サーバーのホストに ffmpeg と ffprobe をインストールするか、設定で Media.FfmpegPath を指定してください。",
+    "endpoints": "エンドポイントの状態",
+    "noEndpoints": "有効なエンドポイントはありません",
+    "identity": "ID 情報",
+    "principal": "プリンシパル",
+    "role": "ロール",
+    "authRequired": "認証必須",
+    "dashboardVersion": "ダッシュボードのバージョン",
+    "repository": "リポジトリ",
+    "copyUrl": "{{name}} をコピー",
+    "urls": {
+      "title": "サーバー URL",
+      "base": "ベース URL",
+      "health": "ヘルス",
+      "openapi": "OpenAPI ドキュメント",
+      "swagger": "Swagger UI",
+      "whoami": "Who am I",
+      "dashboard": "このダッシュボード"
+    }
+  },
+  "notFound": {
+    "title": "ページが見つかりません",
+    "message": "このダッシュボードのルートは存在しません。",
+    "home": "ホームへ移動"
+  },
+  "enums": {
+    "jobStatus": {
+      "Queued": "キュー待ち",
+      "Running": "実行中",
+      "Succeeded": "成功",
+      "Failed": "失敗",
+      "Canceled": "キャンセル済み",
+      "Interrupted": "中断"
+    },
+    "fieldType": {
+      "Boolean": "ブール値",
+      "String": "文字列",
+      "Integer": "整数",
+      "Number": "数値",
+      "Enum": "列挙型",
+      "StringList": "文字列リスト",
+      "Object": "オブジェクト"
+    },
+    "mediaKind": {
+      "Unknown": "不明",
+      "Image": "画像",
+      "Video": "動画",
+      "Audio": "音声"
+    },
+    "summaryStyle": {
+      "Paragraph": "段落",
+      "Bullets": "箇条書き",
+      "Caption": "キャプション"
+    },
+    "extractMode": {
+      "Combined": "一括",
+      "PerField": "フィールドごと"
+    },
+    "extractModeHelp": {
+      "Combined": "1 回のモデル呼び出しですべてのフィールドを返します。最も高速で低コストです。",
+      "PerField": "フィールドごとに 1 回呼び出し、並列で実行します。コストは増えますが、失敗を分離でき、フィールドごとの所要時間を計測できます。"
+    },
+    "endpointKind": {
+      "Completion": "補完",
+      "Transcription": "文字起こし"
+    },
+    "provider": {
+      "Mock": "Mock (テスト専用)",
+      "Ollama": "Ollama",
+      "OllamaCloud": "Ollama Cloud",
+      "OpenAi": "OpenAI",
+      "OpenAiCompatible": "OpenAI 互換",
+      "AzureOpenAi": "Azure OpenAI",
+      "Anthropic": "Anthropic",
+      "Gemini": "Gemini",
+      "VertexAi": "Vertex AI",
+      "Bedrock": "Bedrock",
+      "XAi": "xAI",
+      "Cohere": "Cohere"
+    },
+    "stage": {
+      "Resolve": "解決",
+      "Probe": "プローブ",
+      "Normalize": "正規化",
+      "SceneDetection": "シーン検出",
+      "FrameExtraction": "フレーム抽出",
+      "AudioExtraction": "音声抽出",
+      "Transcribe": "文字起こし",
+      "Scenes": "シーン",
+      "Summarize": "要約",
+      "Extract": "抽出",
+      "Reduce": "集約"
+    },
+    "progressStage": {
+      "Queued": "キュー待ち",
+      "Done": "完了",
+      "Resolve": "メディアを解決中",
+      "Probe": "プローブ中",
+      "AudioExtraction": "音声を抽出中",
+      "Transcribe": "文字起こし中",
+      "SceneDetection": "シーンを検出中",
+      "FrameExtraction": "フレームを抽出中",
+      "Scenes": "シーンを分析中",
+      "Reduce": "動画を要約中",
+      "Summarize": "要約中",
+      "Extract": "フィールドを抽出中"
+    },
+    "purpose": {
+      "Summarize": "要約",
+      "Extract": "抽出",
+      "SceneSummarize": "シーンの要約",
+      "SceneExtract": "シーンのフィールド",
+      "Transcribe": "文字起こし"
+    },
+    "health": {
+      "Healthy": "正常",
+      "Degraded": "低下"
+    }
+  },
+  "units": {
+    "tokensPerSecond": "{{value}} tok/s",
+    "realtimeFactor": "{{value}}x"
+  },
+  "appearance": {
+    "title": "外観",
+    "open": "外観: パレットとライト/ダークモード",
+    "mode": "モード",
+    "palette": "パレット",
+    "modes": {
+      "light": "ライト",
+      "dark": "ダーク",
+      "system": "システム"
+    },
+    "help": "このブラウザーに保存されます。「システム」はオペレーティングシステムのライト/ダーク設定に従います。",
+    "palettes": {
+      "slate": "スレート",
+      "indigoNight": "インディゴナイト",
+      "fjord": "フィヨルド",
+      "nocturne": "ノクターン",
+      "solstice": "ソルスティス",
+      "cocoa": "ココア",
+      "duskRose": "ダスクローズ",
+      "metroNight": "メトロナイト",
+      "forest": "フォレスト",
+      "ocean": "オーシャン",
+      "amber": "アンバー",
+      "graphite": "グラファイト",
+      "lavender": "ラベンダー",
+      "mint": "ミント",
+      "sandstone": "サンドストーン",
+      "terracotta": "テラコッタ"
+    }
+  },
+  "analyzeAudio": {
+    "title": "音声を分析",
+    "summary": "音声ファイル (または動画の音声トラック) を文字起こしし、その文字起こしから要約と型付きフィールドの抽出を行います。ジョブとして実行され、進捗と文字起こしが下に表示されます。",
+    "modelHelp": "文字起こしエンドポイントは音声をテキストに変換します (既定は Inference.DefaultTranscription)。テキストエンドポイントは文字起こしから要約とフィールドを作成します (既定は Inference.DefaultText)。",
+    "languageHelp": "任意の ISO-639 コード。空欄にするとモデルが言語を検出します。",
+    "transcribeRequired": "文字起こしは必須です: 要約とフィールドは文字起こしから生成されます。",
+    "summaryHelp": "テキストエンドポイントが文字起こしから作成します。",
+    "submit": "音声ジョブを送信",
+    "jobTitle": "ジョブ",
+    "openJob": "ジョブを開く",
+    "polling": "数秒ごとに進捗を確認しています。このページを離れてもジョブは実行され続けます。",
+    "emptyTitle": "音声ジョブはまだありません",
+    "emptyMessage": "上でファイルまたは URL を選択して送信してください。進捗、文字起こし、結果がここに表示されます。",
+    "toast": {
+      "submitted": "音声ジョブ {{id}} をキューに追加しました。",
+      "cancelFailed": "ジョブをキャンセルできませんでした: {{message}}"
+    },
+    "errors": {
+      "notSupported": "このサーバーは音声の分析に対応していません (POST /v1.0/audio が見つかりませんでした)。"
+    }
+  },
+  "segments": {
+    "uploadedTitle": "ソースメディアはアップロードされたものです",
+    "uploadedMessage": "Keyframe はアップロードされたメディアを保持しないため、クリップ、音声、フレームには元のファイルが再度必要です。ダウンロードボタンを有効にするには、ディスクから選択してください。",
+    "usingFile": "{{name}} ({{size}}) をダウンロードのソースとして使用しています。",
+    "chooseFile": "元のファイルを選択",
+    "chooseOther": "別のファイルを選択",
+    "clearFile": "クリア",
+    "reading": "読み込み中...",
+    "needSource": "先に元のファイルを選択してください",
+    "download": {
+      "Video": "クリップをダウンロード",
+      "Audio": "音声をダウンロード",
+      "Frame": "フレームをダウンロード"
+    },
+    "hint": {
+      "Video": "この範囲を MP4 クリップとして切り出す",
+      "Audio": "この範囲を MP3 音声として切り出す",
+      "Frame": "このシーンの先頭フレームを JPEG として保存"
+    },
+    "toast": {
+      "downloaded": "{{name}} を保存しました。",
+      "failed": "ダウンロードに失敗しました: {{message}}"
+    }
+  },
+  "analytics": {
+    "title": "アナリティクス",
+    "summary": "画像、動画、音声の分析の経時的なパフォーマンス: 件数、成功率、レイテンシのパーセンタイル、モデルの所要時間、トークン、分析ごとの詳細。",
+    "loading": "アナリティクスを読み込んでいます...",
+    "notAdminTitle": "アナリティクスには管理者キーが必要です",
+    "notAdminMessage": "すべての分析のパフォーマンスとテレメトリを確認するには、管理者キーでサインインしてください。",
+    "unavailableTitle": "このサーバーではアナリティクスを利用できません",
+    "unavailableMessage": "GET /v1.0/analytics/summary が見つかりませんでした。アナリティクスに対応したバージョンにサーバーをアップグレードし、設定で Analytics.Enabled がオンになっていることを確認してください。",
+    "emptyTitle": "この期間の分析はありません",
+    "emptyMessage": "分析を実行するか、期間を広げてください。完了したすべての画像、動画、音声の分析がここに記録されます。",
+    "windowNote": "{{from}} から {{to}} までを {{bucket}} 単位で表示しています。",
+    "ranges": {
+      "1h": "1 時間",
+      "24h": "24 時間",
+      "7d": "7 日",
+      "30d": "30 日",
+      "custom": "カスタム"
+    },
+    "buckets": {
+      "minute": "分",
+      "hour": "時間",
+      "day": "日"
+    },
+    "filters": {
+      "label": "アナリティクスのフィルター",
+      "range": "期間",
+      "mediaKind": "メディア",
+      "endpoint": "エンドポイント",
+      "model": "モデル",
+      "modelPlaceholder": "すべてのモデル"
+    },
+    "kpi": {
+      "label": "アナリティクスの指標",
+      "analyses": "分析",
+      "analysesSub": "成功 {{ok}} 件、失敗 {{failed}} 件",
+      "successRate": "成功率",
+      "analysisP50": "分析時間 (p50)",
+      "queueP95": "キュー待ち時間 (p95)",
+      "ttftP50": "最初のトークンまでの時間 (p50)",
+      "tokensPerSecond": "トークン/秒 (p50)",
+      "modelCalls": "モデル呼び出し",
+      "modelCallsSub": "失敗 {{failed}} 件、再試行 {{retries}} 回",
+      "totalTokens": "合計トークン",
+      "perAnalysis": "分析あたり平均 {{value}}",
+      "p95": "p95 {{value}}",
+      "avg": "平均 {{value}}",
+      "generationP50": "生成 p50 {{value}}"
+    },
+    "byKind": {
+      "label": "メディアの種類別",
+      "count_other": "{{value}} 件の分析",
+      "none": "この期間にこの種類の分析はありません。",
+      "analysisP50": "分析 p50",
+      "analysisP95": "分析 p95",
+      "realtimeP50": "リアルタイム係数 p50",
+      "imagesIn": "入力画像",
+      "mediaSizeP50": "サイズ p50",
+      "mediaDurationP50": "長さ p50",
+      "tokens": "トークン"
+    },
+    "charts": {
+      "volume": "分析件数の推移",
+      "volumeHint": "バーをクリックすると、その分析が下に一覧表示されます。",
+      "volumeAria_other": "分析件数の推移、期間内の分析 {{count}} 件",
+      "latency": "所要時間の推移",
+      "metric": "メトリクス",
+      "latencyAria": "{{metric}} のパーセンタイルの推移",
+      "noSamples": "この期間にこのメトリクスのサンプルはありません。",
+      "tokens": "トークンの推移",
+      "successRate": "成功率の推移"
+    },
+    "series": {
+      "succeeded": "成功",
+      "failed": "失敗",
+      "promptTokens": "プロンプトトークン",
+      "completionTokens": "補完トークン",
+      "successRate": "成功率"
+    },
+    "stats": {
+      "avg": "平均",
+      "p50": "p50",
+      "p90": "p90",
+      "p95": "p95",
+      "p99": "p99",
+      "max": "最大"
+    },
+    "metrics": {
+      "AnalysisMs": "分析時間",
+      "QueueWaitMs": "キュー待ち時間",
+      "ModelCallMs": "モデル呼び出し時間",
+      "TimeToFirstTokenMs": "最初のトークンまでの時間",
+      "GenerationMs": "生成時間",
+      "TokensPerSecond": "トークン/秒",
+      "TokensPerAnalysis": "分析あたりのトークン",
+      "RealtimeFactor": "リアルタイム係数",
+      "MediaDurationMs": "メディアの長さ",
+      "MediaBytes": "メディアのサイズ"
+    },
+    "columns": {
+      "metric": "メトリクス",
+      "samples": "サンプル数"
+    },
+    "distributions": {
+      "title": "分布",
+      "help": "モデル呼び出しのメトリクスは呼び出しごと、その他は分析ごとに計測されます。リアルタイム係数は分析時間をメディアの長さで割った値です (動画と音声のみ)。1 未満はリアルタイムより高速であることを示します。"
+    },
+    "totals": {
+      "title": "トークンと入力",
+      "promptTokens": "プロンプトトークン",
+      "completionTokens": "補完トークン",
+      "cachedTokens": "キャッシュ済みトークン",
+      "reasoningTokens": "推論トークン",
+      "totalTokens": "合計トークン",
+      "tokensPerAnalysisP50": "分析あたりのトークン (p50)",
+      "tokensPerAnalysisP95": "分析あたりのトークン (p95)",
+      "modelCalls": "モデル呼び出し",
+      "failedModelCalls": "失敗したモデル呼び出し",
+      "retries": "再試行",
+      "repairAttempts": "修復の試行",
+      "inputImages": "入力画像",
+      "inputImageBytes": "送信した画像のバイト数",
+      "inputAudioBytes": "送信した音声のバイト数",
+      "scenes": "シーン",
+      "transcriptCharacters": "文字起こしの文字数"
+    },
+    "byModel": {
+      "title": "モデル別",
+      "empty": "この期間にモデル呼び出しはありません。",
+      "endpoint": "エンドポイント",
+      "provider": "プロバイダー",
+      "model": "モデル",
+      "calls": "呼び出し",
+      "failed": "失敗",
+      "durationP50": "所要時間 p50",
+      "durationP95": "所要時間 p95",
+      "ttftP50": "最初のトークン p50",
+      "ttftP95": "最初のトークン p95",
+      "generationP50": "生成 p50",
+      "tokensPerSecondP50": "トークン/秒 p50",
+      "promptTokens": "プロンプトトークン",
+      "completionTokens": "補完トークン"
+    },
+    "byStage": {
+      "title": "ステージ別",
+      "empty": "この期間にステージの所要時間はありません。",
+      "stage": "ステージ",
+      "share": "相対 p50"
+    },
+    "byPurpose": {
+      "title": "目的別",
+      "empty": "この期間にモデル呼び出しはありません。",
+      "purpose": "目的",
+      "calls": "呼び出し",
+      "failed": "失敗",
+      "durationP50": "所要時間 p50",
+      "durationP95": "所要時間 p95",
+      "ttftP50": "最初のトークン p50"
+    },
+    "list": {
+      "title": "最近の分析",
+      "empty": "一致する分析はありません",
+      "emptyMessage": "期間を広げるか、フィルターをクリアしてください。",
+      "filterNote": "上の期間とメディアのフィルターを使用します。エンドポイントとモデルのフィルターはグラフにのみ適用されます。",
+      "statusFilter": "ステータス",
+      "started": "開始日時",
+      "kind": "種類",
+      "status": "ステータス",
+      "analysisTime": "分析時間",
+      "queueWait": "キュー待ち時間",
+      "mediaDuration": "メディアの長さ",
+      "mediaSize": "メディアのサイズ",
+      "realtimeFactor": "リアルタイム",
+      "model": "モデル",
+      "calls": "呼び出し",
+      "tokens": "トークン",
+      "principal": "プリンシパル",
+      "id": "ID",
+      "bucketTitle": "グラフの 1 区間に絞り込み中",
+      "bucketMessage": "{{from}} から {{to}} までの分析。",
+      "bucketClear": "期間全体を表示"
+    },
+    "detail": {
+      "title": "分析の詳細",
+      "subtitle": "{{kind}} の分析、{{time}}",
+      "notFound": "この分析の記録はもう存在しません。",
+      "error": "エラー",
+      "timeline": "タイムライン",
+      "timelineHelp": "ステージの後に、すべてのモデル呼び出しの試行を表示します。呼び出しのバーは、キュー待ち (最も薄い色)、最初のトークンまでの待機、生成を示します。",
+      "calls": "モデル呼び出し",
+      "jsonTitle": "分析の記録",
+      "openJob": "ジョブを開く",
+      "deleteTitle": "分析の記録を削除",
+      "deleteMessage": "アナリティクスの記録 {{id}} を削除しますか? ジョブとその結果には影響しません。",
+      "callsValue": "{{calls}} (失敗 {{failed}})",
+      "retriesValue": "再試行 {{retries}} 回、修復 {{repairs}} 回",
+      "imagesValue": "{{count}} ({{size}})",
+      "fieldsValue": "{{count}} (無効 {{invalid}})",
+      "fields": {
+        "kind": "メディアの種類",
+        "principal": "プリンシパル",
+        "started": "開始日時",
+        "completed": "完了日時",
+        "analysisTime": "分析時間",
+        "queueWait": "キュー待ち時間",
+        "mediaDuration": "メディアの長さ",
+        "mediaSize": "メディアのサイズ",
+        "realtimeFactor": "リアルタイム係数",
+        "visionModel": "ビジョンモデル",
+        "textModel": "テキストモデル",
+        "transcriptionModel": "文字起こしモデル",
+        "modelCalls": "モデル呼び出し",
+        "retries": "再試行と修復",
+        "promptTokens": "プロンプトトークン",
+        "completionTokens": "補完トークン",
+        "cachedTokens": "キャッシュ済みトークン",
+        "reasoningTokens": "推論トークン",
+        "totalTokens": "合計トークン",
+        "inputImages": "入力画像",
+        "inputAudio": "送信した音声",
+        "scenes": "シーン",
+        "transcriptCharacters": "文字起こしの文字数",
+        "fields": "フィールド"
+      }
+    },
+    "toast": {
+      "deleted": "分析の記録 {{id}} を削除しました。"
+    }
+  }
+}

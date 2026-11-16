@@ -5,6 +5,7 @@ namespace Keyframe.Core.Media
     using System.ComponentModel;
     using System.Diagnostics;
     using System.Text;
+    using System.Text.RegularExpressions;
     using System.Threading;
     using System.Threading.Tasks;
     using Keyframe.Core.Exceptions;
@@ -304,12 +305,19 @@ namespace Keyframe.Core.Media
             }
         }
 
+        private static readonly Regex _UnixPath = new Regex(@"(/[^\s/:'""|]+)+/([^\s/:'""|]+)", RegexOptions.Compiled);
+        private static readonly Regex _WindowsPath = new Regex(@"([A-Za-z]:\\(?:[^\s\\:'""|]+\\)*)([^\s\\:'""|]+)", RegexOptions.Compiled);
+
         private static string LastLines(string text, int count)
         {
             if (String.IsNullOrEmpty(text)) return "(no output)";
             string[] lines = text.Split('\n', StringSplitOptions.RemoveEmptyEntries);
             int start = Math.Max(0, lines.Length - count);
-            return String.Join(" | ", lines, start, lines.Length - start).Trim();
+            string joined = String.Join(" | ", lines, start, lines.Length - start).Trim();
+
+            // Error text reaches API callers, so keep file names but drop server directories (temp paths).
+            joined = _UnixPath.Replace(joined, "$2");
+            return _WindowsPath.Replace(joined, "$2");
         }
 
         #endregion

@@ -1,0 +1,1552 @@
+{
+  "app": {
+    "name": "Keyframe",
+    "documentTitle": "{{page}} | Keyframe",
+    "versionLabel": "v{{version}}",
+    "alpha": "ALPHA"
+  },
+  "common": {
+    "actions": "Actions",
+    "any": "Tous",
+    "cancel": "Annuler",
+    "close": "Fermer",
+    "confirm": "Confirmer",
+    "copied": "Copié",
+    "copy": "Copier",
+    "copyId": "Copier l'ID",
+    "delete": "Supprimer",
+    "disabled": "Désactivé",
+    "dismiss": "Ignorer",
+    "download": "Télécharger le JSON",
+    "empty": "Rien à afficher.",
+    "emptyList": "Liste vide",
+    "enabled": "Activé",
+    "false": "Faux",
+    "true": "Vrai",
+    "language": "Langue",
+    "loading": "Chargement...",
+    "never": "Jamais",
+    "no": "Non",
+    "yes": "Oui",
+    "none": "Aucun",
+    "notAvailable": "n/d",
+    "notYet": "Pas encore",
+    "null": "null",
+    "refresh": "Actualiser",
+    "retry": "Réessayer",
+    "save": "Enregistrer",
+    "saving": "Enregistrement...",
+    "unknown": "Inconnu",
+    "updatedAt": "Mis à jour {{time}}",
+    "view": "Afficher",
+    "viewJson": "Afficher le JSON",
+    "working": "Traitement..."
+  },
+  "nav": {
+    "label": "Navigation principale",
+    "home": "Accueil",
+    "image": "Image",
+    "video": "Vidéo",
+    "jobs": "Tâches",
+    "endpoints": "Points de terminaison",
+    "requestHistory": "Historique des requêtes",
+    "apiExplorer": "Explorateur d'API",
+    "settings": "Paramètres",
+    "server": "Infos serveur",
+    "adminOnly": "Nécessite la clé d'administration",
+    "groups": {
+      "analyze": "Analyser",
+      "operate": "Exploiter",
+      "observability": "Observabilité",
+      "system": "Système"
+    },
+    "audio": "Audio",
+    "analytics": "Analytique"
+  },
+  "roles": {
+    "admin": "Administrateur",
+    "accessKey": "Clé d'accès"
+  },
+  "status": {
+    "active": "Actif",
+    "inactive": "Inactif",
+    "available": "Disponible",
+    "missing": "Absent",
+    "checking": "Vérification",
+    "failed": "Échec",
+    "succeeded": "Réussi",
+    "partial": "Partiel",
+    "healthy": "Sain",
+    "unhealthy": "Défaillant",
+    "unreachable": "Injoignable",
+    "valid": "Valide",
+    "invalid": "Non valide"
+  },
+  "topbar": {
+    "toggleNav": "Afficher ou masquer la navigation",
+    "copyServerUrl": "Copier l'URL du serveur",
+    "health": "État du serveur",
+    "principal": "Clé connectée",
+    "anonymous": "Anonyme",
+    "repository": "Keyframe sur GitHub",
+    "lightMode": "Passer au thème clair",
+    "darkMode": "Passer au thème sombre",
+    "logout": "Se déconnecter"
+  },
+  "login": {
+    "title": "Se connecter à un serveur",
+    "tagline": "Résumés et métadonnées typées à partir d'images et de vidéos.",
+    "serverUrl": "URL du serveur",
+    "serverUrlHelp": "Le serveur REST Keyframe, par exemple http://127.0.0.1:8700. Elle est mémorisée sur cet appareil.",
+    "apiKey": "Clé API",
+    "apiKeyPlaceholder": "Clé d'accès ou clé d'administration",
+    "showKey": "Afficher la clé",
+    "hideKey": "Masquer la clé",
+    "remember": "Mémoriser la clé sur cet appareil",
+    "rememberHelp": "Si cette case est décochée, la clé est conservée uniquement en mémoire et vous devez vous reconnecter après un rechargement.",
+    "connect": "Se connecter",
+    "connecting": "Connexion...",
+    "restoring": "Restauration de votre session...",
+    "retrySaved": "Réessayer la session enregistrée",
+    "localDefaults": "Les nouvelles installations locales utilisent la clé d'accès « default » et la clé d'administration « keyframeadmin ». Changez-les toutes les deux avant de partager le serveur.",
+    "errors": {
+      "badUrl": "Saisissez une URL http ou https absolue.",
+      "unreachable": "Impossible de joindre {{url}}. Vérifiez que le serveur est démarré, que l'URL et le port sont corrects et que le navigateur peut y accéder.",
+      "badKey": "Le serveur a refusé cette clé. Vérifiez la clé et réessayez.",
+      "rateLimited": "Trop de tentatives échouées depuis cette adresse. Patientez une minute et réessayez.",
+      "notKeyframe": "Le serveur a répondu mais ne semble pas être Keyframe (pas de /v1.0/whoami). Vérifiez l'URL.",
+      "unexpected": "Le serveur a renvoyé une erreur inattendue.",
+      "savedKeyRejected": "La clé enregistrée n'est plus acceptée par {{url}}. Reconnectez-vous.",
+      "restoreUnreachable": "Impossible de joindre {{url}} pour restaurer votre session.",
+      "sessionExpired": "Le serveur a refusé la clé. Reconnectez-vous."
+    }
+  },
+  "errors": {
+    "network": "Impossible de joindre le serveur.",
+    "badRequest": "Le serveur a refusé la requête car elle n'est pas valide.",
+    "unauthorized": "La clé est absente ou non valide.",
+    "forbidden": "Cette action nécessite la clé d'administration.",
+    "notFound": "Introuvable.",
+    "conflict": "La requête est en conflit avec l'état actuel.",
+    "unprocessable": "Le média n'a pas pu être téléchargé ou décodé.",
+    "tooManyRequests": "Patientez un instant et réessayez. Pour les tâches vidéo et audio, la file d'attente est peut-être pleine : annulez des tâches en cours ou laissez-les se terminer.",
+    "badGateway": "Le point de terminaison du modèle est injoignable.",
+    "timeout": "Le délai de la requête a expiré.",
+    "server": "Le serveur a rencontré une erreur interne (HTTP {{status}}).",
+    "unknown": "Une erreur s'est produite (HTTP {{status}}).",
+    "requestId": "ID de requête",
+    "hints": {
+      "network": "Vérifiez que le serveur est démarré et accessible depuis ce navigateur, puis réessayez.",
+      "badRequest": "Corrigez les problèmes indiqués ci-dessus et soumettez à nouveau.",
+      "forbidden": "Connectez-vous avec la clé d'administration pour effectuer cette action.",
+      "unprocessable": "Vérifiez que l'URL est accessible depuis le serveur et pointe vers une image ou une vidéo prise en charge, ou importez plutôt le fichier.",
+      "tooManyRequests": "Patientez un instant et réessayez. Pour les tâches vidéo, la file d'attente est peut-être pleine : annulez des tâches en cours ou laissez-les se terminer.",
+      "badGateway": "Ouvrez Points de terminaison pour tester la connectivité, ou choisissez un autre point de terminaison et réessayez.",
+      "timeout": "Réessayez, essayez une entrée plus petite ou augmentez le délai d'expiration dans les Paramètres."
+    }
+  },
+  "pagination": {
+    "label": "Pagination",
+    "showing": "{{from}}-{{to}} sur {{total}}",
+    "pageOf": "Page {{page}} sur {{pages}}",
+    "first": "Première page",
+    "previous": "Page précédente",
+    "next": "Page suivante",
+    "last": "Dernière page",
+    "jump": "Aller à la page",
+    "pageSize": "Par page"
+  },
+  "table": {
+    "empty": "Aucun enregistrement",
+    "selectColumns": "Choisir les colonnes",
+    "showAllColumns": "Afficher toutes les colonnes",
+    "sortBy": "Trier par {{column}}",
+    "sortPage": "Le tri s'applique aux lignes de cette page ; le serveur renvoie les plus récentes en premier.",
+    "sortLocal": "Le tri s'applique aux lignes affichées.",
+    "selectAll": "Sélectionner toutes les lignes de cette page",
+    "selectRow": "Sélectionner la ligne",
+    "selectedCount_one": "{{count}} sélectionné",
+    "selectedCount_other": "{{count}} sélectionnés",
+    "clearSelection": "Effacer la sélection",
+    "bulkActions": "Actions groupées"
+  },
+  "filters": {
+    "from": "Du",
+    "to": "Au",
+    "apply": "Appliquer",
+    "clear": "Effacer les filtres"
+  },
+  "chart": {
+    "title": "Activité des requêtes",
+    "range": "Période",
+    "refresh": "Actualiser le graphique",
+    "success": "Succès",
+    "failure": "Échec",
+    "noData": "Aucune requête sur cette période pour l'instant.",
+    "ariaSummary_one": "Graphique d'activité des requêtes, {{count}} requête sur la période",
+    "ariaSummary_other": "Graphique d'activité des requêtes, {{count}} requêtes sur la période",
+    "ranges": {
+      "hour": "Dernière heure",
+      "day": "Dernier jour",
+      "week": "Dernière semaine",
+      "month": "Dernier mois"
+    },
+    "tooltip": {
+      "total": "Total : {{value}}",
+      "success": "Succès : {{value}}",
+      "failure": "Échecs : {{value}}",
+      "avg": "Durée moyenne : {{value}}"
+    }
+  },
+  "telemetry": {
+    "totalTime": "Durée totale",
+    "queued": "En file d'attente",
+    "modelTime": "Temps du modèle",
+    "modelCalls": "Appels au modèle",
+    "failedCalls": "Appels en échec",
+    "promptTokens": "Jetons d'invite",
+    "completionTokens": "Jetons de complétion",
+    "totalTokens": "Total des jetons",
+    "inputImages": "Images en entrée",
+    "noCalls": "Aucun appel au modèle n'a été effectué.",
+    "waterfallAria": "Cascade de télémétrie avec {{stages}} étapes et {{calls}} appels au modèle",
+    "showAll": "Afficher les {{count}} appels au modèle",
+    "showFewer": "Afficher moins d'appels au modèle",
+    "tooltip": {
+      "start": "Début à {{value}}",
+      "duration": "Durée {{value}}",
+      "model": "{{endpoint}} {{model}}",
+      "tokens": "Jetons {{value}}",
+      "attempts": "Tentatives {{value}}",
+      "queue": "En file d'attente {{value}}",
+      "ttft": "Premier jeton après {{value}}",
+      "generation": "Génération {{value}}",
+      "tokensPerSecond": "{{value}} jetons par seconde"
+    },
+    "columns": {
+      "purpose": "Objectif",
+      "target": "Cible",
+      "endpoint": "Point de terminaison",
+      "model": "Modèle",
+      "duration": "Durée",
+      "attempts": "Tentatives",
+      "promptTokens": "Jetons d'invite",
+      "completionTokens": "Jetons de complétion",
+      "totalTokens": "Total des jetons",
+      "finishReason": "Motif de fin",
+      "status": "Statut",
+      "queue": "File d'attente",
+      "ttft": "Premier jeton",
+      "generation": "Génération",
+      "tokensPerSecond": "Jetons/s",
+      "cachedTokens": "Jetons en cache",
+      "reasoningTokens": "Jetons de raisonnement"
+    },
+    "avgTtft": "Délai moyen avant le premier jeton",
+    "avgTokensPerSecond": "Jetons par seconde (moyenne)",
+    "cachedTokens": "Jetons en cache",
+    "reasoningTokens": "Jetons de raisonnement"
+  },
+  "fieldBuilder": {
+    "title": "Champs",
+    "empty": "Aucun champ pour l'instant. Ajoutez-en un pour extraire des valeurs typées.",
+    "fieldNumber": "Champ {{n}}",
+    "key": "Clé",
+    "keyPlaceholder": "dogCount",
+    "type": "Type",
+    "prompt": "Invite",
+    "promptPlaceholder": "La question à laquelle le modèle répond pour ce champ",
+    "options": "Options",
+    "optionsPlaceholder": "Saisissez une option et appuyez sur Entrée",
+    "removeOption": "Supprimer l'option {{option}}",
+    "minimum": "Minimum",
+    "maximum": "Maximum",
+    "maxLength": "Longueur max.",
+    "maxItems": "Éléments max.",
+    "schema": "JSON Schema",
+    "schemaPlaceholder": "{\"type\": \"object\", \"properties\": {}}",
+    "default": "Par défaut",
+    "noDefault": "Aucune valeur par défaut",
+    "defaultListPlaceholder": "Valeurs séparées par des virgules",
+    "optional": "Facultatif",
+    "required": "Obligatoire",
+    "add": "Ajouter un champ",
+    "newFieldType": "Type du nouveau champ",
+    "moveUp": "Monter",
+    "moveDown": "Descendre",
+    "duplicate": "Dupliquer le champ",
+    "remove": "Supprimer le champ",
+    "dragToReorder": "Faire glisser pour réorganiser",
+    "errors": {
+      "keyInvalid": "Utilisez de 1 à 64 lettres, chiffres, traits de soulignement, traits d'union ou points.",
+      "keyDuplicate": "La clé « {{key}} » est utilisée plusieurs fois.",
+      "keySummary": "La clé « {{key}} » entre en conflit avec la clé du résumé.",
+      "promptRequired": "Une invite est obligatoire.",
+      "promptTooLong": "Les invites sont limitées à {{max}} caractères.",
+      "optionsRequired": "Les champs Enum nécessitent au moins une option.",
+      "optionsTooMany": "{{max}} options au maximum.",
+      "notNumber": "Saisissez un nombre.",
+      "minAboveMax": "Le minimum ne doit pas dépasser le maximum.",
+      "atLeastOne": "Doit être au moins égal à 1.",
+      "schemaJson": "Le schéma n'est pas un JSON valide.",
+      "defaultJson": "La valeur par défaut n'est pas un JSON valide.",
+      "defaultNotOption": "La valeur par défaut doit être l'une des options."
+    }
+  },
+  "context": {
+    "help": "Informations de contexte partagées avec chaque invite de la requête : le résumé, chaque champ et, pour la vidéo, chaque scène. Le contexte est traité comme des données, pas comme des instructions.",
+    "label": "Libellé",
+    "labelPlaceholder": "Source",
+    "text": "Texte",
+    "textPlaceholder": "Photos envoyées par les bénévoles de l'adoption.",
+    "add": "Ajouter du contexte",
+    "remove": "Supprimer l'élément de contexte {{n}}",
+    "errors": {
+      "tooMany": "{{max}} éléments de contexte au maximum.",
+      "textRequired": "L'élément de contexte {{n}} nécessite du texte.",
+      "labelTooLong": "Le libellé de l'élément de contexte {{n}} dépasse {{max}} caractères.",
+      "tooLong": "Le contexte dépasse {{max}} caractères au total."
+    }
+  },
+  "media": {
+    "source": "Source du média",
+    "upload": "Importer",
+    "url": "URL",
+    "dropImage": "Déposez une image ici ou choisissez un fichier.",
+    "dropVideo": "Déposez une vidéo ici ou choisissez un fichier.",
+    "chooseFile": "Choisir un fichier",
+    "chooseAnother": "Choisir un autre fichier",
+    "previewAlt": "Aperçu de l'image sélectionnée",
+    "imageUrl": "URL de l'image",
+    "videoUrl": "URL de la vidéo",
+    "urlHint": "Le serveur télécharge lui-même l'URL, qui doit donc être accessible depuis le serveur. Les adresses de réseau privé sont bloquées sauf si Media.AllowPrivateNetworkUrls est activé.",
+    "videoUploadHint": "Les fichiers importés sont envoyés en base64 dans le corps de la requête, ce qui augmente la taille d'environ un tiers. Préférez une URL pour les vidéos volumineuses.",
+    "errors": {
+      "fileRequired": "Choisissez un fichier à analyser.",
+      "urlInvalid": "Saisissez une URL http ou https absolue."
+    },
+    "dropAudio": "Déposez un fichier audio ou vidéo ici ou choisissez un fichier.",
+    "audioUrl": "URL audio ou vidéo",
+    "audioUploadHint": "Les formats audio MP3, WAV, FLAC, M4A, OGG, Opus et WebM sont pris en charge. Pour un fichier vidéo, seule la piste audio est utilisée. Les fichiers importés sont envoyés en base64, ce qui augmente la taille d'environ un tiers."
+  },
+  "model": {
+    "endpoint": "Point de terminaison",
+    "visionEndpoint": "Point de terminaison vision",
+    "textEndpoint": "Point de terminaison texte",
+    "useDefault": "Valeur par défaut du serveur",
+    "name": "Remplacement du modèle",
+    "namePlaceholder": "Modèle par défaut du point de terminaison",
+    "textHelp": "Le point de terminaison texte gère les étapes purement textuelles, comme le résumé de la vidéo entière. Par défaut, il s'agit de Inference.DefaultText, puis du point de terminaison vision.",
+    "transcriptionEndpoint": "Point de terminaison de transcription"
+  },
+  "summarize": {
+    "enable": "Résumer",
+    "key": "Clé du résultat",
+    "keyInvalid": "Utilisez de 1 à 64 lettres, chiffres, traits de soulignement, traits d'union ou points.",
+    "maxWords": "Mots max.",
+    "style": "Style",
+    "instructions": "Instructions",
+    "instructionsPlaceholder": "Consignes facultatives, par exemple : mentionner le lieu et les éventuels animaux."
+  },
+  "extract": {
+    "enable": "Extraire des champs typés",
+    "mode": "Mode d'extraction"
+  },
+  "results": {
+    "title": "Résultat",
+    "noResults": "Aucun résultat n'a été renvoyé.",
+    "noFields": "Aucun champ n'a été demandé.",
+    "noProperties": "Les propriétés du média n'ont pas été demandées.",
+    "copyValue": "Copier la valeur de {{key}}",
+    "errors_one": "{{count}} erreur",
+    "errors_other": "{{count}} erreurs",
+    "errorsHint": "Un appel au modèle a échoué après plusieurs tentatives. Les résultats partiels sont affichés. Réessayez ou testez le point de terminaison depuis la page Points de terminaison.",
+    "warnings_one": "{{count}} avertissement",
+    "warnings_other": "{{count}} avertissements",
+    "tabs": {
+      "results": "Résultats",
+      "fields": "Champs",
+      "telemetry": "Télémétrie",
+      "properties": "Propriétés",
+      "raw": "JSON brut"
+    },
+    "columns": {
+      "key": "Clé",
+      "type": "Type",
+      "value": "Valeur",
+      "valid": "Valide",
+      "raw": "Sortie brute du modèle",
+      "notes": "Erreurs et avertissements"
+    }
+  },
+  "properties": {
+    "mediaKind": "Type de média",
+    "contentType": "Type de contenu",
+    "format": "Format",
+    "size": "Taille",
+    "dimensions": "Dimensions",
+    "duration": "Durée",
+    "frameRate": "Fréquence d'images",
+    "bitRate": "Débit",
+    "videoCodec": "Codec vidéo",
+    "hasAudio": "Contient de l'audio",
+    "audioCodec": "Codec audio",
+    "audioChannels": "Canaux audio",
+    "audioSampleRate": "Fréquence d'échantillonnage audio",
+    "sha256": "SHA-256",
+    "tags": "Balises"
+  },
+  "snippets": {
+    "title": "Copier sous forme de code",
+    "keyNote": "Les extraits lisent la clé depuis la variable d'environnement KEYFRAME_API_KEY et n'incluent jamais votre clé. Les médias importés sont représentés par un espace réservé.",
+    "languages": {
+      "curl": "cURL",
+      "fetch": "JavaScript",
+      "python": "Python",
+      "csharp": "C#"
+    }
+  },
+  "presets": {
+    "label": "Préréglage",
+    "choose": "Charger un préréglage",
+    "none": "Aucun préréglage enregistré",
+    "save": "Enregistrer le préréglage",
+    "saveTitle": "Enregistrer le préréglage",
+    "name": "Nom du préréglage",
+    "saveHelp": "Enregistre le contexte, le modèle, les fonctions et les champs dans ce navigateur. Les médias et les clés ne sont jamais enregistrés.",
+    "delete": "Supprimer le préréglage",
+    "deleteTitle": "Supprimer le préréglage",
+    "deleteMessage": "Supprimer le préréglage « {{name}} » de ce navigateur ?"
+  },
+  "analyze": {
+    "sections": {
+      "media": "Média",
+      "context": "Contexte",
+      "model": "Modèle",
+      "summary": "Résumé",
+      "fields": "Champs typés"
+    },
+    "includeProperties": "Inclure les propriétés du média dans la réponse",
+    "run": "Analyser",
+    "running": "Analyse en cours...",
+    "errors": {
+      "fixFields": "Corrigez d'abord les problèmes signalés.",
+      "noFields": "Ajoutez au moins un champ ou désactivez l'extraction.",
+      "noFunction": "Activez Résumer ou Extraire."
+    },
+    "toast": {
+      "done": "Analyse terminée en {{duration}}.",
+      "partial": "Analyse terminée avec des erreurs en {{duration}}. Consultez le résultat.",
+      "canceled": "Analyse annulée."
+    }
+  },
+  "analyzeImage": {
+    "title": "Analyser une image",
+    "summary": "Résumez une image et extrayez des champs typés. Les résultats incluent la validité de chaque champ et le détail des temps.",
+    "emptyTitle": "Aucune analyse pour l'instant",
+    "emptyMessage": "Choisissez une image, ajustez les champs et sélectionnez Analyser. Les résultats, la validation des champs, la télémétrie et le JSON brut s'affichent ici."
+  },
+  "analyzeVideo": {
+    "title": "Analyser une vidéo",
+    "summary": "Soumettez une tâche vidéo : détection des scènes, résumés et champs par scène, transcription et résultats pour la vidéo entière. Vous êtes redirigé vers la tâche dès qu'elle est acceptée.",
+    "sections": {
+      "whole": "Vidéo entière",
+      "scenes": "Scènes",
+      "transcribe": "Transcription"
+    },
+    "wholeHelp": "Résumé et champs pour la vidéo dans son ensemble.",
+    "sampleFrames": "Images échantillonnées",
+    "sampleFramesHelp": "Images échantillonnées sur toute la vidéo lorsque les scènes sont désactivées (1 à 64).",
+    "scenesEnable": "Détecter les scènes et analyser chacune d'elles",
+    "threshold": "Seuil de scène",
+    "thresholdHelp": "Score de scène ffmpeg de 0,01 à 1. Une valeur plus basse détecte davantage de coupes.",
+    "minSceneMs": "Scène min. (ms)",
+    "maxSceneMs": "Scène max. (ms)",
+    "maxScenes": "Scènes max.",
+    "maxScenesHelp": "Limite le coût. Les scènes en trop sont fusionnées.",
+    "framesPerScene": "Images par scène",
+    "sceneSummary": "Résumé par scène",
+    "sceneExtract": "Extraire les champs pour chaque scène",
+    "includeKeyframeData": "Inclure les miniatures des images clés (utilisées par la chronologie des scènes)",
+    "transcribeEnable": "Transcrire la piste audio",
+    "transcribeEndpoint": "Point de terminaison de transcription",
+    "language": "Langue",
+    "transcribePrompt": "Invite de transcription",
+    "transcribePromptPlaceholder": "Vocabulaire ou indications d'orthographe facultatifs",
+    "submit": "Soumettre la tâche",
+    "submitting": "Envoi...",
+    "errors": {
+      "sceneRange": "La scène min. doit être inférieure à la scène max.",
+      "language": "Utilisez un code ISO-639 tel que en ou pt-BR.",
+      "noFunction": "Activez au moins l'une des options Résumer, Extraire, Scènes ou Transcrire.",
+      "queueFull": "La file d'attente des tâches est pleine."
+    },
+    "toast": {
+      "submitted": "Tâche {{id}} acceptée."
+    },
+    "languagePlaceholder": "en"
+  },
+  "samples": {
+    "image": {
+      "hasPeople": "Y a-t-il des personnes sur cette image ?",
+      "objects": "Listez les principaux objets visibles.",
+      "setting": "Où cette photo a-t-elle été prise ?",
+      "indoors": "Intérieur",
+      "outdoors": "Extérieur",
+      "unknown": "Inconnu"
+    },
+    "video": {
+      "topics": "Listez les principaux sujets abordés.",
+      "showsText": "Un texte bien visible apparaît-il à l'écran ?"
+    },
+    "audio": {
+      "speakerCount": "Combien d'intervenants distincts y a-t-il ?"
+    }
+  },
+  "home": {
+    "title": "Accueil",
+    "summary": "Ce que fait Keyframe en ce moment : état du serveur, trafic des requêtes, tâches d'analyse et points de terminaison des modèles.",
+    "ctaLabel": "Flux de travail courants",
+    "cta": {
+      "image": "Analyser une image",
+      "imageSub": "Résumé et champs typés en un seul appel",
+      "video": "Analyser une vidéo",
+      "videoSub": "Scènes, transcription et champs sous forme de tâche",
+      "explorer": "Ouvrir l'Explorateur d'API",
+      "explorerSub": "Appeler n'importe quelle route depuis le navigateur",
+      "audio": "Analyser un audio",
+      "audioSub": "Transcription, résumé et champs sous forme de tâche"
+    },
+    "kpiLabel": "Indicateurs clés",
+    "kpi": {
+      "requests": "Requêtes ({{range}})",
+      "successRate": "Taux de réussite",
+      "failures_one": "{{value}} échec",
+      "failures_other": "{{value}} échecs",
+      "avgLatency": "Latence moyenne",
+      "jobs": "Tâches actives",
+      "queued": "{{value}} en file d'attente",
+      "endpoints": "Points de terminaison sains",
+      "healthyOf": "{{healthy}} sur {{total}}",
+      "server": "Serveur",
+      "ffmpegAvailable": "ffmpeg disponible",
+      "ffmpegMissing": "ffmpeg absent"
+    },
+    "attention": {
+      "title": "Points d'attention",
+      "none": "Rien ne requiert votre attention.",
+      "open": "Ouvrir",
+      "unreachable": "Le point de terminaison de santé ne répond pas.",
+      "ffmpegMissing": "ffmpeg n'est pas disponible sur le serveur. L'analyse vidéo et la normalisation des images échoueront tant qu'il ne sera pas installé.",
+      "endpointUnhealthy": "Le point de terminaison {{name}} est défaillant. {{message}}",
+      "noActiveEndpoints": "Aucun point de terminaison de modèle n'est actif. Ajoutez-en ou activez-en un dans les Paramètres.",
+      "failedJobs_one": "{{count}} tâche a échoué.",
+      "failedJobs_other": "{{count}} tâches ont échoué.",
+      "failedRequests_one": "{{count}} requête a échoué sur cette période.",
+      "failedRequests_other": "{{count}} requêtes ont échoué sur cette période.",
+      "authDisabled": "L'authentification est désactivée. Toute personne pouvant joindre le serveur peut l'utiliser."
+    },
+    "activityTitle": "Activité des requêtes",
+    "noTraffic": {
+      "title": "Aucun trafic pour l'instant",
+      "message": "Lancez une analyse ou appelez l'API, et les requêtes apparaîtront ici."
+    },
+    "recentJobs": "Tâches récentes",
+    "viewAllJobs": "Voir toutes les tâches",
+    "noJobs": "Aucune tâche pour l'instant."
+  },
+  "externalServices": {
+    "title": "Services externes",
+    "summary": "Outils d'observabilité fournis avec la pile Docker Compose. Les liens utilisent l'hôte auquel vous êtes connecté.",
+    "credentials": "Identifiants par défaut",
+    "noLogin": "Aucun identifiant",
+    "copyUrl": "Copier l'URL",
+    "note": "Il s'agit de valeurs par défaut pour le développement local. Changez le mot de passe Grafana avant d'exposer la pile et gardez Prometheus et Tempo à l'écart des interfaces publiques. Un service qui ne fait pas partie de ce déploiement ne se chargera pas.",
+    "services": {
+      "grafana": {
+        "name": "Grafana",
+        "purpose": "Tableaux de bord du trafic, des étapes du pipeline et des appels aux modèles"
+      },
+      "prometheus": {
+        "name": "Prometheus",
+        "purpose": "Stockage des métriques et interface de requête"
+      },
+      "tempo": {
+        "name": "Tempo",
+        "purpose": "Stockage des traces (point de terminaison de disponibilité)"
+      }
+    }
+  },
+  "jobs": {
+    "title": "Tâches",
+    "summary": "Tâches d'analyse vidéo et audio avec progression en direct. Ouvrez-en une pour voir les scènes, la transcription et la télémétrie ; annulez les tâches en cours ou supprimez celles qui sont terminées.",
+    "newJob": "Nouvelle tâche vidéo",
+    "upload": "Données importées",
+    "columns": {
+      "id": "Tâche",
+      "status": "Statut",
+      "progress": "Progression",
+      "kind": "Type",
+      "principal": "Soumise par",
+      "source": "Source",
+      "size": "Taille",
+      "duration": "Durée du média",
+      "created": "Créée",
+      "completed": "Terminée",
+      "error": "Erreur"
+    },
+    "filters": {
+      "status": "Statut",
+      "kind": "Type",
+      "principal": "Soumise par",
+      "principalPlaceholder": "Nom de la clé"
+    },
+    "cancel": "Annuler la tâche",
+    "cancelTitle": "Annuler la tâche",
+    "cancelMessage": "Annuler la tâche {{id}} ? Le travail en cours sera perdu.",
+    "deleteTitle_one": "Supprimer la tâche",
+    "deleteTitle_other": "Supprimer {{count}} tâches",
+    "deleteMessage_one": "Supprimer la tâche {{id}} et son résultat enregistré ? Cette action est irréversible.",
+    "deleteMessage_other": "Supprimer {{count}} tâches terminées et leurs résultats enregistrés ? Cette action est irréversible.",
+    "deleteSelected_one": "Supprimer {{count}} tâche terminée",
+    "deleteSelected_other": "Supprimer {{count}} tâches terminées",
+    "jsonTitle": "JSON de la tâche",
+    "autoRefresh": "Actualisation toutes les quelques secondes tant que des tâches sont en file d'attente ou en cours.",
+    "emptyTitle": "Aucune tâche pour l'instant",
+    "emptyMessage": "Les analyses vidéo s'exécutent sous forme de tâches. Soumettez-en une depuis Analyser une vidéo.",
+    "emptyFiltered": "Aucune tâche ne correspond à ces filtres",
+    "emptyFilteredMessage": "Effacez ou modifiez les filtres pour voir plus de tâches.",
+    "toast": {
+      "canceled": "Tâche {{id}} annulée.",
+      "deleted_one": "{{count}} tâche supprimée.",
+      "deleted_other": "{{count}} tâches supprimées."
+    }
+  },
+  "jobDetail": {
+    "title": "Tâche",
+    "summary": "Statut, progression et résultats d'une tâche d'analyse.",
+    "back": "Toutes les tâches",
+    "jobJson": "JSON de la tâche",
+    "download": "Télécharger le résultat",
+    "notFound": "Cette tâche n'existe pas ou a été supprimée.",
+    "progress": "Progression",
+    "progressCount": "{{completed}} étapes sur {{total}}",
+    "liveNote": "Cette page se met à jour en direct jusqu'à la fin de la tâche.",
+    "failedTitle": "La tâche a échoué",
+    "noErrorDetail": "Le serveur n'a signalé aucun message d'erreur.",
+    "failedHint": "Vérifiez l'URL du média et les points de terminaison, puis soumettez à nouveau la tâche.",
+    "interruptedTitle": "La tâche a été interrompue",
+    "interruptedMessage": "Le serveur a redémarré pendant l'exécution de cette tâche, qui ne s'est donc pas terminée. Soumettez-la à nouveau.",
+    "canceledTitle": "La tâche a été annulée",
+    "canceledMessage": "Aucun résultat n'est enregistré pour les tâches annulées.",
+    "details": "Détails",
+    "meta": {
+      "kind": "Type",
+      "principal": "Soumise par",
+      "source": "Source",
+      "size": "Taille",
+      "duration": "Durée du média",
+      "created": "Créée",
+      "started": "Démarrée",
+      "completed": "Terminée"
+    },
+    "loadingResult": "Chargement du résultat...",
+    "resultTabs": "Sections du résultat",
+    "tabs": {
+      "overview": "Vue d'ensemble",
+      "scenes": "Scènes",
+      "transcript": "Transcription",
+      "telemetry": "Télémétrie",
+      "raw": "JSON brut"
+    },
+    "wholeResults": "Résultats de la vidéo entière",
+    "noScenes": "La détection des scènes était désactivée ou n'a trouvé aucune scène.",
+    "sceneStrip": "Chronologie des scènes",
+    "sceneTitle": "Scène {{n}} : {{start}} à {{end}}",
+    "sceneHeading": "Scène {{n}} sur {{count}}",
+    "prevScene": "Scène précédente",
+    "nextScene": "Scène suivante",
+    "keyframeAlt": "Image clé à {{time}}",
+    "noThumbnail": "Aucune miniature",
+    "sceneResults": "Résultats de la scène",
+    "sceneFields": "Champs de la scène",
+    "sceneTranscript": "Transcription pendant cette scène",
+    "noTranscript": "La transcription était désactivée ou la vidéo n'a pas d'audio.",
+    "noTranscriptMatches": "Aucun segment de transcription ne correspond.",
+    "transcriptLanguage": "Langue : {{language}}",
+    "searchTranscript": "Rechercher dans la transcription"
+  },
+  "endpoints": {
+    "title": "Points de terminaison",
+    "summary": "Points de terminaison de modèles configurés sur le serveur, avec le fournisseur, le modèle et le dernier état de santé observé. Les administrateurs peuvent tester la connectivité.",
+    "add": "Ajouter un point de terminaison",
+    "readOnlyNote": "Les points de terminaison se modifient dans les Paramètres avec la clé d'administration. Les tests nécessitent également la clé d'administration.",
+    "columns": {
+      "name": "Nom",
+      "health": "Santé",
+      "kind": "Type",
+      "provider": "Fournisseur",
+      "model": "Modèle",
+      "url": "URL",
+      "default": "Par défaut",
+      "concurrency": "Simultanéité max.",
+      "timeout": "Délai d'expiration",
+      "apiKey": "Clé API",
+      "lastChecked": "Dernière vérification",
+      "test": "Test"
+    },
+    "filters": {
+      "kind": "Type",
+      "search": "Rechercher",
+      "searchPlaceholder": "Nom, fournisseur ou modèle"
+    },
+    "localFilterNote": "{{shown}} sur {{total}} affichés. Le filtrage est local ; le serveur renvoie tous les points de terminaison.",
+    "default": "Par défaut",
+    "noUrl": "Valeur par défaut du fournisseur",
+    "keySet": "Définie (se termine par {{last4}})",
+    "keyNotSet": "Non définie",
+    "test": "Tester",
+    "testing": "Test en cours...",
+    "detailSubtitle": "Configuration et santé du point de terminaison",
+    "editInSettings": "Modifier dans les Paramètres",
+    "providerUnavailable": "fournisseur non disponible dans cette version",
+    "healthMessage": "Message de santé",
+    "testPassed": "Test réussi",
+    "testFailedTitle": "Échec du test",
+    "testDetail": "Durée : {{duration}}. Modèle : {{model}}",
+    "jsonTitle": "JSON du point de terminaison",
+    "emptyTitle": "Aucun point de terminaison configuré",
+    "emptyMessage": "Ajoutez un point de terminaison de modèle dans les Paramètres, sous Inférence, afin que les analyses disposent d'un modèle à appeler.",
+    "emptyFiltered": "Aucun point de terminaison ne correspond à ces filtres",
+    "toast": {
+      "testOk": "Le point de terminaison {{name}} a répondu en {{duration}}.",
+      "testFailed": "Le point de terminaison {{name}} a échoué au test après {{duration}}.",
+      "testError": "Impossible de tester le point de terminaison {{name}}."
+    }
+  },
+  "requestHistory": {
+    "title": "Historique des requêtes",
+    "summary": "Toutes les requêtes API capturées par le serveur, avec le statut, les temps et les en-têtes et corps masqués. Filtrez, inspectez et effacez le trafic conservé.",
+    "kpi": {
+      "inRange": "Requêtes ({{range}})",
+      "failures": "Échecs",
+      "successRate": "Taux de réussite",
+      "avgDuration": "Durée moyenne",
+      "matching": "Correspondant aux filtres"
+    },
+    "filters": {
+      "method": "Méthode",
+      "status": "Code de statut",
+      "statusPlaceholder": "500",
+      "path": "Le chemin contient",
+      "pathPlaceholder": "/v1.0/image",
+      "principal": "Principal",
+      "principalPlaceholder": "Nom de la clé"
+    },
+    "columns": {
+      "time": "Heure",
+      "method": "Méthode",
+      "path": "Chemin",
+      "status": "Statut",
+      "duration": "Durée",
+      "principal": "Principal",
+      "sourceIp": "IP source",
+      "id": "Entrée",
+      "ago": "Ancienneté"
+    },
+    "filterByPath": "Filtrer par ce chemin",
+    "deleteMatching": "Supprimer les correspondances",
+    "clearAll": "Tout effacer",
+    "deleteTitle": "Supprimer la requête",
+    "deleteMessage": "Supprimer la requête {{method}} {{path}} capturée ?",
+    "bulkTitle": "Supprimer les requêtes capturées",
+    "bulkMessageFiltered_one": "Supprimer {{count}} requête correspondant à {{filters}} ? Cette action est irréversible.",
+    "bulkMessageFiltered_other": "Supprimer les {{count}} requêtes correspondant à {{filters}} ? Cette action est irréversible.",
+    "bulkMessageAll_one": "Aucun filtre n'est défini. Supprimer {{count}} requête conservée ? Cette action est irréversible.",
+    "bulkMessageAll_other": "Aucun filtre n'est défini. Supprimer les {{count}} requêtes conservées ? Cette action est irréversible.",
+    "filterParts": {
+      "method": "méthode {{value}}",
+      "status": "statut {{value}}",
+      "path": "chemin contenant « {{value}} »",
+      "principal": "principal {{value}}",
+      "from": "à partir du {{value}}",
+      "to": "avant le {{value}}"
+    },
+    "jsonTitle": "JSON de la requête",
+    "emptyTitle": "Aucun trafic conservé",
+    "emptyMessage": "Les requêtes apparaissent ici au fur et à mesure que le serveur les traite. Si cette liste reste vide, vérifiez que RequestHistory.Enabled est activé dans les Paramètres.",
+    "emptyFiltered": "Aucune requête ne correspond à ces filtres",
+    "emptyFilteredMessage": "Effacez ou élargissez les filtres, ou choisissez une autre période.",
+    "inspector": {
+      "title": "Détails de la requête",
+      "metadata": "Métadonnées",
+      "url": "URL",
+      "requestId": "ID de requête",
+      "created": "Reçue",
+      "completed": "Terminée",
+      "requestHeaders": "En-têtes de la requête",
+      "requestBody": "Corps de la requête",
+      "responseHeaders": "En-têtes de la réponse",
+      "responseBody": "Corps de la réponse",
+      "raw": "JSON brut",
+      "noHeaders": "Aucun en-tête capturé.",
+      "noBody": "Aucun corps capturé.",
+      "truncated": "Tronqué (taille d'origine {{size}})"
+    },
+    "toast": {
+      "deleted": "Requête supprimée.",
+      "bulkDeleted_one": "{{count}} requête supprimée.",
+      "bulkDeleted_other": "{{count}} requêtes supprimées.",
+      "loadFailed": "Impossible de charger la requête."
+    }
+  },
+  "explorer": {
+    "title": "Explorateur d'API",
+    "summary": "Toutes les routes du document OpenAPI actif du serveur. Les requêtes utilisent votre clé connectée.",
+    "loadingSpec": "Chargement de /openapi.json...",
+    "specMissing": "Le document OpenAPI n'est pas disponible",
+    "specMissingMessage": "L'explorateur a besoin de GET /openapi.json sur le serveur. Vérifiez que le serveur est accessible et fournit le document, puis réessayez.",
+    "viaProxyTitle": "Document OpenAPI chargé via le proxy du tableau de bord",
+    "viaProxyMessage": "Le navigateur n'a pas pu lire /openapi.json directement sur le serveur (échec réseau ou CORS) ; il a donc été chargé depuis l'origine du tableau de bord. Les requêtes sont toujours envoyées directement au serveur auquel vous êtes connecté.",
+    "search": "Rechercher une méthode, un chemin ou un résumé",
+    "noMatches": "Aucune opération ne correspond.",
+    "operations": "Opérations",
+    "pickOperation": "Choisissez une opération dans la liste ci-dessus.",
+    "resolvedUrl": "URL résolue",
+    "copyUrl": "Copier l'URL",
+    "pathParams": "Paramètres de chemin",
+    "queryParams": "Paramètres de requête",
+    "required": "Obligatoire",
+    "headers": "En-têtes",
+    "authInherited": "L'en-tête Authorization est ajouté automatiquement à partir de votre session.",
+    "headerName": "Nom de l'en-tête",
+    "headerValue": "Valeur",
+    "addHeader": "Ajouter un en-tête",
+    "removeHeader": "Supprimer l'en-tête",
+    "body": "Corps de la requête",
+    "format": "Formater le JSON",
+    "resetTemplate": "Réinitialiser au modèle",
+    "copyBody": "Copier le corps",
+    "invalidJson": "JSON non valide : {{message}}",
+    "missingPath": "À renseigner : {{names}}",
+    "destructive": "Cette opération modifie ou supprime des données.",
+    "execute": "Exécuter",
+    "running": "Exécution...",
+    "stop": "Arrêter",
+    "response": "Réponse",
+    "responseTabs": "Sections de la réponse",
+    "noResponse": "Exécutez la requête pour voir la réponse.",
+    "aborted": "La requête a été arrêtée.",
+    "emptyBody": "La réponse n'a pas de corps.",
+    "streaming": "Diffusion en continu",
+    "tabs": {
+      "body": "Corps",
+      "headers": "En-têtes",
+      "code": "Code"
+    },
+    "history": "Historique ({{count}})",
+    "historyTitle": "Requêtes récentes",
+    "noHistory": "Les requêtes que vous exécutez sont listées ici. Les clés ne sont jamais enregistrées.",
+    "load": "Charger",
+    "confirmTitle": "Exécuter une requête destructive ?",
+    "confirmMessage": "{{method}} {{path}} modifie ou supprime des données sur le serveur. Continuer ?",
+    "pickerLabel": "Choisir une opération d'API",
+    "operationCount_one": "{{count}} opération",
+    "operationCount_other": "{{count}} opérations",
+    "binaryTitle": "Réponse binaire",
+    "binaryMessage": "{{type}}, {{size}}. Téléchargez-la pour l'ouvrir.",
+    "binaryFilename": "response.bin",
+    "downloadBody": "Télécharger"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "summary": "Modifiez le fichier de paramètres du serveur. Les paramètres Direct s'appliquent à l'enregistrement ; ceux marqués Redémarrage prennent effet après un redémarrage.",
+    "file": "Fichier de paramètres",
+    "notAdminTitle": "Les paramètres nécessitent la clé d'administration",
+    "notAdminMessage": "Vous êtes connecté avec une clé d'accès, qui ne permet ni de lire ni de modifier les paramètres du serveur. Déconnectez-vous et reconnectez-vous avec la clé d'administration pour modifier les paramètres ou redémarrer le serveur.",
+    "preferences": "Préférences du tableau de bord",
+    "preferencesHelp": "Enregistrées uniquement dans ce navigateur.",
+    "sections": "Sections des paramètres",
+    "showRaw": "Afficher le JSON",
+    "hideRaw": "Masquer le JSON",
+    "rawTitle": "JSON des paramètres",
+    "rawHelp": "Vue en lecture seule des paramètres enregistrés tels que le serveur les renvoie, avec les secrets masqués.",
+    "restart": "Redémarrer le serveur",
+    "restartNow": "Redémarrer maintenant",
+    "restartTitle": "Redémarrer le serveur ?",
+    "restartMessage": "Le serveur termine cette réponse puis s'arrête. Sous Docker Compose (restart: unless-stopped), il redémarre avec les paramètres enregistrés. Les tâches en cours sont marquées Interrompue.",
+    "restartUnsaved": "Vous avez des modifications non enregistrées. Elles seront perdues si vous ne les enregistrez pas d'abord.",
+    "restarting": "Redémarrage",
+    "restartingMessage": "En attente du retour du serveur. La modification est suspendue.",
+    "restartDone": "Le serveur est de retour.",
+    "restartTimeout": "Le serveur n'est pas revenu",
+    "restartTimeoutMessage": "Si le serveur n'est pas exécuté par un environnement de conteneurs ou un gestionnaire de services doté d'une politique de redémarrage, redémarrez-le manuellement.",
+    "restartRequired": "Redémarrage requis",
+    "restartRequiredMessage": "Certaines modifications enregistrées ne prennent effet qu'après le redémarrage du serveur.",
+    "saveFailed": "Le serveur a refusé les paramètres.",
+    "unsaved": "Modifications non enregistrées",
+    "noChanges": "Aucune modification",
+    "discard": "Annuler les modifications",
+    "range": "Plage de {{min}} à {{max}}",
+    "unset": "Non défini",
+    "noEndpoint": "Aucun",
+    "envOverride": "Défini par la variable d'environnement {{name}}. La valeur de l'environnement est prioritaire ; ce champ est donc en lecture seule ici.",
+    "arrayEmpty": "Aucun élément configuré.",
+    "newItem": "Nouvel élément",
+    "removeItem": "Supprimer",
+    "badges": {
+      "live": "Direct",
+      "liveHelp": "S'applique dès l'enregistrement.",
+      "restart": "Redémarrage",
+      "restartHelp": "Prend effet après le redémarrage du serveur.",
+      "env": "Env : {{name}}",
+      "envHelp": "Remplacé par {{name}}."
+    },
+    "secret": {
+      "set": "Défini (se termine par {{last4}})",
+      "notSet": "Non défini",
+      "change": "Modifier",
+      "keep": "Conserver l'actuel",
+      "clear": "Effacer"
+    },
+    "errors": {
+      "required": "Obligatoire.",
+      "number": "Saisissez un nombre.",
+      "duplicateName": "Les noms doivent être uniques.",
+      "summary_one": "{{count}} champ nécessite votre attention.",
+      "summary_other": "{{count}} champs nécessitent votre attention."
+    },
+    "toast": {
+      "savedLive": "Paramètres enregistrés et appliqués.",
+      "savedRestart": "Paramètres enregistrés. Redémarrez le serveur pour appliquer toutes les modifications.",
+      "restarted": "Le serveur a redémarré."
+    },
+    "options": {
+      "Sqlite": "SQLite",
+      "Mysql": "MySQL",
+      "Postgresql": "PostgreSQL",
+      "SqlServer": "SQL Server",
+      "grpc": "gRPC",
+      "httpprotobuf": "HTTP (protobuf)",
+      "Completion": "Complétion",
+      "Transcription": "Transcription"
+    },
+    "severity": {
+      "0": "0 Débogage",
+      "1": "1 Info",
+      "2": "2 Avertissement",
+      "3": "3 Erreur",
+      "4": "4 Alerte",
+      "5": "5 Critique",
+      "6": "6 Urgence",
+      "7": "7 Maximale"
+    },
+    "addItem": {
+      "Auth": {
+        "AccessKeys": "Ajouter une clé d'accès"
+      },
+      "Inference": {
+        "Endpoints": "Ajouter un point de terminaison"
+      },
+      "Logging": {
+        "Servers": "Ajouter un serveur syslog"
+      }
+    },
+    "groups": {
+      "rest": {
+        "title": "Serveur REST",
+        "help": "Adresse d'écoute et taille maximale des requêtes."
+      },
+      "auth": {
+        "title": "Authentification",
+        "help": "La clé d'administration et les clés d'accès nommées utilisées par les appelants. Les clés sont masquées ; n'en modifiez une que si vous en avez réellement l'intention."
+      },
+      "database": {
+        "title": "Base de données",
+        "help": "Emplacement de stockage des tâches, des résultats et de l'historique des requêtes."
+      },
+      "inference": {
+        "title": "Inférence",
+        "help": "Points de terminaison des modèles, valeurs par défaut, nouvelles tentatives et délais d'expiration."
+      },
+      "media": {
+        "title": "Média",
+        "help": "ffmpeg, limites de téléchargement et dimensionnement des images."
+      },
+      "jobs": {
+        "title": "Tâches",
+        "help": "Simultanéité des tâches vidéo et audio, taille de la file d'attente et conservation."
+      },
+      "requestHistory": {
+        "title": "Historique des requêtes",
+        "help": "Capture des requêtes et de leurs corps pour la page Historique des requêtes."
+      },
+      "logging": {
+        "title": "Journalisation",
+        "help": "Sortie console, fichier et syslog."
+      },
+      "telemetry": {
+        "title": "Télémétrie",
+        "help": "Export OpenTelemetry, point de terminaison de collecte Prometheus et journaux Loki."
+      },
+      "analytics": {
+        "title": "Analytique",
+        "help": "Enregistrements de performance par analyse affichés sur la page Analytique, et durée de leur conservation."
+      }
+    },
+    "fields": {
+      "Rest": {
+        "Hostname": "Nom d'hôte",
+        "Port": "Port",
+        "Ssl": "TLS",
+        "MaxRequestBodyBytes": "Corps de requête max."
+      },
+      "Auth": {
+        "RequireAuthentication": "Exiger l'authentification",
+        "AdminApiKey": "Clé API d'administration",
+        "MaxFailedAttemptsPerMinute": "Tentatives échouées max. par minute",
+        "AccessKeys": {
+          "_": "Clés d'accès",
+          "Name": "Nom",
+          "Key": "Clé",
+          "Active": "Active"
+        }
+      },
+      "Database": {
+        "Type": "Type",
+        "Filename": "Fichier",
+        "Hostname": "Nom d'hôte",
+        "Port": "Port",
+        "DatabaseName": "Nom de la base de données",
+        "Username": "Nom d'utilisateur",
+        "Password": "Mot de passe",
+        "TrustServerCertificate": "Faire confiance au certificat du serveur",
+        "CommandTimeoutSeconds": "Délai d'expiration des commandes (secondes)"
+      },
+      "Inference": {
+        "DefaultVision": "Point de terminaison vision par défaut",
+        "DefaultText": "Point de terminaison texte par défaut",
+        "DefaultTranscription": "Point de terminaison de transcription par défaut",
+        "MaxRetries": "Nouvelles tentatives max.",
+        "MaxRepairAttempts": "Tentatives de réparation JSON max.",
+        "RetryBackoffMs": "Délai entre tentatives (ms)",
+        "RequestTimeoutMs": "Délai d'expiration des requêtes (ms)",
+        "MaxTranscriptCharacters": "Caractères de transcription max.",
+        "Endpoints": {
+          "_": "Points de terminaison",
+          "Name": "Nom",
+          "Provider": "Fournisseur",
+          "Kind": "Type",
+          "Endpoint": "URL",
+          "ApiKey": "Clé API",
+          "Model": "Modèle",
+          "MaxConcurrentRequests": "Requêtes simultanées max.",
+          "TimeoutMs": "Délai d'expiration (ms)",
+          "Temperature": "Température",
+          "MaxOutputTokens": "Jetons de sortie max.",
+          "Active": "Actif"
+        }
+      },
+      "Media": {
+        "TempDirectory": "Répertoire temporaire",
+        "FfmpegPath": "Chemin de ffmpeg",
+        "FfprobePath": "Chemin de ffprobe",
+        "MaxDownloadBytes": "Taille de téléchargement max.",
+        "DownloadTimeoutMs": "Délai d'expiration du téléchargement (ms)",
+        "AllowPrivateNetworkUrls": "Autoriser les URL de réseau privé",
+        "ImageMaxEdge": "Côté max. de l'image (px)",
+        "ThumbnailMaxEdge": "Côté max. de la miniature (px)",
+        "JpegQuality": "Qualité JPEG (1 meilleure, 31 pire)",
+        "MaxParallelFfmpeg": "Processus ffmpeg parallèles max.",
+        "FfmpegTimeoutMs": "Délai d'expiration de ffmpeg (ms)",
+        "MaxVideoDurationMs": "Durée vidéo max. (ms)",
+        "TranscriptionChunkSeconds": "Segment de transcription (secondes)",
+        "MaxSegmentMs": "Longueur de segment max. (ms)"
+      },
+      "Jobs": {
+        "MaxConcurrentJobs": "Tâches simultanées max.",
+        "MaxQueuedJobs": "Tâches en file d'attente max.",
+        "RetentionDays": "Conservation (jours)",
+        "MaxWaitTimeoutMs": "Délai d'attente max. (ms)"
+      },
+      "RequestHistory": {
+        "Enabled": "Capturer les requêtes",
+        "MaxRequestBodyBytes": "Corps de requête capturé max.",
+        "MaxResponseBodyBytes": "Corps de réponse capturé max.",
+        "RetentionDays": "Conservation (jours)"
+      },
+      "Logging": {
+        "ConsoleLogging": "Journalisation dans la console",
+        "EnableColors": "Couleurs de la console",
+        "LogDirectory": "Répertoire des journaux",
+        "LogFilename": "Nom du fichier journal",
+        "MinimumSeverity": "Gravité minimale",
+        "Servers": {
+          "_": "Serveurs syslog",
+          "Hostname": "Nom d'hôte",
+          "Port": "Port"
+        }
+      },
+      "Telemetry": {
+        "Enable": "Télémétrie",
+        "ServiceName": "Nom du service",
+        "OtlpEnable": "Export OTLP",
+        "OtlpEndpoint": "Point de terminaison OTLP",
+        "OtlpProtocol": "Protocole OTLP",
+        "PrometheusEnable": "Point de terminaison Prometheus",
+        "PrometheusHostname": "Nom d'hôte Prometheus",
+        "PrometheusPort": "Port Prometheus",
+        "PrometheusPath": "Chemin Prometheus",
+        "LokiEnable": "Export Loki",
+        "LokiEndpoint": "Point de terminaison Loki",
+        "ExportLogs": "Exporter les journaux",
+        "MetricExportIntervalMs": "Intervalle d'export des métriques (ms)",
+        "TraceSamplingRatio": "Taux d'échantillonnage des traces"
+      },
+      "Analytics": {
+        "Enabled": "Enregistrer l'analytique",
+        "RetentionDays": "Conservation (jours)"
+      }
+    }
+  },
+  "server": {
+    "title": "Infos serveur",
+    "summary": "Version, santé, clé avec laquelle vous êtes connecté et URL du serveur à copier.",
+    "health": "Santé",
+    "status": "Statut",
+    "version": "Version du serveur",
+    "started": "Démarré",
+    "uptime": "Temps de fonctionnement",
+    "database": "Base de données",
+    "jobs": "Tâches",
+    "jobsValue": "{{active}} actives, {{queued}} en file d'attente",
+    "ffmpeg": "ffmpeg",
+    "ffmpegMissingHelp": "Installez ffmpeg et ffprobe sur l'hôte du serveur, ou définissez Media.FfmpegPath dans les Paramètres.",
+    "endpoints": "Santé des points de terminaison",
+    "noEndpoints": "Aucun point de terminaison actif",
+    "identity": "Identité",
+    "principal": "Principal",
+    "role": "Rôle",
+    "authRequired": "Authentification requise",
+    "dashboardVersion": "Version du tableau de bord",
+    "repository": "Dépôt",
+    "copyUrl": "Copier {{name}}",
+    "urls": {
+      "title": "URL du serveur",
+      "base": "URL de base",
+      "health": "Santé",
+      "openapi": "Document OpenAPI",
+      "swagger": "Swagger UI",
+      "whoami": "Qui suis-je",
+      "dashboard": "Ce tableau de bord"
+    }
+  },
+  "notFound": {
+    "title": "Page introuvable",
+    "message": "Cette route du tableau de bord n'existe pas.",
+    "home": "Aller à l'accueil"
+  },
+  "enums": {
+    "jobStatus": {
+      "Queued": "En file d'attente",
+      "Running": "En cours",
+      "Succeeded": "Réussie",
+      "Failed": "Échouée",
+      "Canceled": "Annulée",
+      "Interrupted": "Interrompue"
+    },
+    "fieldType": {
+      "Boolean": "Booléen",
+      "String": "Chaîne",
+      "Integer": "Entier",
+      "Number": "Nombre",
+      "Enum": "Énumération",
+      "StringList": "Liste de chaînes",
+      "Object": "Objet"
+    },
+    "mediaKind": {
+      "Unknown": "Inconnu",
+      "Image": "Image",
+      "Video": "Vidéo",
+      "Audio": "Audio"
+    },
+    "summaryStyle": {
+      "Paragraph": "Paragraphe",
+      "Bullets": "Puces",
+      "Caption": "Légende"
+    },
+    "extractMode": {
+      "Combined": "Combiné",
+      "PerField": "Par champ"
+    },
+    "extractModeHelp": {
+      "Combined": "Un seul appel au modèle renvoie tous les champs. Le plus rapide et le moins coûteux.",
+      "PerField": "Un appel par champ, exécutés en parallèle. Plus coûteux, mais isole les échecs et mesure le temps de chaque champ."
+    },
+    "endpointKind": {
+      "Completion": "Complétion",
+      "Transcription": "Transcription"
+    },
+    "provider": {
+      "Mock": "Simulé (tests uniquement)",
+      "Ollama": "Ollama",
+      "OllamaCloud": "Ollama Cloud",
+      "OpenAi": "OpenAI",
+      "OpenAiCompatible": "Compatible OpenAI",
+      "AzureOpenAi": "Azure OpenAI",
+      "Anthropic": "Anthropic",
+      "Gemini": "Gemini",
+      "VertexAi": "Vertex AI",
+      "Bedrock": "Bedrock",
+      "XAi": "xAI",
+      "Cohere": "Cohere"
+    },
+    "stage": {
+      "Resolve": "Résolution",
+      "Probe": "Analyse du fichier",
+      "Normalize": "Normalisation",
+      "SceneDetection": "Détection des scènes",
+      "FrameExtraction": "Extraction des images",
+      "AudioExtraction": "Extraction de l'audio",
+      "Transcribe": "Transcription",
+      "Scenes": "Scènes",
+      "Summarize": "Résumé",
+      "Extract": "Extraction",
+      "Reduce": "Réduction"
+    },
+    "progressStage": {
+      "Queued": "En file d'attente",
+      "Done": "Terminé",
+      "Resolve": "Résolution du média",
+      "Probe": "Analyse du fichier",
+      "AudioExtraction": "Extraction de l'audio",
+      "Transcribe": "Transcription",
+      "SceneDetection": "Détection des scènes",
+      "FrameExtraction": "Extraction des images",
+      "Scenes": "Analyse des scènes",
+      "Reduce": "Résumé de la vidéo",
+      "Summarize": "Résumé en cours",
+      "Extract": "Extraction des champs"
+    },
+    "purpose": {
+      "Summarize": "Résumé",
+      "Extract": "Extraction",
+      "SceneSummarize": "Résumé de scène",
+      "SceneExtract": "Champs de scène",
+      "Transcribe": "Transcription"
+    },
+    "health": {
+      "Healthy": "Sain",
+      "Degraded": "Dégradé"
+    }
+  },
+  "units": {
+    "tokensPerSecond": "{{value}} jetons/s",
+    "realtimeFactor": "{{value}}x"
+  },
+  "appearance": {
+    "title": "Apparence",
+    "open": "Apparence : palette et mode clair ou sombre",
+    "mode": "Mode",
+    "palette": "Palette",
+    "modes": {
+      "light": "Clair",
+      "dark": "Sombre",
+      "system": "Système"
+    },
+    "help": "Enregistré dans ce navigateur. Système suit le réglage clair ou sombre de votre système d'exploitation.",
+    "palettes": {
+      "slate": "Ardoise",
+      "indigoNight": "Nuit indigo",
+      "fjord": "Fjord",
+      "nocturne": "Nocturne",
+      "solstice": "Solstice",
+      "cocoa": "Cacao",
+      "duskRose": "Rose crépuscule",
+      "metroNight": "Nuit urbaine",
+      "forest": "Forêt",
+      "ocean": "Océan",
+      "amber": "Ambre",
+      "graphite": "Graphite",
+      "lavender": "Lavande",
+      "mint": "Menthe",
+      "sandstone": "Grès",
+      "terracotta": "Terre cuite"
+    }
+  },
+  "analyzeAudio": {
+    "title": "Analyser un audio",
+    "summary": "Transcrivez un fichier audio (ou la piste audio d'une vidéo), puis résumez-le et extrayez des champs typés à partir de la transcription. S'exécute sous forme de tâche ; la progression et la transcription s'affichent ci-dessous.",
+    "modelHelp": "Le point de terminaison de transcription convertit la parole en texte (par défaut Inference.DefaultTranscription). Le point de terminaison texte rédige le résumé et les champs à partir de la transcription (par défaut Inference.DefaultText).",
+    "languageHelp": "Code ISO-639 facultatif. Laissez vide pour que le modèle détecte la langue.",
+    "transcribeRequired": "La transcription est obligatoire : le résumé et les champs sont produits à partir de la transcription.",
+    "summaryHelp": "Rédigé par le point de terminaison texte à partir de la transcription.",
+    "submit": "Soumettre la tâche audio",
+    "jobTitle": "Tâche",
+    "openJob": "Ouvrir la tâche",
+    "polling": "Vérification de la progression toutes les quelques secondes. Vous pouvez quitter cette page ; la tâche continue de s'exécuter.",
+    "emptyTitle": "Aucune tâche audio pour l'instant",
+    "emptyMessage": "Choisissez un fichier ou une URL ci-dessus et soumettez. La progression, la transcription et les résultats s'affichent ici.",
+    "toast": {
+      "submitted": "Tâche audio {{id}} mise en file d'attente.",
+      "cancelFailed": "Impossible d'annuler la tâche : {{message}}"
+    },
+    "errors": {
+      "notSupported": "Ce serveur ne prend pas en charge l'analyse audio (POST /v1.0/audio est introuvable)."
+    }
+  },
+  "segments": {
+    "uploadedTitle": "Le média source a été importé",
+    "uploadedMessage": "Keyframe ne conserve pas les médias importés : les extraits, l'audio et les images nécessitent à nouveau le fichier d'origine. Sélectionnez-le sur le disque pour activer les boutons de téléchargement.",
+    "usingFile": "Utilisation de {{name}} ({{size}}) comme source des téléchargements.",
+    "chooseFile": "Choisir le fichier d'origine",
+    "chooseOther": "Choisir un autre fichier",
+    "clearFile": "Effacer",
+    "reading": "Lecture...",
+    "needSource": "Choisissez d'abord le fichier d'origine",
+    "download": {
+      "Video": "Télécharger l'extrait",
+      "Audio": "Télécharger l'audio",
+      "Frame": "Télécharger l'image"
+    },
+    "hint": {
+      "Video": "Découper cette plage en extrait MP4",
+      "Audio": "Découper cette plage en audio MP3",
+      "Frame": "Enregistrer l'image du début de cette scène au format JPEG"
+    },
+    "toast": {
+      "downloaded": "{{name}} enregistré.",
+      "failed": "Échec du téléchargement : {{message}}"
+    }
+  },
+  "analytics": {
+    "title": "Analytique",
+    "summary": "Performances dans le temps pour l'analyse d'images, de vidéos et d'audio : volume, taux de réussite, percentiles de latence, temps des modèles, jetons et détail par analyse.",
+    "loading": "Chargement de l'analytique...",
+    "notAdminTitle": "L'analytique nécessite la clé d'administration",
+    "notAdminMessage": "Connectez-vous avec la clé d'administration pour voir les performances et la télémétrie de toutes les analyses.",
+    "unavailableTitle": "L'analytique n'est pas disponible sur ce serveur",
+    "unavailableMessage": "GET /v1.0/analytics/summary est introuvable. Mettez à niveau le serveur vers une version prenant en charge l'analytique et vérifiez que Analytics.Enabled est activé dans les Paramètres.",
+    "emptyTitle": "Aucune analyse sur cette période",
+    "emptyMessage": "Lancez une analyse ou élargissez la période. Chaque analyse d'image, de vidéo et d'audio terminée est enregistrée ici.",
+    "windowNote": "Affichage du {{from}} au {{to}}, regroupé par {{bucket}}.",
+    "ranges": {
+      "1h": "1 heure",
+      "24h": "24 heures",
+      "7d": "7 jours",
+      "30d": "30 jours",
+      "custom": "Personnalisée"
+    },
+    "buckets": {
+      "minute": "minute",
+      "hour": "heure",
+      "day": "jour"
+    },
+    "filters": {
+      "label": "Filtres de l'analytique",
+      "range": "Période",
+      "mediaKind": "Média",
+      "endpoint": "Point de terminaison",
+      "model": "Modèle",
+      "modelPlaceholder": "Tous les modèles"
+    },
+    "kpi": {
+      "label": "Indicateurs de l'analytique",
+      "analyses": "Analyses",
+      "analysesSub": "{{ok}} réussies, {{failed}} échouées",
+      "successRate": "Taux de réussite",
+      "analysisP50": "Durée d'analyse (p50)",
+      "queueP95": "Attente en file (p95)",
+      "ttftP50": "Délai avant le premier jeton (p50)",
+      "tokensPerSecond": "Jetons par seconde (p50)",
+      "modelCalls": "Appels au modèle",
+      "modelCallsSub": "{{failed}} échoués, {{retries}} nouvelles tentatives",
+      "totalTokens": "Total des jetons",
+      "perAnalysis": "{{value}} par analyse en moyenne",
+      "p95": "p95 {{value}}",
+      "avg": "Moyenne {{value}}",
+      "generationP50": "Génération p50 {{value}}"
+    },
+    "byKind": {
+      "label": "Par type de média",
+      "count_one": "{{value}} analyse",
+      "count_other": "{{value}} analyses",
+      "none": "Aucune analyse de ce type sur la période.",
+      "analysisP50": "Analyse p50",
+      "analysisP95": "Analyse p95",
+      "realtimeP50": "Facteur temps réel p50",
+      "imagesIn": "Images en entrée",
+      "mediaSizeP50": "Taille p50",
+      "mediaDurationP50": "Durée p50",
+      "tokens": "Jetons"
+    },
+    "charts": {
+      "volume": "Analyses dans le temps",
+      "volumeHint": "Cliquez sur une barre pour lister ses analyses ci-dessous.",
+      "volumeAria_one": "Analyses dans le temps, {{count}} analyse sur la période",
+      "volumeAria_other": "Analyses dans le temps, {{count}} analyses sur la période",
+      "latency": "Temps dans le temps",
+      "metric": "Métrique",
+      "latencyAria": "Percentiles de {{metric}} dans le temps",
+      "noSamples": "Aucun échantillon pour cette métrique sur la période.",
+      "tokens": "Jetons dans le temps",
+      "successRate": "Taux de réussite dans le temps"
+    },
+    "series": {
+      "succeeded": "Réussies",
+      "failed": "Échouées",
+      "promptTokens": "Jetons d'invite",
+      "completionTokens": "Jetons de complétion",
+      "successRate": "Taux de réussite"
+    },
+    "stats": {
+      "avg": "Moyenne",
+      "p50": "p50",
+      "p90": "p90",
+      "p95": "p95",
+      "p99": "p99",
+      "max": "Max."
+    },
+    "metrics": {
+      "AnalysisMs": "Durée d'analyse",
+      "QueueWaitMs": "Attente en file",
+      "ModelCallMs": "Durée des appels au modèle",
+      "TimeToFirstTokenMs": "Délai avant le premier jeton",
+      "GenerationMs": "Durée de génération",
+      "TokensPerSecond": "Jetons par seconde",
+      "TokensPerAnalysis": "Jetons par analyse",
+      "RealtimeFactor": "Facteur temps réel",
+      "MediaDurationMs": "Durée du média",
+      "MediaBytes": "Taille du média"
+    },
+    "columns": {
+      "metric": "Métrique",
+      "samples": "Échantillons"
+    },
+    "distributions": {
+      "title": "Distributions",
+      "help": "Les métriques des appels au modèle sont mesurées par appel ; les autres par analyse. Le facteur temps réel correspond à la durée d'analyse divisée par la durée du média (vidéo et audio uniquement) ; une valeur inférieure à 1 est plus rapide que le temps réel."
+    },
+    "totals": {
+      "title": "Jetons et entrées",
+      "promptTokens": "Jetons d'invite",
+      "completionTokens": "Jetons de complétion",
+      "cachedTokens": "Jetons en cache",
+      "reasoningTokens": "Jetons de raisonnement",
+      "totalTokens": "Total des jetons",
+      "tokensPerAnalysisP50": "Jetons par analyse (p50)",
+      "tokensPerAnalysisP95": "Jetons par analyse (p95)",
+      "modelCalls": "Appels au modèle",
+      "failedModelCalls": "Appels au modèle échoués",
+      "retries": "Nouvelles tentatives",
+      "repairAttempts": "Tentatives de réparation",
+      "inputImages": "Images en entrée",
+      "inputImageBytes": "Octets d'image envoyés",
+      "inputAudioBytes": "Octets audio envoyés",
+      "scenes": "Scènes",
+      "transcriptCharacters": "Caractères de transcription"
+    },
+    "byModel": {
+      "title": "Par modèle",
+      "empty": "Aucun appel au modèle sur la période.",
+      "endpoint": "Point de terminaison",
+      "provider": "Fournisseur",
+      "model": "Modèle",
+      "calls": "Appels",
+      "failed": "Échoués",
+      "durationP50": "Durée p50",
+      "durationP95": "Durée p95",
+      "ttftP50": "Premier jeton p50",
+      "ttftP95": "Premier jeton p95",
+      "generationP50": "Génération p50",
+      "tokensPerSecondP50": "Jetons/s p50",
+      "promptTokens": "Jetons d'invite",
+      "completionTokens": "Jetons de complétion"
+    },
+    "byStage": {
+      "title": "Par étape",
+      "empty": "Aucune mesure d'étape sur la période.",
+      "stage": "Étape",
+      "share": "p50 relatif"
+    },
+    "byPurpose": {
+      "title": "Par objectif",
+      "empty": "Aucun appel au modèle sur la période.",
+      "purpose": "Objectif",
+      "calls": "Appels",
+      "failed": "Échoués",
+      "durationP50": "Durée p50",
+      "durationP95": "Durée p95",
+      "ttftP50": "Premier jeton p50"
+    },
+    "list": {
+      "title": "Analyses récentes",
+      "empty": "Aucune analyse ne correspond",
+      "emptyMessage": "Élargissez la période ou effacez les filtres.",
+      "filterNote": "Utilise la période et le filtre de média ci-dessus. Les filtres de point de terminaison et de modèle s'appliquent uniquement aux graphiques.",
+      "statusFilter": "Statut",
+      "started": "Démarrée",
+      "kind": "Type",
+      "status": "Statut",
+      "analysisTime": "Durée d'analyse",
+      "queueWait": "Attente en file",
+      "mediaDuration": "Durée du média",
+      "mediaSize": "Taille du média",
+      "realtimeFactor": "Temps réel",
+      "model": "Modèle",
+      "calls": "Appels",
+      "tokens": "Jetons",
+      "principal": "Principal",
+      "id": "ID",
+      "bucketTitle": "Filtré sur un intervalle du graphique",
+      "bucketMessage": "Analyses du {{from}} au {{to}}.",
+      "bucketClear": "Afficher toute la période"
+    },
+    "detail": {
+      "title": "Détail de l'analyse",
+      "subtitle": "Analyse {{kind}}, {{time}}",
+      "notFound": "Cet enregistrement d'analyse n'existe plus.",
+      "error": "Erreur",
+      "timeline": "Chronologie",
+      "timelineHelp": "Les étapes, puis chaque tentative d'appel au modèle. Les barres d'appel montrent l'attente en file (la plus claire), l'attente du premier jeton et la génération.",
+      "calls": "Appels au modèle",
+      "jsonTitle": "Enregistrement d'analyse",
+      "openJob": "Ouvrir la tâche",
+      "deleteTitle": "Supprimer l'enregistrement d'analyse",
+      "deleteMessage": "Supprimer l'enregistrement d'analytique {{id}} ? La tâche et son résultat ne sont pas affectés.",
+      "callsValue": "{{calls}} ({{failed}} échoués)",
+      "retriesValue": "{{retries}} nouvelles tentatives, {{repairs}} réparations",
+      "imagesValue": "{{count}} ({{size}})",
+      "fieldsValue": "{{count}} ({{invalid}} non valides)",
+      "fields": {
+        "kind": "Type de média",
+        "principal": "Principal",
+        "started": "Démarrée",
+        "completed": "Terminée",
+        "analysisTime": "Durée d'analyse",
+        "queueWait": "Attente en file",
+        "mediaDuration": "Durée du média",
+        "mediaSize": "Taille du média",
+        "realtimeFactor": "Facteur temps réel",
+        "visionModel": "Modèle de vision",
+        "textModel": "Modèle de texte",
+        "transcriptionModel": "Modèle de transcription",
+        "modelCalls": "Appels au modèle",
+        "retries": "Nouvelles tentatives et réparations",
+        "promptTokens": "Jetons d'invite",
+        "completionTokens": "Jetons de complétion",
+        "cachedTokens": "Jetons en cache",
+        "reasoningTokens": "Jetons de raisonnement",
+        "totalTokens": "Total des jetons",
+        "inputImages": "Images en entrée",
+        "inputAudio": "Audio envoyé",
+        "scenes": "Scènes",
+        "transcriptCharacters": "Caractères de transcription",
+        "fields": "Champs"
+      }
+    },
+    "toast": {
+      "deleted": "Enregistrement d'analyse {{id}} supprimé."
+    }
+  }
+}

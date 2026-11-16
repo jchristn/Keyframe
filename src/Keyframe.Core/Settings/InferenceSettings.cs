@@ -13,19 +13,20 @@ namespace Keyframe.Core.Settings
         #region Public-Members
 
         /// <summary>
-        /// Name of the endpoint used for vision calls when a request does not name one. Default "mock".
+        /// Name of the endpoint used for vision calls when a request does not name one. Default "ollama-gemma3-4b".
         /// </summary>
-        public string? DefaultVision { get; set; } = "mock";
+        public string? DefaultVision { get; set; } = "ollama-gemma3-4b";
 
         /// <summary>
-        /// Name of the endpoint used for text-only calls when a request does not name one. Null falls back to the vision endpoint.
+        /// Name of the endpoint used for text-only calls when a request does not name one. Default "ollama-gpt-oss-20b".
+        /// Null falls back to the vision endpoint.
         /// </summary>
-        public string? DefaultText { get; set; } = null;
+        public string? DefaultText { get; set; } = "ollama-gpt-oss-20b";
 
         /// <summary>
-        /// Name of the endpoint used for transcription when a request does not name one. Default "mock-stt".
+        /// Name of the endpoint used for transcription when a request does not name one. Default "whisper".
         /// </summary>
-        public string? DefaultTranscription { get; set; } = "mock-stt";
+        public string? DefaultTranscription { get; set; } = "whisper";
 
         /// <summary>
         /// Retries for transient failures (429, 5xx, timeouts). Default 2. Minimum 0, maximum 10.
@@ -104,7 +105,7 @@ namespace Keyframe.Core.Settings
         }
 
         /// <summary>
-        /// Configured endpoints. Never null.
+        /// Configured endpoints. Never null. Defaults to <see cref="DefaultEndpoints"/>.
         /// </summary>
         public List<EndpointSettings> Endpoints
         {
@@ -127,15 +128,27 @@ namespace Keyframe.Core.Settings
         private int _RetryBackoffMs = 500;
         private int _RequestTimeoutMs = 300000;
         private int _MaxTranscriptCharacters = 60000;
-        private List<EndpointSettings> _Endpoints = new List<EndpointSettings>
-        {
-            new EndpointSettings { Name = "mock", Provider = ProviderTypeEnum.Mock, Kind = EndpointKindEnum.Completion, Model = "mock-vision", MaxConcurrentRequests = 4 },
-            new EndpointSettings { Name = "mock-stt", Provider = ProviderTypeEnum.Mock, Kind = EndpointKindEnum.Transcription, Model = "mock-whisper", MaxConcurrentRequests = 4 }
-        };
+        private List<EndpointSettings> _Endpoints = DefaultEndpoints();
 
         #endregion
 
         #region Public-Methods
+
+        /// <summary>
+        /// The shipped default endpoints: three local Ollama models (two vision, one text) on 127.0.0.1:11434 and a
+        /// local OpenAI-compatible Whisper server (speaches) on 127.0.0.1:8000. None are contacted until used.
+        /// </summary>
+        /// <returns>New list of default endpoints.</returns>
+        public static List<EndpointSettings> DefaultEndpoints()
+        {
+            return new List<EndpointSettings>
+            {
+                new EndpointSettings { Name = "ollama-gemma3-4b", Provider = ProviderTypeEnum.Ollama, Kind = EndpointKindEnum.Completion, Endpoint = "http://127.0.0.1:11434", Model = "gemma3:4b", MaxOutputTokens = 4096, TimeoutMs = 300000 },
+                new EndpointSettings { Name = "ollama-qwen3-vl-8b", Provider = ProviderTypeEnum.Ollama, Kind = EndpointKindEnum.Completion, Endpoint = "http://127.0.0.1:11434", Model = "qwen3-vl:8b", MaxOutputTokens = 4096, TimeoutMs = 300000 },
+                new EndpointSettings { Name = "ollama-gpt-oss-20b", Provider = ProviderTypeEnum.Ollama, Kind = EndpointKindEnum.Completion, Endpoint = "http://127.0.0.1:11434", Model = "gpt-oss:20b", MaxOutputTokens = 4096, TimeoutMs = 300000 },
+                new EndpointSettings { Name = "whisper", Provider = ProviderTypeEnum.OpenAiCompatible, Kind = EndpointKindEnum.Transcription, Endpoint = "http://127.0.0.1:8000/v1", Model = "Systran/faster-whisper-small" }
+            };
+        }
 
         /// <summary>
         /// Find an active endpoint by name (case-insensitive).

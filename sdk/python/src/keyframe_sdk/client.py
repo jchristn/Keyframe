@@ -5,12 +5,13 @@ from __future__ import annotations
 import base64
 import json
 import mimetypes
+import re
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Type, TypeVar, Union
-from urllib.parse import quote, urlsplit
+from urllib.parse import quote, unquote, urlsplit
 
 import httpx
 
@@ -22,7 +23,11 @@ from .errors import (
     KeyframeTimeoutError,
 )
 from .models import (
+    AnalysisRecord,
+    AnalyticsSummary,
     ApiErrorResponse,
+    AudioAnalysisResponse,
+    AudioSubmitResult,
     DeleteResult,
     EndpointResponse,
     EndpointTestResponse,
@@ -33,12 +38,15 @@ from .models import (
     JobResponse,
     JobStatus,
     KeyframeSettings,
+    MediaKind,
     MediaProperties,
     MediaSource,
     ProbeRequest,
     RequestHistoryEntry,
     RequestHistorySummary,
     RestartResponse,
+    SegmentMedia,
+    SegmentResponse,
     SettingsResponse,
     VideoAnalysisRequest,
     VideoAnalysisResponse,
@@ -58,6 +66,8 @@ RequestLike = Union[Model, Mapping[str, Any]]
 _EXTRA_TYPES = {
     ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".gif": "image/gif", ".webp": "image/webp",
     ".mp4": "video/mp4", ".m4v": "video/mp4", ".mov": "video/quicktime", ".webm": "video/webm", ".mkv": "video/x-matroska",
+    ".mp3": "audio/mpeg", ".wav": "audio/wav", ".flac": "audio/flac", ".m4a": "audio/mp4", ".aac": "audio/aac",
+    ".ogg": "audio/ogg", ".opus": "audio/ogg",
 }
 
 
@@ -85,11 +95,13 @@ def media_from_file(path: Union[str, Path], media_type: Optional[str] = None) ->
 
 @dataclass
 class RawResponse:
-    """Status, body, and headers of one exchange."""
+    """Status, body, and headers of one exchange. ``content`` holds the raw body bytes; for a binary
+    request (``send_raw(..., binary=True)``) ``body`` is only decoded when the status is an error."""
 
     status_code: int
     body: str
     headers: httpx.Headers
+    content: bytes = b""
 
     @property
     def request_id(self) -> Optional[str]:
@@ -109,6 +121,8 @@ def _body(request: Optional[RequestLike], omit_none: bool) -> Any:
 def _iso(value: Any) -> Optional[str]:
     if value is None or value == "":
         return None
+    if isinstance(value, bool):
+        return "true" if value else "false"
     if isinstance(value, datetime):
         if value.tzinfo is None:
             value = value.replace(tzinfo=timezone.utc)
@@ -120,6 +134,33 @@ def _segment(value: str, name: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{name} is required.")
     return quote(value, safe="")
+
+
+_FILENAME_STAR = re.compile(r"filename\*\s*=\s*([^']*)'[^']*'([^;]+)", re.IGNORECASE)
+_FILENAME = re.compile(r'filename\s*=\s*(?:"((?:[^"\\]|\\.)*)"|([^;]+))', re.IGNORECASE)
+
+
+def _disposition_filename(value: Optional[str]) -> Optional[str]:
+    """The file name in a Content-Disposition header, or None."""
+    if not value:
+        return None
+    star = _FILENAME_STAR.search(value)
+    if star:
+        return unquote(star.group(2).strip(), encoding=star.group(1) or "utf-8", errors="replace")
+    plain = _FILENAME.search(value)
+    if not plain:
+        return None
+    if plain.group(1) is not None:
+        return re.sub(r"\\(.)", r"\1", plain.group(1))
+    return plain.group(2).strip() or None
+
+
+def _header_int(headers: httpx.Headers, name: str) -> Optional[int]:
+    value = headers.get(name)
+    try:
+        return int(value) if value is not None and value.strip() else None
+    except ValueError:
+        return None
 
 
 def _query(values: Dict[str, Any]) -> Dict[str, str]:
@@ -162,10 +203,13 @@ class KeyframeClient:
         self.image = ImageClient(self)
         self.video = VideoClient(self)
         self.probe = ProbeClient(self)
+        self.audio = AudioClient(self)
+        self.segments = SegmentsClient(self)
         self.jobs = JobsClient(self)
         self.endpoints = EndpointsClient(self)
         self.request_history = RequestHistoryClient(self)
         self.settings = SettingsClient(self)
+        self.analytics = AnalyticsClient(self)
 
     # Lifecycle
 
@@ -212,10 +256,12 @@ class KeyframeClient:
     # Transport
 
     def send_raw(
-        self, method: str, path: str, body: Any = None, params: Optional[Dict[str, str]] = None
+        self, method: str, path: str, body: Any = None, params: Optional[Dict[str, str]] = None, binary: bool = False
     ) -> RawResponse:
-        """Send a request and return the raw response without raising on error status codes."""
-        headers = {"Accept": "application/json", "User-Agent": f"keyframe-sdk-python/{VERSION}"}
+        """Send a request and return the raw response without raising on error status codes.
+        With ``binary`` the response is read as bytes into ``content`` (any media type is accepted)."""
+        accept = "*/*" if binary else "application/json"
+        headers = {"Accept": accept, "User-Agent": f"keyframe-sdk-python/{VERSION}"}
         if self.__api_key:
             if self.auth_header == "x-api-key":
                 headers["x-api-key"] = self.__api_key
@@ -232,10 +278,14 @@ class KeyframeClient:
             raise KeyframeTimeoutError(f"{method} {path} did not complete within {self.timeout_s}s.") from e
         except httpx.TransportError as e:
             raise KeyframeConnectionError(f"{method} {path} failed: unable to reach {self.base_url}.") from e
-        return RawResponse(status_code=response.status_code, body=response.text, headers=response.headers)
+        content = response.content
+        text = response.text if not binary or not 200 <= response.status_code <= 299 else ""
+        return RawResponse(status_code=response.status_code, body=text, headers=response.headers, content=content)
 
-    def _checked(self, method: str, path: str, body: Any = None, params: Optional[Dict[str, str]] = None) -> RawResponse:
-        raw = self.send_raw(method, path, body, params)
+    def _checked(
+        self, method: str, path: str, body: Any = None, params: Optional[Dict[str, str]] = None, binary: bool = False
+    ) -> RawResponse:
+        raw = self.send_raw(method, path, body, params, binary)
         if raw.status_code < 200 or raw.status_code > 299:
             api_error: Optional[ApiErrorResponse] = None
             if raw.body:
@@ -332,6 +382,62 @@ class VideoClient(_Sub):
         return self._c.jobs.get_result(job.id)
 
 
+class AudioClient(_Sub):
+    def analyze(self, request: RequestLike) -> AudioSubmitResult:
+        """POST /v1.0/audio. Returns an AudioSubmitResult holding either ``job`` (202, or a finished non-succeeded job)
+        or ``result`` (200 when Wait was true and the job succeeded in time)."""
+        raw = self._c._checked("POST", "/v1.0/audio", _body(request, True))
+        data = json.loads(raw.body)
+        if raw.status_code == 202 or isinstance(data.get("Status"), str):
+            job = JobResponse.from_dict(data)
+            return AudioSubmitResult(status_code=raw.status_code, job_id=job.id, job=job)
+        return AudioSubmitResult(
+            status_code=raw.status_code,
+            job_id=raw.headers.get("x-keyframe-job-id", ""),
+            result=AudioAnalysisResponse.from_dict(data),
+        )
+
+    def analyze_and_wait(
+        self, request: RequestLike, poll_interval_s: Optional[float] = None, timeout_s: Optional[float] = None
+    ) -> AudioAnalysisResponse:
+        """Submit, poll the job until terminal, then fetch the result.
+        Raises KeyframeJobError when the job ends Failed, Canceled, or Interrupted."""
+        submitted = self.analyze(request)
+        if submitted.result is not None:
+            return submitted.result
+        assert submitted.job is not None
+        job = submitted.job if submitted.job.is_terminal else self._c.jobs.wait(submitted.job_id, poll_interval_s, timeout_s)
+        if job.status != JobStatus.SUCCEEDED:
+            raise KeyframeJobError(job)
+        return self._c.jobs.get_audio_result(job.id)
+
+
+class SegmentsClient(_Sub):
+    def get(self, request: RequestLike) -> SegmentMedia:
+        """POST /v1.0/segment with ResponseFormat Binary. Returns the media bytes with the Content-Type,
+        the file name from Content-Disposition, and the x-keyframe-segment-* range headers."""
+        body = _body(request, True)
+        body["ResponseFormat"] = "Binary"
+        raw = self._c._checked("POST", "/v1.0/segment", body, None, binary=True)
+        media_type = raw.headers.get("content-type")
+        return SegmentMedia(
+            data=raw.content,
+            media_type=media_type.split(";")[0].strip() if media_type else None,
+            filename=_disposition_filename(raw.headers.get("content-disposition")),
+            start_ms=_header_int(raw.headers, "x-keyframe-segment-start-ms"),
+            end_ms=_header_int(raw.headers, "x-keyframe-segment-end-ms"),
+            duration_ms=_header_int(raw.headers, "x-keyframe-segment-duration-ms"),
+            size_bytes=len(raw.content),
+            request_id=raw.request_id,
+        )
+
+    def get_json(self, request: RequestLike) -> SegmentResponse:
+        """POST /v1.0/segment with ResponseFormat Json. ``decode_data()`` on the result returns the bytes."""
+        body = _body(request, True)
+        body["ResponseFormat"] = "Json"
+        return self._c._model(SegmentResponse, "POST", "/v1.0/segment", body)
+
+
 class JobsClient(_Sub):
     #: Default polling interval in seconds for ``wait`` (clamped 0.1 to 60).
     default_poll_interval_s: float = 1.0
@@ -360,8 +466,12 @@ class JobsClient(_Sub):
         return self._c._model(JobResponse, "GET", "/v1.0/jobs/" + _segment(job_id, "job_id"))
 
     def get_result(self, job_id: str) -> VideoAnalysisResponse:
-        """GET /v1.0/jobs/{id}/result. 409 until the job succeeded."""
+        """GET /v1.0/jobs/{id}/result for a video job. 409 until the job succeeded."""
         return self._c._model(VideoAnalysisResponse, "GET", "/v1.0/jobs/" + _segment(job_id, "job_id") + "/result")
+
+    def get_audio_result(self, job_id: str) -> AudioAnalysisResponse:
+        """GET /v1.0/jobs/{id}/result for an audio job. 409 until the job succeeded."""
+        return self._c._model(AudioAnalysisResponse, "GET", "/v1.0/jobs/" + _segment(job_id, "job_id") + "/result")
 
     def cancel(self, job_id: str) -> JobResponse:
         """POST /v1.0/jobs/{id}/cancel. 409 when already finished."""
@@ -476,3 +586,54 @@ class SettingsClient(_Sub):
     def restart(self) -> RestartResponse:
         """POST /v1.0/restart (admin)."""
         return self._c._model(RestartResponse, "POST", "/v1.0/restart")
+
+
+_ANALYTICS = "/v1.0/analytics"
+
+
+class AnalyticsClient(_Sub):
+    """Analytics over stored analyses (admin key)."""
+
+    def summary(
+        self,
+        from_utc: Optional[Union[datetime, str]] = None,
+        to_utc: Optional[Union[datetime, str]] = None,
+        bucket: Optional[str] = None,
+        media_kind: Optional[Union[MediaKind, str]] = None,
+        endpoint: Optional[str] = None,
+        model: Optional[str] = None,
+    ) -> AnalyticsSummary:
+        """GET /v1.0/analytics/summary. ``bucket`` is minute, hour, or day; the range defaults to the last 24 hours."""
+        params = _query({
+            "fromUtc": from_utc, "toUtc": to_utc, "bucket": bucket, "mediaKind": media_kind,
+            "endpoint": endpoint, "model": model,
+        })
+        return self._c._model(AnalyticsSummary, "GET", _ANALYTICS + "/summary", None, params)
+
+    def list_analyses(
+        self,
+        media_kind: Optional[Union[MediaKind, str]] = None,
+        success: Optional[bool] = None,
+        from_utc: Optional[Union[datetime, str]] = None,
+        to_utc: Optional[Union[datetime, str]] = None,
+        max_results: Optional[int] = None,
+        skip: Optional[int] = None,
+    ) -> EnumerationResult:
+        """GET /v1.0/analytics/analyses, newest first. ``items`` holds AnalysisRecord objects with ``calls`` None."""
+        params = _query({
+            "mediaKind": media_kind, "success": success, "fromUtc": from_utc, "toUtc": to_utc,
+            "maxResults": max_results, "skip": skip,
+        })
+        return self._c._page(AnalysisRecord, _ANALYTICS + "/analyses", params)
+
+    def get_analysis(self, analysis_id: str) -> AnalysisRecord:
+        """GET /v1.0/analytics/analyses/{id}. ``calls`` holds every model call attempt."""
+        return self._c._model(AnalysisRecord, "GET", _ANALYTICS + "/analyses/" + _segment(analysis_id, "analysis_id"))
+
+    def delete_analysis(self, analysis_id: str) -> DeleteResult:
+        """DELETE /v1.0/analytics/analyses/{id}. 404 when missing."""
+        return self._c._model(DeleteResult, "DELETE", _ANALYTICS + "/analyses/" + _segment(analysis_id, "analysis_id"))
+
+    def delete_analyses(self, older_than_utc: Optional[Union[datetime, str]] = None) -> DeleteResult:
+        """DELETE /v1.0/analytics/analyses. Deletes analyses completed before ``older_than_utc``; with no cutoff, deletes all."""
+        return self._c._model(DeleteResult, "DELETE", _ANALYTICS + "/analyses", None, _query({"olderThanUtc": older_than_utc}))

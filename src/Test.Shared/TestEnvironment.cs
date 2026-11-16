@@ -1,10 +1,12 @@
 namespace Test.Shared
 {
     using System;
+    using System.Collections.Generic;
     using System.Diagnostics;
     using System.IO;
     using System.Threading;
     using System.Threading.Tasks;
+    using Keyframe.Core.Enums;
     using Keyframe.Core.Media;
     using Keyframe.Core.Settings;
 
@@ -62,7 +64,9 @@ namespace Test.Shared
         #region Public-Methods
 
         /// <summary>
-        /// Settings suitable for tests: temp under the test root, fast retries.
+        /// Settings suitable for tests: temp under the test root, fast retries, and only the mock endpoints
+        /// ("mock" for completion, "mock-stt" for transcription) as defaults. The shipped Ollama and Whisper
+        /// defaults are removed so tests never reach a real model server.
         /// </summary>
         /// <returns>Settings.</returns>
         public static KeyframeSettings CreateSettings()
@@ -71,7 +75,24 @@ namespace Test.Shared
             settings.Media.TempDirectory = Path.Combine(Root, "temp");
             settings.Inference.RetryBackoffMs = 0;
             settings.Database.Filename = Path.Combine(Root, "db-" + Guid.NewGuid().ToString("N") + ".db");
+            AddMockEndpoints(settings);
             return settings;
+        }
+
+        /// <summary>
+        /// Replace the configured endpoints with the mock completion and transcription endpoints and make them the defaults.
+        /// </summary>
+        /// <param name="settings">Settings to change.</param>
+        public static void AddMockEndpoints(KeyframeSettings settings)
+        {
+            settings.Inference.Endpoints = new List<EndpointSettings>
+            {
+                new EndpointSettings { Name = "mock", Provider = ProviderTypeEnum.Mock, Kind = EndpointKindEnum.Completion, Model = "mock-vision", MaxConcurrentRequests = 4 },
+                new EndpointSettings { Name = "mock-stt", Provider = ProviderTypeEnum.Mock, Kind = EndpointKindEnum.Transcription, Model = "mock-whisper", MaxConcurrentRequests = 4 }
+            };
+            settings.Inference.DefaultVision = "mock";
+            settings.Inference.DefaultText = null;
+            settings.Inference.DefaultTranscription = "mock-stt";
         }
 
         /// <summary>
@@ -125,6 +146,91 @@ namespace Test.Shared
                 "-f", "lavfi", "-i", "testsrc=duration=6:size=320x240:rate=25",
                 "-c:v", "libx264", "-pix_fmt", "yuv420p"
             }, token);
+        }
+
+        /// <summary>
+        /// Path to a generated 25 second 44.1 kHz stereo WAV (a 440 Hz sine wave).
+        /// </summary>
+        /// <param name="token">Cancellation token.</param>
+        /// <returns>Path.</returns>
+        public static Task<string> WavAsync(CancellationToken token)
+        {
+            return FixtureAsync("audio.wav", new[] { "-f", "lavfi", "-i", "sine=frequency=440:duration=25:sample_rate=44100", "-ac", "2", "-c:a", "pcm_s16le" }, token);
+        }
+
+        /// <summary>
+        /// Path to a generated 8 second MP3 (a 660 Hz sine wave).
+        /// </summary>
+        /// <param name="token">Cancellation token.</param>
+        /// <returns>Path.</returns>
+        public static Task<string> Mp3Async(CancellationToken token)
+        {
+            return FixtureAsync("audio.mp3", new[] { "-f", "lavfi", "-i", "sine=frequency=660:duration=8", "-c:a", "libmp3lame", "-q:a", "6" }, token);
+        }
+
+        /// <summary>
+        /// Path to a generated 6 second MP3 with embedded cover art (an attached picture stream).
+        /// </summary>
+        /// <param name="token">Cancellation token.</param>
+        /// <returns>Path.</returns>
+        public static Task<string> Mp3WithCoverAsync(CancellationToken token)
+        {
+            return FixtureAsync("cover.mp3", new[]
+            {
+                "-f", "lavfi", "-i", "sine=frequency=550:duration=6",
+                "-f", "lavfi", "-i", "testsrc2=size=300x300:duration=0.04:rate=25,format=yuvj420p",
+                "-map", "0:a", "-map", "1:v",
+                "-c:a", "libmp3lame", "-q:a", "6", "-c:v", "mjpeg",
+                "-disposition:v:0", "attached_pic", "-id3v2_version", "3"
+            }, token);
+        }
+
+        /// <summary>
+        /// Path to a generated speech clip (16 kHz mono WAV) made with the macOS "say" command, or null when "say"
+        /// is not available. Used by live transcription tests.
+        /// </summary>
+        /// <param name="token">Cancellation token.</param>
+        /// <returns>Path, or null.</returns>
+        public static async Task<string?> SpeechAsync(CancellationToken token)
+        {
+            string wav = Path.Combine(Root, "fixtures", "speech.wav");
+            if (File.Exists(wav)) return wav;
+            Directory.CreateDirectory(Path.GetDirectoryName(wav)!);
+            string aiff = Path.Combine(Root, "fixtures", "speech-" + Guid.NewGuid().ToString("N") + ".aiff");
+
+            try
+            {
+                ProcessStartInfo psi = new ProcessStartInfo("say") { UseShellExecute = false, CreateNoWindow = true, RedirectStandardError = true, RedirectStandardOutput = true };
+                psi.ArgumentList.Add("-o");
+                psi.ArgumentList.Add(aiff);
+                psi.ArgumentList.Add(SpeechText);
+                using (Process? process = Process.Start(psi))
+                {
+                    if (process == null) return null;
+                    await process.WaitForExitAsync(token).ConfigureAwait(false);
+                    if (process.ExitCode != 0 || !File.Exists(aiff)) return null;
+                }
+            }
+            catch (System.ComponentModel.Win32Exception)
+            {
+                return null;
+            }
+
+            FfmpegRunner runner = new FfmpegRunner();
+            await runner.RunFfmpegCheckedAsync("fixture", new[] { "-y", "-hide_banner", "-loglevel", "error", "-i", aiff, "-ar", "16000", "-ac", "1", wav }, token).ConfigureAwait(false);
+            File.Delete(aiff);
+            return wav;
+        }
+
+        /// <summary>
+        /// The sentence spoken in <see cref="SpeechAsync"/>.
+        /// </summary>
+        public static string SpeechText
+        {
+            get
+            {
+                return "Keyframe turns audio into searchable text. The weather today is sunny and warm.";
+            }
         }
 
         /// <summary>

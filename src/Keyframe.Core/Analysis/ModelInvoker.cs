@@ -95,8 +95,20 @@ namespace Keyframe.Core.Analysis
                     token.ThrowIfCancellationRequested();
                     telemetry.Attempts++;
 
+                    DateTime attemptStart = DateTime.UtcNow;
+                    Stopwatch attemptWatch = Stopwatch.StartNew();
                     InferenceResponse response = await client.CompleteAsync(request, token).ConfigureAwait(false);
+                    attemptWatch.Stop();
                     Accumulate(telemetry, response);
+                    ModelCallAttempt attempt = ToAttempt(telemetry.Attempts, attemptStart, attemptWatch, response);
+                    telemetry.AttemptDetails.Add(attempt);
+                    KeyframeMetrics.RecordModelTiming(
+                        request.Purpose.ToString().ToLowerInvariant(),
+                        client.Provider.ToString().ToLowerInvariant(),
+                        response.QueueMs,
+                        response.TimeToFirstTokenMs,
+                        response.GenerationMs,
+                        response.TokensPerSecond);
 
                     if (!response.Success)
                     {
@@ -123,6 +135,9 @@ namespace Keyframe.Core.Analysis
                         result.Text = text;
                         break;
                     }
+
+                    attempt.Success = false;
+                    attempt.Error = "Unusable output: " + invalid;
 
                     if (repairs >= settings.MaxRepairAttempts)
                     {
@@ -170,12 +185,38 @@ namespace Keyframe.Core.Analysis
             telemetry.StatusCode = response.StatusCode;
             telemetry.FinishReason = response.FinishReason;
             if (!String.IsNullOrEmpty(response.Model)) telemetry.Model = response.Model;
-            if (response.TimeToFirstTokenMs.HasValue && !telemetry.TimeToFirstTokenMs.HasValue) telemetry.TimeToFirstTokenMs = response.TimeToFirstTokenMs;
+            if (response.TimeToFirstTokenMs.HasValue) telemetry.TimeToFirstTokenMs = response.TimeToFirstTokenMs;
+            if (response.GenerationMs.HasValue) telemetry.GenerationMs = response.GenerationMs;
+            if (response.TokensPerSecond.HasValue) telemetry.TokensPerSecond = response.TokensPerSecond;
+            telemetry.QueueMs = Math.Round(telemetry.QueueMs + response.QueueMs, 3);
             telemetry.PromptTokens = Add(telemetry.PromptTokens, response.PromptTokens);
             telemetry.CompletionTokens = Add(telemetry.CompletionTokens, response.CompletionTokens);
             telemetry.TotalTokens = Add(telemetry.TotalTokens, response.TotalTokens);
             telemetry.CachedTokens = Add(telemetry.CachedTokens, response.CachedTokens);
             telemetry.ReasoningTokens = Add(telemetry.ReasoningTokens, response.ReasoningTokens);
+        }
+
+        private static ModelCallAttempt ToAttempt(int number, DateTime startUtc, Stopwatch watch, InferenceResponse response)
+        {
+            return new ModelCallAttempt
+            {
+                Attempt = number,
+                StartUtc = startUtc,
+                Success = response.Success,
+                Error = response.Success ? null : response.Error,
+                StatusCode = response.StatusCode,
+                DurationMs = Math.Round(watch.Elapsed.TotalMilliseconds, 3),
+                QueueMs = response.QueueMs,
+                TimeToFirstTokenMs = response.TimeToFirstTokenMs,
+                GenerationMs = response.GenerationMs,
+                TokensPerSecond = response.TokensPerSecond,
+                PromptTokens = response.PromptTokens,
+                CompletionTokens = response.CompletionTokens,
+                TotalTokens = response.TotalTokens,
+                CachedTokens = response.CachedTokens,
+                ReasoningTokens = response.ReasoningTokens,
+                FinishReason = response.FinishReason
+            };
         }
 
         private static long? Add(long? a, long? b)

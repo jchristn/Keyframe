@@ -34,8 +34,9 @@ namespace Keyframe.McpServer.Tools
         /// </summary>
         public static readonly string[] ToolNames = new string[]
         {
-            "keyframe_health", "keyframe_probe", "keyframe_image_analyze", "keyframe_video_analyze",
-            "keyframe_job_get", "keyframe_job_result", "keyframe_job_list", "keyframe_job_cancel", "keyframe_endpoints_list"
+            "keyframe_health", "keyframe_probe", "keyframe_image_analyze", "keyframe_video_analyze", "keyframe_audio_analyze",
+            "keyframe_segment", "keyframe_job_get", "keyframe_job_result", "keyframe_job_list", "keyframe_job_cancel",
+            "keyframe_endpoints_list", "keyframe_analytics_summary", "keyframe_analytics_list"
         };
 
         #endregion
@@ -46,7 +47,7 @@ namespace Keyframe.McpServer.Tools
         private static readonly Counter<long> _Calls = _Meter.CreateCounter<long>("keyframe.mcp.tool.calls", "{call}", "MCP tool calls.");
         private static readonly Histogram<double> _Duration = _Meter.CreateHistogram<double>("keyframe.mcp.tool.duration", "s", "MCP tool call duration.");
 
-        private readonly KeyframeClient _Client;
+        private readonly Func<KeyframeClient> _Resolve;
         private readonly Action<string>? _Log;
 
         #endregion
@@ -56,12 +57,25 @@ namespace Keyframe.McpServer.Tools
         /// <summary>
         /// Instantiate.
         /// </summary>
-        /// <param name="client">Keyframe SDK client.</param>
+        /// <param name="client">Keyframe SDK client used for every call.</param>
         /// <param name="log">Optional debug logger.</param>
         /// <exception cref="ArgumentNullException">Thrown when client is null.</exception>
         public KeyframeTools(KeyframeClient client, Action<string>? log = null)
         {
-            _Client = client ?? throw new ArgumentNullException(nameof(client));
+            if (client == null) throw new ArgumentNullException(nameof(client));
+            _Resolve = () => client;
+            _Log = log;
+        }
+
+        /// <summary>
+        /// Instantiate with a per-call client resolver, so each tool call uses the calling client's own Keyframe key.
+        /// </summary>
+        /// <param name="resolve">Returns the Keyframe SDK client for the current caller.</param>
+        /// <param name="log">Optional debug logger.</param>
+        /// <exception cref="ArgumentNullException">Thrown when resolve is null.</exception>
+        public KeyframeTools(Func<KeyframeClient> resolve, Action<string>? log = null)
+        {
+            _Resolve = resolve ?? throw new ArgumentNullException(nameof(resolve));
             _Log = log;
         }
 
@@ -81,7 +95,7 @@ namespace Keyframe.McpServer.Tools
             register("keyframe_health",
                 "Keyframe server health: version, uptime, ffmpeg availability, database, job counts, and model endpoint health. Call first to confirm the server is reachable.",
                 new { type = "object", properties = new { } },
-                (args, token) => Run("keyframe_health", async () => (object)await _Client.Health.GetAsync(token).ConfigureAwait(false)));
+                (args, token) => Run("keyframe_health", async () => (object)await _Resolve().Health.GetAsync(token).ConfigureAwait(false)));
 
             register("keyframe_probe",
                 "Deterministic media properties from ffprobe (kind, dimensions, duration, frame rate, codecs, audio, tags). No model calls. Supply Url (preferred) or base64 Data.",
@@ -98,7 +112,7 @@ namespace Keyframe.McpServer.Tools
                 {
                     ProbeInput input = Parse<ProbeInput>(args);
                     if (String.IsNullOrWhiteSpace(input.Url) && String.IsNullOrWhiteSpace(input.Data)) throw new McpToolException("Supply Url or Data.");
-                    return await _Client.Probe.ProbeAsync(new MediaSource { Url = input.Url, Data = input.Data }, token).ConfigureAwait(false);
+                    return await _Resolve().Probe.ProbeAsync(new MediaSource { Url = input.Url, Data = input.Data }, token).ConfigureAwait(false);
                 }));
 
             register("keyframe_image_analyze",
@@ -130,7 +144,7 @@ namespace Keyframe.McpServer.Tools
                     };
 
                     ApplyFunctions(request.Functions.Summarize, request.Functions.Extract, input.Summarize, input.Fields, input.Mode, true);
-                    return await _Client.Image.AnalyzeAsync(request, token).ConfigureAwait(false);
+                    return await _Resolve().Image.AnalyzeAsync(request, token).ConfigureAwait(false);
                 }));
 
             register("keyframe_video_analyze",
@@ -192,20 +206,116 @@ namespace Keyframe.McpServer.Tools
                     bool otherWork = request.Functions.Scenes.Enable || request.Functions.Transcribe.Enable;
                     ApplyFunctions(request.Functions.Summarize, request.Functions.Extract, input.Summarize, input.Fields, input.Mode, !otherWork);
 
-                    VideoSubmitResult submitted = await _Client.Video.AnalyzeAsync(request, token).ConfigureAwait(false);
+                    VideoSubmitResult submitted = await _Resolve().Video.AnalyzeAsync(request, token).ConfigureAwait(false);
                     if (submitted.Result != null) return submitted.Result;
                     return (object?)submitted.Job ?? new { submitted.JobId, submitted.StatusCode };
                 }));
 
+            register("keyframe_audio_analyze",
+                "Analyze an audio file (mp3, wav, flac, m4a or aac, ogg or opus, webm audio) or the audio track of a video: a transcript, then a summary and typed fields "
+                + "from the transcript with the text model. Defaults: Transcribe and Summarize on, Extract off (supply Fields to extract). Starts a background job and returns it "
+                + "(poll keyframe_job_get, then keyframe_job_result). Set Wait to true for short recordings to get the result directly. Context and Fields work as in keyframe_image_analyze.",
+                new
+                {
+                    type = "object",
+                    properties = new
+                    {
+                        Audio = MediaSchema("The audio, or a video whose audio track is used."),
+                        Context = ContextSchema(),
+                        Summarize = SummarizeSchema(),
+                        Fields = FieldsSchema(),
+                        Mode = new { type = "string", @enum = new[] { "Combined", "PerField" } },
+                        Transcribe = new
+                        {
+                            type = "object",
+                            description = "Transcription runs by default and is required for Summarize and Fields.",
+                            properties = new
+                            {
+                                Enable = new { type = "boolean" },
+                                Language = new { type = "string", description = "ISO 639-1 code; omit to detect." },
+                                Prompt = new { type = "string", description = "Optional vocabulary or spelling hints for the transcription model." }
+                            }
+                        },
+                        TranscriptionModel = ModelSchema(),
+                        TextModel = ModelSchema(),
+                        Wait = new { type = "boolean", description = "Wait for the result. Default false." },
+                        WaitTimeoutMs = new { type = "integer", description = "Wait timeout, default 120000." }
+                    },
+                    required = new[] { "Audio" }
+                },
+                (args, token) => Run("keyframe_audio_analyze", async () =>
+                {
+                    AudioAnalyzeInput input = Parse<AudioAnalyzeInput>(args);
+                    AudioAnalysisRequest request = new AudioAnalysisRequest
+                    {
+                        Audio = input.Audio,
+                        Context = input.Context,
+                        TranscriptionModel = input.TranscriptionModel,
+                        TextModel = input.TextModel,
+                        Wait = input.Wait
+                    };
+
+                    if (input.WaitTimeoutMs != null) request.WaitTimeoutMs = input.WaitTimeoutMs.Value;
+                    if (input.Transcribe != null) request.Functions.Transcribe = input.Transcribe;
+                    ApplyFunctions(request.Functions.Summarize, request.Functions.Extract, input.Summarize, input.Fields, input.Mode, true);
+
+                    AudioSubmitResult submitted = await _Resolve().Audio.AnalyzeAsync(request, token).ConfigureAwait(false);
+                    if (submitted.Result != null) return submitted.Result;
+                    return (object?)submitted.Job ?? new { submitted.JobId, submitted.StatusCode };
+                }));
+
+            register("keyframe_segment",
+                "Cut a time range out of a video or audio source and return it as JSON with the media in base64 Data: a video clip (Output Video: mp4 default or webm), "
+                + "an audio clip (Output Audio: mp3 default, wav, flac, m4a, or ogg), or one still frame at StartMs (Output Frame: jpg default or png). Use StartMs and EndMs "
+                + "from Scenes or Transcript.Segments of an analysis result. The source is resolved again from Url or Data. EndMs past the end is clamped. "
+                + "Keep ranges short and use MaxEdge on MCP transports, since the base64 payload grows with the clip.",
+                new
+                {
+                    type = "object",
+                    properties = new
+                    {
+                        Source = MediaSchema("The source video or audio."),
+                        StartMs = new { type = "integer", description = "Start in milliseconds, 0 or more. For Frame output, the frame time." },
+                        EndMs = new { type = "integer", description = "End in milliseconds. Required for Video and Audio output and must exceed StartMs; ignored for Frame." },
+                        Output = new { type = "string", @enum = new[] { "Video", "Audio", "Frame" }, description = "Default Video." },
+                        Format = new { type = "string", description = "Video: mp4 or webm. Audio: mp3, wav, flac, m4a, or ogg. Frame: jpg or png. Omit for the default." },
+                        MaxEdge = new { type = "integer", description = "Optional long-edge cap in pixels for video and frame output, 16 to 4096." }
+                    },
+                    required = new[] { "Source", "StartMs" }
+                },
+                (args, token) => Run("keyframe_segment", async () =>
+                {
+                    SegmentInput input = Parse<SegmentInput>(args);
+                    if (input.Source == null) throw new McpToolException("Source is required.");
+                    if (input.StartMs == null) throw new McpToolException("StartMs is required.");
+                    SegmentRequest request = new SegmentRequest
+                    {
+                        Source = input.Source,
+                        StartMs = input.StartMs.Value,
+                        EndMs = input.EndMs,
+                        Output = input.Output ?? SegmentOutputEnum.Video,
+                        Format = input.Format,
+                        MaxEdge = input.MaxEdge
+                    };
+
+                    return await _Resolve().Segments.GetSegmentJsonAsync(request, token).ConfigureAwait(false);
+                }));
+
             register("keyframe_job_get",
-                "Status and progress of a video job: Status (Queued, Running, Succeeded, Failed, Canceled, Interrupted), Progress {Stage, Completed, Total, Percent}, and Error.",
+                "Status and progress of a video or audio job: Status (Queued, Running, Succeeded, Failed, Canceled, Interrupted), Progress {Stage, Completed, Total, Percent}, and Error.",
                 JobIdSchema(),
-                (args, token) => Run("keyframe_job_get", async () => (object)await _Client.Jobs.GetAsync(RequireJobId(args), token).ConfigureAwait(false)));
+                (args, token) => Run("keyframe_job_get", async () => (object)await _Resolve().Jobs.GetAsync(RequireJobId(args), token).ConfigureAwait(false)));
 
             register("keyframe_job_result",
-                "The full result of a succeeded video job: Results, Fields, Scenes, Transcript, Properties, and Telemetry. Fails with 409 until the job has succeeded.",
+                "The full result of a succeeded video or audio job: Results, Fields, Transcript, Properties, and Telemetry, plus Scenes for video. Fails with 409 until the job has succeeded.",
                 JobIdSchema(),
-                (args, token) => Run("keyframe_job_result", async () => (object)await _Client.Jobs.GetResultAsync(RequireJobId(args), token).ConfigureAwait(false)));
+                (args, token) => Run("keyframe_job_result", async () =>
+                {
+                    string jobId = RequireJobId(args);
+                    JobResponse job = await _Resolve().Jobs.GetAsync(jobId, token).ConfigureAwait(false);
+                    if (job.MediaKind == MediaKindEnum.Audio) return await _Resolve().Jobs.GetAudioResultAsync(jobId, token).ConfigureAwait(false);
+                    return await _Resolve().Jobs.GetResultAsync(jobId, token).ConfigureAwait(false);
+                }));
 
             register("keyframe_job_list",
                 "List jobs, newest first.",
@@ -235,18 +345,84 @@ namespace Keyframe.McpServer.Tools
                         filter.Status = status;
                     }
 
-                    return await _Client.Jobs.ListAsync(filter, token).ConfigureAwait(false);
+                    return await _Resolve().Jobs.ListAsync(filter, token).ConfigureAwait(false);
                 }));
 
             register("keyframe_job_cancel",
-                "Cancel a queued or running video job. Fails with 409 when the job already finished.",
+                "Cancel a queued or running video or audio job. Fails with 409 when the job already finished.",
                 JobIdSchema(),
-                (args, token) => Run("keyframe_job_cancel", async () => (object)await _Client.Jobs.CancelAsync(RequireJobId(args), token).ConfigureAwait(false)));
+                (args, token) => Run("keyframe_job_cancel", async () => (object)await _Resolve().Jobs.CancelAsync(RequireJobId(args), token).ConfigureAwait(false)));
 
             register("keyframe_endpoints_list",
                 "Configured model endpoints (API keys masked) with provider availability and health. Use an endpoint Name in Model.Endpoint to choose it.",
                 new { type = "object", properties = new { } },
-                (args, token) => Run("keyframe_endpoints_list", async () => (object)await _Client.Endpoints.ListAsync(token).ConfigureAwait(false)));
+                (args, token) => Run("keyframe_endpoints_list", async () => (object)await _Resolve().Endpoints.ListAsync(token).ConfigureAwait(false)));
+
+            register("keyframe_analytics_summary",
+                "Analytics over finished analyses (requires connecting with the Keyframe admin key): totals, per media kind (Image, Video, Audio), gap-filled time "
+                + "buckets, and breakdowns by model, stage, and call purpose. Every timing (analysis time, queue wait, model call time, time to first token, generation time, tokens "
+                + "per second, realtime factor) has count, min, max, avg, p50, p90, p95, p99, stddev, and sum. Defaults to the last 24 hours; Bucket defaults to Minute up to "
+                + "2 hours, Hour up to 7 days, otherwise Day.",
+                new
+                {
+                    type = "object",
+                    properties = new
+                    {
+                        FromUtc = new { type = "string", format = "date-time", description = "Inclusive lower bound (ISO 8601). Default 24 hours before ToUtc." },
+                        ToUtc = new { type = "string", format = "date-time", description = "Exclusive upper bound (ISO 8601). Default now." },
+                        Bucket = new { type = "string", @enum = new[] { "Minute", "Hour", "Day" } },
+                        MediaKind = new { type = "string", @enum = new[] { "Image", "Video", "Audio" } },
+                        Endpoint = new { type = "string", description = "Endpoint name filter." },
+                        Model = new { type = "string", description = "Model name filter." }
+                    }
+                },
+                (args, token) => Run("keyframe_analytics_summary", async () =>
+                {
+                    AnalyticsSummaryInput input = Parse<AnalyticsSummaryInput>(args);
+                    AnalyticsSummaryFilter filter = new AnalyticsSummaryFilter
+                    {
+                        FromUtc = input.FromUtc,
+                        ToUtc = input.ToUtc,
+                        Bucket = input.Bucket,
+                        MediaKind = input.MediaKind,
+                        Endpoint = input.Endpoint,
+                        Model = input.Model
+                    };
+
+                    return await _Resolve().Analytics.GetSummaryAsync(filter, token).ConfigureAwait(false);
+                }));
+
+            register("keyframe_analytics_list",
+                "Stored analyses, newest first (requires connecting with the Keyframe admin key). Each record has timings (AnalysisMs, QueueWaitMs, "
+                + "RealtimeFactor), the endpoints and models used, model call, retry, and token counts, and stage timings. Model call attempts are not included.",
+                new
+                {
+                    type = "object",
+                    properties = new
+                    {
+                        MediaKind = new { type = "string", @enum = new[] { "Image", "Video", "Audio" } },
+                        Success = new { type = "boolean" },
+                        FromUtc = new { type = "string", format = "date-time", description = "Inclusive lower bound on completion time (ISO 8601)." },
+                        ToUtc = new { type = "string", format = "date-time", description = "Exclusive upper bound on completion time (ISO 8601)." },
+                        MaxResults = new { type = "integer", description = "1 to 1000, default 50." },
+                        Skip = new { type = "integer", description = "Records to skip, default 0." }
+                    }
+                },
+                (args, token) => Run("keyframe_analytics_list", async () =>
+                {
+                    AnalyticsListInput input = Parse<AnalyticsListInput>(args);
+                    AnalyticsFilter filter = new AnalyticsFilter
+                    {
+                        MediaKind = input.MediaKind,
+                        Success = input.Success,
+                        FromUtc = input.FromUtc,
+                        ToUtc = input.ToUtc,
+                        MaxResults = input.MaxResults ?? 50,
+                        Skip = input.Skip ?? 0
+                    };
+
+                    return await _Resolve().Analytics.ListAnalysesAsync(filter, token).ConfigureAwait(false);
+                }));
         }
 
         #endregion

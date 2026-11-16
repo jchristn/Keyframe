@@ -7,17 +7,33 @@
     <meta name="color-scheme" content="light dark" />
     <title>Keyframe</title>
     <script>
-      // Apply the saved theme before first paint to avoid a light flash in dark mode.
+      // Apply the saved palette and mode before first paint so a reload never flashes the
+      // wrong colors. The full token stylesheet is injected by src/theme before React renders.
       (function () {
+        var root = document.documentElement;
+        var palette = 'slate';
+        var mode = 'system';
+        var bg = null;
         try {
-          var t = localStorage.getItem('keyframe.theme');
-          if (t !== 'light' && t !== 'dark') {
-            t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          var raw = localStorage.getItem('keyframe.appearance');
+          if (raw) {
+            var a = JSON.parse(raw);
+            if (a && typeof a.palette === 'string') palette = a.palette;
+            if (a && (a.mode === 'light' || a.mode === 'dark' || a.mode === 'system')) mode = a.mode;
+            bg = a && a.bg ? a.bg : null;
+          } else {
+            var legacy = localStorage.getItem('keyframe.theme');
+            if (legacy === 'light' || legacy === 'dark') mode = legacy;
           }
-          document.documentElement.setAttribute('data-theme', t);
         } catch (e) {
-          document.documentElement.setAttribute('data-theme', 'light');
+          // Storage unavailable: use the defaults.
         }
+        var dark = mode === 'dark' || (mode === 'system' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        var resolved = dark ? 'dark' : 'light';
+        root.setAttribute('data-palette', palette);
+        root.setAttribute('data-theme', resolved);
+        root.style.colorScheme = resolved;
+        root.style.backgroundColor = bg && bg[resolved] ? bg[resolved] : dark ? '#0b1120' : '#f1f5f9';
       })();
     </script>
   </head>

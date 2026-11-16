@@ -5,6 +5,7 @@ namespace Keyframe.Sdk
     using System.Collections.Specialized;
     using System.Linq;
     using System.Net.Http;
+    using System.Text;
     using System.Text.Json;
     using System.Threading;
     using System.Threading.Tasks;
@@ -106,12 +107,22 @@ namespace Keyframe.Sdk
         public VideoClient Video { get; }
 
         /// <summary>
+        /// Audio analysis, including submit-and-wait.
+        /// </summary>
+        public AudioClient Audio { get; }
+
+        /// <summary>
+        /// Segment retrieval: cut a time range or a frame out of a video or audio source.
+        /// </summary>
+        public SegmentsClient Segments { get; }
+
+        /// <summary>
         /// Deterministic media probing.
         /// </summary>
         public ProbeClient Probe { get; }
 
         /// <summary>
-        /// Video job management.
+        /// Video and audio job management.
         /// </summary>
         public JobsClient Jobs { get; }
 
@@ -124,6 +135,11 @@ namespace Keyframe.Sdk
         /// Request history.
         /// </summary>
         public RequestHistoryClient RequestHistory { get; }
+
+        /// <summary>
+        /// Analytics summaries and stored analyses (admin key required).
+        /// </summary>
+        public AnalyticsClient Analytics { get; }
 
         /// <summary>
         /// Settings management and restart (admin key required).
@@ -178,10 +194,13 @@ namespace Keyframe.Sdk
             WhoAmI = new WhoAmIClient(this);
             Image = new ImageClient(this);
             Video = new VideoClient(this);
+            Audio = new AudioClient(this);
+            Segments = new SegmentsClient(this);
             Probe = new ProbeClient(this);
             Jobs = new JobsClient(this);
             Endpoints = new EndpointsClient(this);
             RequestHistory = new RequestHistoryClient(this);
+            Analytics = new AnalyticsClient(this);
             Settings = new SettingsClient(this);
         }
 
@@ -212,62 +231,9 @@ namespace Keyframe.Sdk
         /// <exception cref="HttpRequestException">Thrown when the server cannot be reached.</exception>
         /// <exception cref="TimeoutException">Thrown when the request exceeds TimeoutMs.</exception>
         /// <exception cref="OperationCanceledException">Thrown when the token is canceled.</exception>
-        public async Task<RawResponse> SendRawAsync(HttpMethod method, string path, object? body = null, CancellationToken token = default)
+        public Task<RawResponse> SendRawAsync(HttpMethod method, string path, object? body = null, CancellationToken token = default)
         {
-            ArgumentNullException.ThrowIfNull(method);
-            ArgumentNullException.ThrowIfNull(path);
-            ObjectDisposedException.ThrowIf(_Disposed, this);
-            token.ThrowIfCancellationRequested();
-
-            string url = _BaseUrl + (path.StartsWith("/", StringComparison.Ordinal) ? path : "/" + path);
-
-            using (CancellationTokenSource timeout = new CancellationTokenSource(_TimeoutMs))
-            {
-                using (CancellationTokenSource linked = CancellationTokenSource.CreateLinkedTokenSource(token, timeout.Token))
-                {
-                    using (RestRequest request = new RestRequest(url, method, _HttpClient))
-                    {
-                        request.UserAgent = _UserAgent;
-                        request.Headers.Add("Accept", "application/json");
-                        ApplyAuth(request);
-
-                        try
-                        {
-                            RestResponse? response;
-                            if (body != null)
-                            {
-                                request.ContentType = "application/json";
-                                string json = KeyframeSerializer.Serialize(body);
-                                response = await request.SendAsync(json, linked.Token).ConfigureAwait(false);
-                            }
-                            else
-                            {
-                                response = await request.SendAsync(linked.Token).ConfigureAwait(false);
-                            }
-
-                            if (response == null) throw new HttpRequestException("No response from " + method + " " + path + ".");
-
-                            using (response)
-                            {
-                                RawResponse raw = new RawResponse
-                                {
-                                    StatusCode = response.StatusCode,
-                                    Body = response.DataAsString ?? String.Empty,
-                                    RequestId = Header(response.Headers, "x-request-id"),
-                                    JobId = Header(response.Headers, "x-keyframe-job-id"),
-                                    Location = Header(response.Headers, "Location")
-                                };
-
-                                return raw;
-                            }
-                        }
-                        catch (OperationCanceledException) when (timeout.IsCancellationRequested && !token.IsCancellationRequested)
-                        {
-                            throw new TimeoutException(method + " " + path + " did not complete within " + _TimeoutMs + "ms.");
-                        }
-                    }
-                }
-            }
+            return SendCoreAsync(method, path, body, false, token);
         }
 
         /// <summary>
@@ -301,6 +267,13 @@ namespace Keyframe.Sdk
         internal async Task<RawResponse> SendCheckedAsync(HttpMethod method, string path, object? body, CancellationToken token)
         {
             RawResponse raw = await SendRawAsync(method, path, body, token).ConfigureAwait(false);
+            if (raw.StatusCode < 200 || raw.StatusCode > 299) throw ToException(method, path, raw);
+            return raw;
+        }
+
+        internal async Task<RawResponse> SendBinaryCheckedAsync(HttpMethod method, string path, object? body, CancellationToken token)
+        {
+            RawResponse raw = await SendCoreAsync(method, path, body, true, token).ConfigureAwait(false);
             if (raw.StatusCode < 200 || raw.StatusCode > 299) throw ToException(method, path, raw);
             return raw;
         }
@@ -357,6 +330,77 @@ namespace Keyframe.Sdk
 
         #region Private-Methods
 
+        private async Task<RawResponse> SendCoreAsync(HttpMethod method, string path, object? body, bool binary, CancellationToken token)
+        {
+            ArgumentNullException.ThrowIfNull(method);
+            ArgumentNullException.ThrowIfNull(path);
+            ObjectDisposedException.ThrowIf(_Disposed, this);
+            token.ThrowIfCancellationRequested();
+
+            string url = _BaseUrl + (path.StartsWith("/", StringComparison.Ordinal) ? path : "/" + path);
+
+            using (CancellationTokenSource timeout = new CancellationTokenSource(_TimeoutMs))
+            {
+                using (CancellationTokenSource linked = CancellationTokenSource.CreateLinkedTokenSource(token, timeout.Token))
+                {
+                    using (RestRequest request = new RestRequest(url, method, _HttpClient))
+                    {
+                        request.UserAgent = _UserAgent;
+                        request.Headers.Add("Accept", binary ? "*/*" : "application/json");
+                        ApplyAuth(request);
+
+                        try
+                        {
+                            RestResponse? response;
+                            if (body != null)
+                            {
+                                request.ContentType = "application/json";
+                                string json = KeyframeSerializer.Serialize(body);
+                                response = await request.SendAsync(json, linked.Token).ConfigureAwait(false);
+                            }
+                            else
+                            {
+                                response = await request.SendAsync(linked.Token).ConfigureAwait(false);
+                            }
+
+                            if (response == null) throw new HttpRequestException("No response from " + method + " " + path + ".");
+
+                            using (response)
+                            {
+                                RawResponse raw = new RawResponse
+                                {
+                                    StatusCode = response.StatusCode,
+                                    ContentType = response.ContentType,
+                                    RequestId = Header(response.Headers, "x-request-id"),
+                                    JobId = Header(response.Headers, "x-keyframe-job-id"),
+                                    Location = Header(response.Headers, "Location"),
+                                    Headers = Headers(response.Headers)
+                                };
+
+                                if (binary)
+                                {
+                                    raw.Data = response.DataAsBytes ?? Array.Empty<byte>();
+                                    bool isJson = !String.IsNullOrEmpty(raw.ContentType) && raw.ContentType.Contains("json", StringComparison.OrdinalIgnoreCase);
+                                    bool isError = raw.StatusCode < 200 || raw.StatusCode > 299;
+                                    raw.Body = (isJson || isError) ? Encoding.UTF8.GetString(raw.Data) : String.Empty;
+                                }
+                                else
+                                {
+                                    raw.Body = response.DataAsString ?? String.Empty;
+                                }
+
+                                return raw;
+                            }
+                        }
+                        catch (OperationCanceledException) when (timeout.IsCancellationRequested && !token.IsCancellationRequested)
+                        {
+                            throw new TimeoutException(method + " " + path + " did not complete within " + _TimeoutMs + "ms.");
+                        }
+                    }
+                }
+            }
+        }
+
         private void ApplyAuth(RestRequest request)
         {
             if (String.IsNullOrEmpty(_ApiKey)) return;
@@ -391,6 +435,20 @@ namespace Keyframe.Sdk
             }
 
             return null;
+        }
+
+        private static Dictionary<string, string> Headers(NameValueCollection? headers)
+        {
+            Dictionary<string, string> result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (headers == null) return result;
+            foreach (string? key in headers.AllKeys)
+            {
+                if (key == null) continue;
+                string? value = headers[key];
+                if (value != null) result[key] = value;
+            }
+
+            return result;
         }
 
         #endregion

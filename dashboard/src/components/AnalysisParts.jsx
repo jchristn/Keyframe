@@ -28,7 +28,10 @@ export function MediaInput({ kind, value, onChange, error = null, disabled = fal
     return () => URL.revokeObjectURL(url);
   }, [value.file, kind]);
 
-  const accept = kind === 'image' ? 'image/*' : 'video/*';
+  const accept = kind === 'image' ? 'image/*' : kind === 'audio' ? 'audio/*,video/*' : 'video/*';
+  const kindIcon = kind === 'image' ? 'image' : kind === 'audio' ? 'audio' : 'film';
+  const dropKey = kind === 'image' ? 'media.dropImage' : kind === 'audio' ? 'media.dropAudio' : 'media.dropVideo';
+  const urlKey = kind === 'image' ? 'media.imageUrl' : kind === 'audio' ? 'media.audioUrl' : 'media.videoUrl';
   return (
     <div className="media-input">
       <Tabs
@@ -56,7 +59,7 @@ export function MediaInput({ kind, value, onChange, error = null, disabled = fal
               if (file) onChange({ ...value, file });
             }}
           >
-            {preview ? <img className="dropzone-preview" src={preview} alt={t('media.previewAlt')} /> : <Icon name={kind === 'image' ? 'image' : 'film'} size={28} />}
+            {preview ? <img className="dropzone-preview" src={preview} alt={t('media.previewAlt')} /> : <Icon name={kindIcon} size={28} />}
             <div className="dropzone-text">
               {value.file ? (
                 <>
@@ -67,7 +70,7 @@ export function MediaInput({ kind, value, onChange, error = null, disabled = fal
                   </span>
                 </>
               ) : (
-                <span>{t(kind === 'image' ? 'media.dropImage' : 'media.dropVideo')}</span>
+                <span>{t(dropKey)}</span>
               )}
             </div>
             <label htmlFor={fileId} className="button button-secondary button-sm">
@@ -76,11 +79,12 @@ export function MediaInput({ kind, value, onChange, error = null, disabled = fal
             </label>
             <input id={fileId} type="file" accept={accept} className="sr-only" disabled={disabled} onChange={(e) => onChange({ ...value, file: e.target.files[0] || null })} />
             {kind === 'video' ? <p className="help-text">{t('media.videoUploadHint')}</p> : null}
+            {kind === 'audio' ? <p className="help-text">{t('media.audioUploadHint')}</p> : null}
           </div>
         ) : (
           <div className="form-field">
             <label htmlFor={urlId} className="field-label">
-              {t(kind === 'image' ? 'media.imageUrl' : 'media.videoUrl')}
+              {t(urlKey)}
             </label>
             <input
               id={urlId}
@@ -305,7 +309,7 @@ export function PropertiesGrid({ properties }) {
   const rows = [
     ['properties.mediaKind', p.MediaKind ? t('enums.mediaKind.' + p.MediaKind, { defaultValue: p.MediaKind }) : null],
     ['properties.contentType', p.ContentType],
-    ['properties.format', p.Format],
+    ['properties.format', p.Format || p.Container],
     ['properties.size', p.SizeBytes ? formatBytes(p.SizeBytes, locale) : null],
     ['properties.dimensions', p.Width && p.Height ? formatNumber(p.Width, locale) + ' × ' + formatNumber(p.Height, locale) : null],
     ['properties.duration', p.DurationMs ? formatDuration(p.DurationMs, locale) : null],
@@ -314,8 +318,8 @@ export function PropertiesGrid({ properties }) {
     ['properties.videoCodec', p.VideoCodec],
     ['properties.hasAudio', p.MediaKind === 'Video' ? (p.HasAudio ? t('common.yes') : t('common.no')) : null],
     ['properties.audioCodec', p.AudioCodec],
-    ['properties.audioChannels', p.AudioChannels],
-    ['properties.audioSampleRate', p.AudioSampleRate ? formatNumber(p.AudioSampleRate, locale) : null]
+    ['properties.audioChannels', p.AudioChannels || p.Channels ? formatNumber(p.AudioChannels || p.Channels, locale) : null],
+    ['properties.audioSampleRate', p.AudioSampleRate || p.SampleRate ? formatNumber(p.AudioSampleRate || p.SampleRate, locale) : null]
   ].filter(([, v]) => v !== null && v !== undefined && v !== '');
   const tags = Object.entries(p.Tags || {});
   return (

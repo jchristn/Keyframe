@@ -1,7 +1,7 @@
 import { useId, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLocale } from '../i18n';
-import { formatBytes, formatDuration, formatRelativeTime } from '../i18n/formatters';
+import { formatBytes, formatDuration, formatList, formatRelativeTime } from '../i18n/formatters';
 import PageHeader from '../components/PageHeader';
 import { MethodBadge } from '../components/StatusBadge';
 import StatusBadge from '../components/StatusBadge';
@@ -12,16 +12,19 @@ import ConfirmModal from '../components/ConfirmModal';
 import Icon from '../components/Icon';
 import { EmptyState, ErrorBanner, LoadingState, Notice } from '../components/States';
 import { SnippetPanel } from '../components/AnalysisParts';
+import OperationPicker from '../components/OperationPicker';
 import useApiExplorer from '../hooks/useApiExplorer';
 import { groupByTag, isDestructive } from '../utils/openApi';
+import { downloadBlob } from '../utils/media';
 
 function ParamInputs({ params, values, onChange, kind }) {
   const { t } = useLocale();
   const base = useId();
   if (!params.length) return null;
   return (
-    <fieldset className="explorer-fieldset">
-      <legend>{t('explorer.' + kind + 'Params')}</legend>
+    <section className="panel explorer-section" aria-label={t('explorer.' + kind + 'Params')}>
+      <h3 className="panel-title">{t('explorer.' + kind + 'Params')}</h3>
+      <div className="explorer-param-grid">
       {params.map((p) => {
         const schema = p.schema || {};
         return (
@@ -58,15 +61,16 @@ function ParamInputs({ params, values, onChange, kind }) {
           </div>
         );
       })}
-    </fieldset>
+      </div>
+    </section>
   );
 }
 
 function HeaderEditor({ headers, onChange }) {
   const { t } = useLocale();
   return (
-    <fieldset className="explorer-fieldset">
-      <legend>{t('explorer.headers')}</legend>
+    <section className="panel explorer-section" aria-label={t('explorer.headers')}>
+      <h3 className="panel-title">{t('explorer.headers')}</h3>
       <p className="help-text">{t('explorer.authInherited')}</p>
       {headers.map((h, i) => (
         <div key={i} className="header-row">
@@ -77,11 +81,13 @@ function HeaderEditor({ headers, onChange }) {
           </button>
         </div>
       ))}
-      <button type="button" className="button button-secondary button-sm" onClick={() => onChange([...headers, { name: '', value: '' }])}>
-        <Icon name="plus" />
-        {t('explorer.addHeader')}
-      </button>
-    </fieldset>
+      <div>
+        <button type="button" className="button button-secondary button-sm" onClick={() => onChange([...headers, { name: '', value: '' }])}>
+          <Icon name="plus" />
+          {t('explorer.addHeader')}
+        </button>
+      </div>
+    </section>
   );
 }
 
@@ -90,20 +96,12 @@ function ApiExplorerView() {
   const { t, locale } = useLocale();
   const { apiClient } = useAuth();
   const ex = useApiExplorer(apiClient);
-  const searchId = useId();
   const bodyId = useId();
-  const [filter, setFilter] = useState('');
   const [respTab, setRespTab] = useState('body');
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
 
-  const groups = useMemo(() => {
-    const q = filter.trim().toLowerCase();
-    const ops = q
-      ? ex.operations.filter((o) => [o.method, o.path, o.id, o.summary, o.tag].some((v) => v && v.toLowerCase().includes(q)))
-      : ex.operations;
-    return groupByTag(ops, ex.spec);
-  }, [ex.operations, ex.spec, filter]);
+  const groups = useMemo(() => groupByTag(ex.operations, ex.spec), [ex.operations, ex.spec]);
 
   const op = ex.operation;
   const pathParams = op ? op.parameters.filter((p) => p.in === 'path') : [];
@@ -126,7 +124,7 @@ function ApiExplorerView() {
   }
 
   return (
-    <div className="view view-wide">
+    <div className="view">
       <PageHeader
         title={t('explorer.title')}
         summary={t('explorer.summary')}
@@ -178,152 +176,134 @@ function ApiExplorerView() {
       ) : null}
       {ex.spec ? (
         <div className="explorer">
-          <nav className="explorer-ops panel" aria-label={t('explorer.operations')}>
-            <label htmlFor={searchId} className="sr-only">
-              {t('explorer.search')}
-            </label>
-            <div className="search-input">
-              <Icon name="search" />
-              <input id={searchId} type="search" value={filter} onChange={(e) => setFilter(e.target.value)} placeholder={t('explorer.search')} />
-            </div>
-            {groups.length === 0 ? <p className="muted">{t('explorer.noMatches')}</p> : null}
-            {groups.map((g) => (
-              <div key={g.tag} className="explorer-group">
-                <div className="nav-group-label">{g.tag}</div>
-                <ul>
-                  {g.items.map((o) => (
-                    <li key={o.id}>
-                      <button type="button" className={'explorer-op' + (op && op.id === o.id ? ' active' : '')} onClick={() => ex.setOperationId(o.id)} aria-current={op && op.id === o.id ? 'true' : undefined}>
-                        <MethodBadge method={o.method} />
-                        <span className="explorer-op-text">
-                          <span className="mono explorer-op-path">{o.path}</span>
-                          <span className="muted">{o.summary}</span>
-                        </span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </nav>
-
-          <div className="explorer-main">
+          <section className="panel explorer-picker" aria-label={t('explorer.operations')}>
+            <OperationPicker groups={groups} value={op} onChange={ex.setOperationId} />
             {op ? (
               <>
-                <section className="panel">
-                  <div className="explorer-op-header">
-                    <MethodBadge method={op.method} />
-                    <code className="mono">{op.path}</code>
-                  </div>
-                  <h2 className="panel-title">{op.summary}</h2>
-                  {op.description ? <p className="help-text">{op.description}</p> : null}
-                  <div className="resolved-url">
-                    <span className="field-label">{t('explorer.resolvedUrl')}</span>
-                    <code className="mono break-all">{ex.resolvedUrl}</code>
-                    <CopyButton value={ex.resolvedUrl} label={t('explorer.copyUrl')} />
-                  </div>
-                  <ParamInputs kind="path" params={pathParams} values={ex.pathParams} onChange={ex.setPathParams} />
-                  <ParamInputs kind="query" params={queryParams} values={ex.queryParams} onChange={ex.setQueryParams} />
-                  <HeaderEditor headers={ex.headers} onChange={ex.setHeaders} />
-                  {op.requestBody ? (
-                    <fieldset className="explorer-fieldset">
-                      <legend>{t('explorer.body')}</legend>
-                      <div className="body-toolbar">
-                        <button
-                          type="button"
-                          className="button button-secondary button-sm"
-                          onClick={() => {
-                            try {
-                              ex.setBody(JSON.stringify(JSON.parse(ex.body), null, 2));
-                            } catch {
-                              // Leave the input unchanged; the inline error explains why.
-                            }
-                          }}
-                          disabled={!!ex.bodyError}
-                        >
-                          {t('explorer.format')}
-                        </button>
-                        <button type="button" className="button button-secondary button-sm" onClick={ex.resetBody}>
-                          {t('explorer.resetTemplate')}
-                        </button>
-                        <CopyButton value={ex.body} label={t('explorer.copyBody')} />
-                      </div>
-                      <label htmlFor={bodyId} className="sr-only">
-                        {t('explorer.body')}
-                      </label>
-                      <textarea id={bodyId} className="mono code-input" rows={14} value={ex.body} onChange={(e) => ex.setBody(e.target.value)} spellCheck={false} aria-invalid={!!ex.bodyError || undefined} />
-                      {ex.bodyError ? (
-                        <div className="field-error" role="alert">
-                          {t('explorer.invalidJson', { message: ex.bodyError })}
-                        </div>
-                      ) : null}
-                    </fieldset>
-                  ) : null}
-                  <div className="form-actions">
-                    {ex.missingPath.length ? <span className="field-error">{t('explorer.missingPath', { names: ex.missingPath.join(', ') })}</span> : null}
-                    {isDestructive(op.method, op.path) ? (
-                      <span className="text-warning">
-                        <Icon name="alert" /> {t('explorer.destructive')}
-                      </span>
-                    ) : null}
-                    {ex.running ? (
-                      <button type="button" className="button button-secondary" onClick={ex.stop}>
-                        <Icon name="stop" />
-                        {t('explorer.stop')}
-                      </button>
-                    ) : null}
-                    <button type="button" className={'button ' + (isDestructive(op.method, op.path) ? 'button-danger' : 'button-primary')} onClick={run} disabled={!canRun}>
-                      <Icon name="play" />
-                      {ex.running ? t('explorer.running') : t('explorer.execute')}
-                    </button>
-                  </div>
-                </section>
-
-                <section className="panel" aria-live="polite" aria-labelledby="explorer-response-title">
-                  <div className="panel-header">
-                    <h2 id="explorer-response-title" className="panel-title">
-                      {t('explorer.response')}
-                    </h2>
-                    {ex.response && ex.response.status ? (
-                      <span className="panel-actions">
-                        <StatusBadge kind="http" value={ex.response.status} label={ex.response.status + (ex.response.statusText ? ' ' + ex.response.statusText : '')} />
-                        <span className="muted">{formatDuration(ex.response.durationMs, locale)}</span>
-                        <span className="muted">{formatBytes(ex.response.bytes, locale)}</span>
-                        {ex.response.streaming ? <span className="badge badge-info badge-xs">{t('explorer.streaming')}</span> : null}
-                      </span>
-                    ) : null}
-                  </div>
-                  {!ex.response && !ex.running ? <p className="muted">{t('explorer.noResponse')}</p> : null}
-                  {ex.running && !ex.response ? <LoadingState compact label={t('explorer.running')} /> : null}
-                  {ex.response && ex.response.aborted ? <p className="muted">{t('explorer.aborted')}</p> : null}
-                  {ex.response && ex.response.error ? <ErrorBanner error={ex.response.error} onRetry={run} /> : null}
-                  <Tabs
-                    size="sm"
-                    label={t('explorer.responseTabs')}
-                    active={respTab}
-                    onChange={setRespTab}
-                    tabs={[
-                      { id: 'body', label: t('explorer.tabs.body') },
-                      { id: 'headers', label: t('explorer.tabs.headers') },
-                      { id: 'code', label: t('explorer.tabs.code') }
-                    ]}
-                  >
-                    {respTab === 'body' ? (
-                      ex.response && ex.response.status ? (
-                        <JsonViewer value={parsedBody !== null ? parsedBody : ex.response.body} maxHeight="55vh" emptyText={t('explorer.emptyBody')} />
-                      ) : null
-                    ) : null}
-                    {respTab === 'headers' ? (
-                      ex.response && ex.response.headers ? <JsonViewer value={ex.response.headers} maxHeight={360} /> : null
-                    ) : null}
-                    {respTab === 'code' ? <SnippetPanel method={op.method} url={ex.resolvedUrl} body={op.requestBody && ex.body.trim() ? ex.body : null} /> : null}
-                  </Tabs>
-                </section>
+                {op.description ? <p className="help-text">{op.description}</p> : null}
+                <div className="resolved-url">
+                  <span className="field-label">{t('explorer.resolvedUrl')}</span>
+                  <code className="mono break-all">{ex.resolvedUrl}</code>
+                  <CopyButton value={ex.resolvedUrl} label={t('explorer.copyUrl')} />
+                </div>
               </>
-            ) : (
-              <EmptyState icon="explorer" title={t('explorer.pickOperation')} />
-            )}
-          </div>
+            ) : null}
+          </section>
+          {op ? (
+            <>
+              <ParamInputs kind="path" params={pathParams} values={ex.pathParams} onChange={ex.setPathParams} />
+              <ParamInputs kind="query" params={queryParams} values={ex.queryParams} onChange={ex.setQueryParams} />
+              <HeaderEditor headers={ex.headers} onChange={ex.setHeaders} />
+              {op.requestBody ? (
+                <section className="panel explorer-section" aria-label={t('explorer.body')}>
+                  <div className="panel-header">
+                    <h3 className="panel-title">{t('explorer.body')}</h3>
+                    <div className="body-toolbar">
+                      <button
+                        type="button"
+                        className="button button-secondary button-sm"
+                        onClick={() => {
+                          try {
+                            ex.setBody(JSON.stringify(JSON.parse(ex.body), null, 2));
+                          } catch {
+                            // Leave the input unchanged; the inline error explains why.
+                          }
+                        }}
+                        disabled={!!ex.bodyError}
+                      >
+                        {t('explorer.format')}
+                      </button>
+                      <button type="button" className="button button-secondary button-sm" onClick={ex.resetBody}>
+                        {t('explorer.resetTemplate')}
+                      </button>
+                      <CopyButton value={ex.body} label={t('explorer.copyBody')} />
+                    </div>
+                  </div>
+                  <label htmlFor={bodyId} className="sr-only">
+                    {t('explorer.body')}
+                  </label>
+                  <textarea id={bodyId} className="mono code-input" rows={14} value={ex.body} onChange={(e) => ex.setBody(e.target.value)} spellCheck={false} aria-invalid={!!ex.bodyError || undefined} />
+                  {ex.bodyError ? (
+                    <div className="field-error" role="alert">
+                      {t('explorer.invalidJson', { message: ex.bodyError })}
+                    </div>
+                  ) : null}
+                </section>
+              ) : null}
+              <div className="form-actions sticky-actions">
+                {ex.missingPath.length ? <span className="field-error">{t('explorer.missingPath', { names: formatList(ex.missingPath, locale) })}</span> : null}
+                {isDestructive(op.method, op.path) ? (
+                  <span className="text-warning">
+                    <Icon name="alert" /> {t('explorer.destructive')}
+                  </span>
+                ) : null}
+                {ex.running ? (
+                  <button type="button" className="button button-secondary" onClick={ex.stop}>
+                    <Icon name="stop" />
+                    {t('explorer.stop')}
+                  </button>
+                ) : null}
+                <button type="button" className={'button ' + (isDestructive(op.method, op.path) ? 'button-danger' : 'button-primary')} onClick={run} disabled={!canRun}>
+                  <Icon name="play" />
+                  {ex.running ? t('explorer.running') : t('explorer.execute')}
+                </button>
+              </div>
+
+              <section className="panel" aria-live="polite" aria-labelledby="explorer-response-title">
+                <div className="panel-header">
+                  <h2 id="explorer-response-title" className="panel-title">
+                    {t('explorer.response')}
+                  </h2>
+                  {ex.response && ex.response.status ? (
+                    <span className="panel-actions">
+                      <StatusBadge kind="http" value={ex.response.status} label={ex.response.status + (ex.response.statusText ? ' ' + ex.response.statusText : '')} />
+                      <span className="muted">{formatDuration(ex.response.durationMs, locale)}</span>
+                      <span className="muted">{formatBytes(ex.response.bytes, locale)}</span>
+                      {ex.response.streaming ? <span className="badge badge-info badge-xs">{t('explorer.streaming')}</span> : null}
+                    </span>
+                  ) : null}
+                </div>
+                {!ex.response && !ex.running ? <p className="muted">{t('explorer.noResponse')}</p> : null}
+                {ex.running && !ex.response ? <LoadingState compact label={t('explorer.running')} /> : null}
+                {ex.response && ex.response.aborted ? <p className="muted">{t('explorer.aborted')}</p> : null}
+                {ex.response && ex.response.error ? <ErrorBanner error={ex.response.error} onRetry={run} /> : null}
+                <Tabs
+                  size="sm"
+                  label={t('explorer.responseTabs')}
+                  active={respTab}
+                  onChange={setRespTab}
+                  tabs={[
+                    { id: 'body', label: t('explorer.tabs.body') },
+                    { id: 'headers', label: t('explorer.tabs.headers') },
+                    { id: 'code', label: t('explorer.tabs.code') }
+                  ]}
+                >
+                  {respTab === 'body' && ex.response && ex.response.binary ? (
+                    <div className="binary-response">
+                      <Icon name="download" size={20} />
+                      <div>
+                        <div className="banner-title">{t('explorer.binaryTitle')}</div>
+                        <div className="muted">{t('explorer.binaryMessage', { type: ex.response.contentType, size: formatBytes(ex.response.bytes, locale) })}</div>
+                      </div>
+                      <button type="button" className="button button-secondary button-sm" onClick={() => downloadBlob(ex.response.blob, ex.response.filename || t('explorer.binaryFilename'))}>
+                        <Icon name="download" />
+                        {t('explorer.downloadBody')}
+                      </button>
+                    </div>
+                  ) : null}
+                  {respTab === 'body' && !(ex.response && ex.response.binary) ? (
+                    ex.response && ex.response.status ? (
+                      <JsonViewer value={parsedBody !== null ? parsedBody : ex.response.body} maxHeight="60vh" emptyText={t('explorer.emptyBody')} />
+                    ) : null
+                  ) : null}
+                  {respTab === 'headers' ? (ex.response && ex.response.headers ? <JsonViewer value={ex.response.headers} maxHeight={360} /> : null) : null}
+                  {respTab === 'code' ? <SnippetPanel method={op.method} url={ex.resolvedUrl} body={op.requestBody && ex.body.trim() ? ex.body : null} /> : null}
+                </Tabs>
+              </section>
+            </>
+          ) : (
+            <EmptyState icon="explorer" title={t('explorer.pickOperation')} />
+          )}
         </div>
       ) : null}
       <ConfirmModal

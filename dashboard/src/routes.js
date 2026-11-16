@@ -13,7 +13,8 @@ export const NAV_GROUPS = [
     labelKey: 'nav.groups.analyze',
     items: [
       { id: 'image', path: '/dashboard/analyze/image', icon: 'image', labelKey: 'nav.image' },
-      { id: 'video', path: '/dashboard/analyze/video', icon: 'video', labelKey: 'nav.video' }
+      { id: 'video', path: '/dashboard/analyze/video', icon: 'video', labelKey: 'nav.video' },
+      { id: 'audio', path: '/dashboard/analyze/audio', icon: 'audio', labelKey: 'nav.audio' }
     ]
   },
   {
@@ -28,6 +29,7 @@ export const NAV_GROUPS = [
     id: 'observability',
     labelKey: 'nav.groups.observability',
     items: [
+      { id: 'analytics', path: '/dashboard/analytics', icon: 'analytics', labelKey: 'nav.analytics', admin: true },
       { id: 'request-history', path: '/dashboard/request-history', icon: 'history', labelKey: 'nav.requestHistory' },
       { id: 'api-explorer', path: '/dashboard/api-explorer', icon: 'explorer', labelKey: 'nav.apiExplorer' }
     ]

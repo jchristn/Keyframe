@@ -86,7 +86,26 @@ namespace Keyframe.Core.Analysis
         /// <exception cref="UnsupportedMediaException">Thrown when the media is not a video or exceeds limits.</exception>
         /// <exception cref="MediaProcessingException">Thrown when ffmpeg fails.</exception>
         /// <exception cref="OperationCanceledException">Thrown when canceled.</exception>
-        public async Task<VideoAnalysisResponse> AnalyzeAsync(VideoAnalysisRequest request, Action<JobProgress>? progress = null, CancellationToken token = default)
+        public Task<VideoAnalysisResponse> AnalyzeAsync(VideoAnalysisRequest request, Action<JobProgress>? progress = null, CancellationToken token = default)
+        {
+            return AnalyzeAsync(request, progress, null, token);
+        }
+
+        /// <summary>
+        /// Analyze a video, recording where the request came from.
+        /// </summary>
+        /// <param name="request">Request.</param>
+        /// <param name="progress">Optional progress callback.</param>
+        /// <param name="origin">Request origin for telemetry and analytics, or null.</param>
+        /// <param name="token">Cancellation token.</param>
+        /// <returns>Response. Function failures are reported in the response rather than thrown.</returns>
+        /// <exception cref="RequestValidationException">Thrown when the request is invalid.</exception>
+        /// <exception cref="EndpointNotFoundException">Thrown when a requested or default endpoint is unavailable.</exception>
+        /// <exception cref="MediaResolutionException">Thrown when the video cannot be downloaded or decoded.</exception>
+        /// <exception cref="UnsupportedMediaException">Thrown when the media is not a video or exceeds limits.</exception>
+        /// <exception cref="MediaProcessingException">Thrown when ffmpeg fails.</exception>
+        /// <exception cref="OperationCanceledException">Thrown when canceled.</exception>
+        public async Task<VideoAnalysisResponse> AnalyzeAsync(VideoAnalysisRequest request, Action<JobProgress>? progress, AnalysisOrigin? origin, CancellationToken token = default)
         {
             List<string> validation = RequestValidator.Validate(request);
             if (validation.Count > 0) throw new RequestValidationException(validation);
@@ -97,11 +116,15 @@ namespace Keyframe.Core.Analysis
             bool sceneWork = functions.Scenes.Enable && (functions.Scenes.Summarize.Enable || functions.Scenes.Extract.Enable);
             bool textOnly = request.TextModel != null;
 
+            AnalysisContext context = new AnalysisContext(MediaKindEnum.Video) { Progress = progress, Origin = origin };
+
             IInferenceClient? vision = null;
             if (sceneWork || (videoLevel && !textOnly))
             {
                 EndpointSettings visionEndpoint = _Services.Clients.ResolveCompletionEndpoint(request.Model?.Endpoint, settings.Inference.DefaultVision);
                 vision = _Services.Clients.GetCompletionClient(visionEndpoint);
+                context.VisionEndpoint = visionEndpoint.Name;
+                context.VisionModel = request.Model?.Name ?? visionEndpoint.Model;
             }
 
             IInferenceClient? text = null;
@@ -109,6 +132,8 @@ namespace Keyframe.Core.Analysis
             {
                 EndpointSettings textEndpoint = _Services.Clients.ResolveCompletionEndpoint(request.TextModel!.Endpoint, settings.Inference.DefaultText, settings.Inference.DefaultVision);
                 text = _Services.Clients.GetCompletionClient(textEndpoint);
+                context.TextEndpoint = textEndpoint.Name;
+                context.TextModel = request.TextModel!.Name ?? textEndpoint.Model;
             }
 
             ITranscriptionClient? stt = null;
@@ -116,12 +141,15 @@ namespace Keyframe.Core.Analysis
             {
                 EndpointSettings sttEndpoint = _Services.Clients.ResolveTranscriptionEndpoint(functions.Transcribe.Endpoint);
                 stt = _Services.Clients.GetTranscriptionClient(sttEndpoint);
+                context.TranscriptionEndpoint = sttEndpoint.Name;
+                context.TranscriptionModel = functions.Transcribe.Model ?? sttEndpoint.Model;
             }
 
-            AnalysisContext context = new AnalysisContext(MediaKindEnum.Video) { Progress = progress };
-            VideoAnalysisResponse response = new VideoAnalysisResponse { MediaKind = MediaKindEnum.Video };
+            VideoAnalysisResponse response = new VideoAnalysisResponse { MediaKind = MediaKindEnum.Video, RequestId = origin?.RequestId };
             Stopwatch sw = Stopwatch.StartNew();
             string outcome = "failure";
+            string? exception = null;
+            bool canceled = false;
 
             using (Activity? activity = KeyframeTelemetry.Source.StartActivity("analysis:video", ActivityKind.Internal))
             using (MediaWorkspace workspace = new MediaWorkspace(settings.Media.TempDirectory))
@@ -144,6 +172,8 @@ namespace Keyframe.Core.Analysis
                         properties = await _Services.Prober.ProbeAsync(resolved.Path, token).ConfigureAwait(false);
                     }
 
+                    context.MediaBytes = resolved.SizeBytes;
+                    context.MediaDurationMs = properties.DurationMs;
                     if (properties.MediaKind != MediaKindEnum.Video)
                         throw new UnsupportedMediaException("Expected a video but the media is " + properties.MediaKind.ToString().ToLowerInvariant() + ".");
                     if (!properties.DurationMs.HasValue || properties.DurationMs.Value < 1)
@@ -163,7 +193,7 @@ namespace Keyframe.Core.Analysis
                     {
                         if (properties.HasAudio)
                         {
-                            response.Transcript = await TranscribeAsync(stt, resolved.Path, duration, functions.Transcribe, workspace, settings, context, token).ConfigureAwait(false);
+                            response.Transcript = await _Services.Transcription.TranscribeAsync(stt, resolved.Path, duration, functions.Transcribe, workspace, settings, context, 10, 25, token).ConfigureAwait(false);
                         }
                         else
                         {
@@ -229,8 +259,14 @@ namespace Keyframe.Core.Analysis
                     bool allValid = response.Fields.TrueForAll(f => f.Valid) && response.Scenes.TrueForAll(s => s.Fields.TrueForAll(f => f.Valid));
                     outcome = response.Success ? (allValid ? "success" : "partial") : "failure";
                 }
-                catch (Exception ex) when (!(ex is OperationCanceledException))
+                catch (OperationCanceledException)
                 {
+                    canceled = true;
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    exception = ex.Message;
                     activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
                     KeyframeMetrics.RecordAnalysis("video", "failure", sw.Elapsed.TotalSeconds);
                     throw;
@@ -238,6 +274,7 @@ namespace Keyframe.Core.Analysis
                 finally
                 {
                     context.CompleteInto(response);
+                    _Services.NotifyCompleted(context.BuildCompletion(response, exception, canceled, response.Scenes.Count, response.Transcript));
                 }
             }
 
@@ -248,132 +285,6 @@ namespace Keyframe.Core.Analysis
         #endregion
 
         #region Private-Methods
-
-        private async Task<TranscriptResult> TranscribeAsync(
-            ITranscriptionClient client,
-            string path,
-            long durationMs,
-            TranscribeSpec spec,
-            MediaWorkspace workspace,
-            KeyframeSettings settings,
-            AnalysisContext context,
-            CancellationToken token)
-        {
-            context.ReportProgress("AudioExtraction", 0, 1, 10);
-            List<AudioChunk> chunks;
-            using (StageTimer stage = context.BeginStage(AnalysisStageEnum.AudioExtraction))
-            {
-                chunks = await _Services.Audio.ExtractAsync(path, workspace.CreateSubdirectory("audio"), settings.Media.TranscriptionChunkSeconds, token).ConfigureAwait(false);
-            }
-
-            TranscriptResult transcript = new TranscriptResult { Language = spec.Language };
-            using (StageTimer stage = context.BeginStage(AnalysisStageEnum.Transcribe))
-            {
-                int completed = 0;
-                List<Task<List<TranscriptSegmentResult>>> tasks = chunks.Select(chunk => Task.Run(async () =>
-                {
-                    long chunkDuration = Math.Min(settings.Media.TranscriptionChunkSeconds * 1000L, Math.Max(1, durationMs - chunk.OffsetMs));
-                    List<TranscriptSegmentResult> segments = await TranscribeChunkAsync(client, chunk, chunkDuration, spec, transcript, settings, context, token).ConfigureAwait(false);
-                    int done = Interlocked.Increment(ref completed);
-                    context.ReportProgress("Transcribe", done, chunks.Count, 10 + 15.0 * done / chunks.Count);
-                    return segments;
-                }, token)).ToList();
-
-                List<TranscriptSegmentResult>[] results = await Task.WhenAll(tasks).ConfigureAwait(false);
-                transcript.Segments = results.SelectMany(r => r).OrderBy(s => s.StartMs).ToList();
-                transcript.Text = String.Join(" ", transcript.Segments.Select(s => s.Text.Trim()).Where(s => s.Length > 0));
-                if (context.HasErrors()) stage.Fail("transcription errors");
-            }
-
-            return transcript;
-        }
-
-        private async Task<List<TranscriptSegmentResult>> TranscribeChunkAsync(
-            ITranscriptionClient client,
-            AudioChunk chunk,
-            long chunkDurationMs,
-            TranscribeSpec spec,
-            TranscriptResult transcript,
-            KeyframeSettings settings,
-            AnalysisContext context,
-            CancellationToken token)
-        {
-            byte[] audio = await File.ReadAllBytesAsync(chunk.Path, token).ConfigureAwait(false);
-            ModelCallTelemetry telemetry = new ModelCallTelemetry
-            {
-                Purpose = ModelCallPurposeEnum.Transcribe,
-                Target = "chunk:" + chunk.Index,
-                Endpoint = client.EndpointName,
-                Provider = client.Provider,
-                Model = spec.Model ?? client.Model,
-                StartUtc = DateTime.UtcNow,
-                InputAudioBytes = audio.Length,
-                Attempts = 0
-            };
-
-            Stopwatch sw = Stopwatch.StartNew();
-            TranscriptionResponse? response = null;
-            using (Activity? activity = KeyframeTelemetry.Source.StartActivity("inference Transcribe", ActivityKind.Client))
-            {
-                activity?.SetTag("keyframe.endpoint", client.EndpointName);
-                activity?.SetTag("keyframe.provider", client.Provider.ToString());
-
-                for (int attempt = 0; attempt <= settings.Inference.MaxRetries; attempt++)
-                {
-                    telemetry.Attempts++;
-                    response = await client.TranscribeAsync(new TranscriptionRequest
-                    {
-                        Audio = audio,
-                        MediaType = chunk.MediaType,
-                        FileName = Path.GetFileName(chunk.Path),
-                        DurationMs = chunkDurationMs,
-                        Model = spec.Model,
-                        Language = spec.Language,
-                        Prompt = spec.Prompt
-                    }, token).ConfigureAwait(false);
-
-                    telemetry.StatusCode = response.StatusCode;
-                    if (!String.IsNullOrEmpty(response.Model)) telemetry.Model = response.Model;
-                    if (response.Success || !response.Retryable) break;
-
-                    int delay = (int)Math.Min(60000, settings.Inference.RetryBackoffMs * Math.Pow(2, attempt));
-                    if (attempt < settings.Inference.MaxRetries && delay > 0) await Task.Delay(delay, token).ConfigureAwait(false);
-                }
-
-                sw.Stop();
-                telemetry.DurationMs = Math.Round(sw.Elapsed.TotalMilliseconds, 2);
-                telemetry.Success = response != null && response.Success;
-                telemetry.Error = telemetry.Success ? null : response?.Error ?? "Transcription failed.";
-                if (!telemetry.Success) activity?.SetStatus(ActivityStatusCode.Error, telemetry.Error);
-            }
-
-            KeyframeMetrics.RecordModelCall("transcribe", client.Provider.ToString().ToLowerInvariant(), telemetry.Success ? "success" : "failure", sw.Elapsed.TotalSeconds, null, null);
-            context.AddModelCall(telemetry);
-
-            List<TranscriptSegmentResult> segments = new List<TranscriptSegmentResult>();
-            if (response == null || !response.Success)
-            {
-                context.AddError("Transcribe chunk " + chunk.Index + ": " + telemetry.Error);
-                return segments;
-            }
-
-            if (transcript.Language == null && response.Language != null)
-            {
-                lock (transcript) { if (transcript.Language == null) transcript.Language = response.Language; }
-            }
-
-            if (response.Segments.Count > 0)
-            {
-                foreach (TranscriptionSegment s in response.Segments)
-                    segments.Add(new TranscriptSegmentResult { StartMs = chunk.OffsetMs + s.StartMs, EndMs = chunk.OffsetMs + s.EndMs, Text = s.Text });
-            }
-            else if (!String.IsNullOrWhiteSpace(response.Text))
-            {
-                segments.Add(new TranscriptSegmentResult { StartMs = chunk.OffsetMs, EndMs = chunk.OffsetMs + chunkDurationMs, Text = response.Text });
-            }
-
-            return segments;
-        }
 
         private async Task<List<SceneResult>> AnalyzeScenesAsync(
             IInferenceClient? vision,

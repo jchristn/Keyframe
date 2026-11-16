@@ -2,6 +2,7 @@ namespace Test.Shared
 {
     using System;
     using System.Threading.Tasks;
+    using Keyframe.Core.Enums;
     using Keyframe.Core.Serialization;
     using Keyframe.Core.Settings;
     using Touchstone.Core;
@@ -27,9 +28,24 @@ namespace Test.Shared
                     Check.Equal(8700, s.Rest.Port, "Rest.Port");
                     Check.Equal("127.0.0.1", s.Rest.Hostname, "Rest.Hostname");
                     Check.Equal(true, s.Auth.RequireAuthentication, "Auth.RequireAuthentication");
-                    Check.Equal(2, s.Inference.Endpoints.Count, "default endpoint count");
-                    Check.True(s.Inference.FindActive("mock") != null, "mock endpoint present");
-                    Check.True(s.Inference.FindActive("MOCK-STT") != null, "endpoint lookup is case-insensitive");
+                    Check.Equal(4, s.Inference.Endpoints.Count, "default endpoint count");
+                    Check.True(!s.Inference.Endpoints.Exists(e => e.Provider == ProviderTypeEnum.Mock), "no mock endpoints in shipped defaults");
+                    Check.Equal("ollama-gemma3-4b", s.Inference.DefaultVision, "default vision");
+                    Check.Equal("ollama-gpt-oss-20b", s.Inference.DefaultText, "default text");
+                    Check.Equal("whisper", s.Inference.DefaultTranscription, "default transcription");
+                    Check.True(s.Inference.FindActive("OLLAMA-GEMMA3-4B") != null, "endpoint lookup is case-insensitive");
+                    EndpointSettings whisper = s.Inference.FindActive("whisper")!;
+                    Check.Equal(ProviderTypeEnum.OpenAiCompatible, whisper.Provider, "whisper provider");
+                    Check.Equal(EndpointKindEnum.Transcription, whisper.Kind, "whisper kind");
+                    Check.Equal("Systran/faster-whisper-small", whisper.Model, "whisper model");
+                    EndpointSettings gptoss = s.Inference.FindActive("ollama-gpt-oss-20b")!;
+                    Check.Equal(4096, gptoss.MaxOutputTokens, "ollama max output tokens");
+                    Check.Equal(300000, gptoss.TimeoutMs, "ollama timeout");
+                    Check.Equal(true, s.Analytics.Enabled, "Analytics.Enabled");
+                    Check.Equal(90, s.Analytics.RetentionDays, "Analytics.RetentionDays");
+                    Check.Equal(600000L, s.Media.MaxSegmentMs, "Media.MaxSegmentMs");
+                    Check.Equal(3650, new AnalyticsSettings { RetentionDays = 99999 }.RetentionDays, "retention maximum");
+                    Check.Equal(1, new AnalyticsSettings { RetentionDays = 0 }.RetentionDays, "retention minimum");
                     return Task.CompletedTask;
                 }, new[] { "fast" }),
 
@@ -54,11 +70,11 @@ namespace Test.Shared
                     KeyframeSettings s = new KeyframeSettings();
                     s.Rest.Port = 9123;
                     string json = KeyframeSerializer.Serialize(s, true);
-                    Check.True(json.Contains("\"Provider\": \"Mock\""), "enums serialize as strings");
+                    Check.True(json.Contains("\"Provider\": \"Ollama\""), "enums serialize as strings");
                     KeyframeSettings? copy = KeyframeSerializer.Deserialize<KeyframeSettings>(json);
                     Check.True(copy != null, "deserialized");
                     Check.Equal(9123, copy!.Rest.Port, "round-tripped port");
-                    Check.Equal(2, copy.Inference.Endpoints.Count, "round-tripped endpoints are not duplicated");
+                    Check.Equal(4, copy.Inference.Endpoints.Count, "round-tripped endpoints are not duplicated");
                     return Task.CompletedTask;
                 }, new[] { "fast" })
             });

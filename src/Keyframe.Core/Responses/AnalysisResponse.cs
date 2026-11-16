@@ -15,6 +15,11 @@ namespace Keyframe.Core.Responses
         public string Id { get; set; } = IdGenerator.GenerateAnalysisId();
 
         /// <summary>
+        /// Identifier of the HTTP request that submitted the analysis (prefix "rqi_", or the caller's x-request-id), when known.
+        /// </summary>
+        public string? RequestId { get; set; } = null;
+
+        /// <summary>
         /// Whether every enabled function produced a result. Partial field failures keep this true.
         /// </summary>
         public bool Success { get; set; } = false;

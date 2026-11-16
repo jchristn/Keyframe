@@ -209,9 +209,10 @@ namespace Keyframe.Server.Services
             CopyHeaders(context.Response.Headers, entry.ResponseHeaders!);
 
             string requestBody = SafeRequestBody(context);
-            string responseBody = SafeResponseBody(context);
+            bool binaryResponse = IsBinary(context.Response.ContentType);
+            string responseBody = binaryResponse ? String.Empty : SafeResponseBody(context);
             entry.RequestBodyBytes = Encoding.UTF8.GetByteCount(requestBody);
-            entry.ResponseBodyBytes = Encoding.UTF8.GetByteCount(responseBody);
+            entry.ResponseBodyBytes = binaryResponse ? SafeResponseLength(context) : Encoding.UTF8.GetByteCount(responseBody);
 
             if (path.StartsWith(SettingsPath, StringComparison.OrdinalIgnoreCase) && context.Request.Method != HttpMethod.GET)
             {
@@ -224,7 +225,7 @@ namespace Keyframe.Server.Services
                 entry.RequestBodyTruncated = truncated;
             }
 
-            if (path.StartsWith(HistoryPrefix, StringComparison.OrdinalIgnoreCase) || path.StartsWith(SettingsPath, StringComparison.OrdinalIgnoreCase))
+            if (binaryResponse || path.StartsWith(HistoryPrefix, StringComparison.OrdinalIgnoreCase) || path.StartsWith(SettingsPath, StringComparison.OrdinalIgnoreCase))
             {
                 entry.ResponseBody = null;
             }
@@ -360,6 +361,28 @@ namespace Keyframe.Server.Services
             catch (Exception)
             {
                 return String.Empty;
+            }
+        }
+
+        private static bool IsBinary(string? contentType)
+        {
+            if (String.IsNullOrWhiteSpace(contentType)) return false;
+            string type = contentType.Trim().ToLowerInvariant();
+            return type.StartsWith("video/", StringComparison.Ordinal)
+                || type.StartsWith("audio/", StringComparison.Ordinal)
+                || type.StartsWith("image/", StringComparison.Ordinal)
+                || type.StartsWith("application/octet-stream", StringComparison.Ordinal);
+        }
+
+        private static long SafeResponseLength(HttpContextBase context)
+        {
+            try
+            {
+                return context.Response.DataAsBytes?.Length ?? 0;
+            }
+            catch (Exception)
+            {
+                return 0;
             }
         }
 

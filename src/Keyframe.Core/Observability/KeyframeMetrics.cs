@@ -55,6 +55,13 @@ namespace Keyframe.Core.Observability
         private static readonly Histogram<double> _FfmpegDuration = _Meter.CreateHistogram<double>(TelemetryNames.FfmpegDuration, "s", "ffmpeg and ffprobe duration.");
         private static readonly Counter<long> _JobsTotal = _Meter.CreateCounter<long>(TelemetryNames.JobsTotal, "{job}", "Jobs finished.");
         private static readonly Counter<long> _AuthRequests = _Meter.CreateCounter<long>(TelemetryNames.AuthRequests, "{request}", "Authentication outcomes.");
+        private static readonly Histogram<double> _ModelQueueDuration = _Meter.CreateHistogram<double>(TelemetryNames.ModelQueueDuration, "s", "Time a model call waited on its endpoint concurrency gate.");
+        private static readonly Histogram<double> _ModelTimeToFirstToken = _Meter.CreateHistogram<double>(TelemetryNames.ModelTimeToFirstToken, "s", "Model time to first token.");
+        private static readonly Histogram<double> _ModelGenerationDuration = _Meter.CreateHistogram<double>(TelemetryNames.ModelGenerationDuration, "s", "Model generation time, first to last token.");
+        private static readonly Histogram<double> _ModelTokensPerSecond = _Meter.CreateHistogram<double>(TelemetryNames.ModelTokensPerSecond, "{token}/s", "Completion tokens per second of generation time.");
+        private static readonly Histogram<double> _JobQueueDuration = _Meter.CreateHistogram<double>(TelemetryNames.JobQueueDuration, "s", "Time a job waited in the queue.");
+        private static readonly Histogram<double> _AnalysisRealtimeFactor = _Meter.CreateHistogram<double>(TelemetryNames.AnalysisRealtimeFactor, "1", "Analysis time divided by media duration.");
+        private static readonly Counter<long> _AnalyticsWrites = _Meter.CreateCounter<long>(TelemetryNames.AnalyticsWrites, "{analysis}", "Analytics rows written.");
 
         #endregion
 
@@ -106,6 +113,78 @@ namespace Keyframe.Core.Observability
             try
             {
                 _StageDuration.Record(seconds, new KeyValuePair<string, object?>("media_kind", mediaKind), new KeyValuePair<string, object?>("stage", stage));
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        /// <summary>
+        /// Record the timing of one model call attempt. Null values are skipped.
+        /// </summary>
+        /// <param name="purpose">Purpose label.</param>
+        /// <param name="provider">Provider label.</param>
+        /// <param name="queueMs">Time waiting on the endpoint gate in milliseconds.</param>
+        /// <param name="timeToFirstTokenMs">Time to first token in milliseconds, when known.</param>
+        /// <param name="generationMs">Generation time in milliseconds, when known.</param>
+        /// <param name="tokensPerSecond">Tokens per second, when known.</param>
+        public static void RecordModelTiming(string purpose, string provider, double queueMs, double? timeToFirstTokenMs, double? generationMs, double? tokensPerSecond)
+        {
+            try
+            {
+                KeyValuePair<string, object?> p = new KeyValuePair<string, object?>("purpose", purpose);
+                KeyValuePair<string, object?> v = new KeyValuePair<string, object?>("provider", provider);
+                _ModelQueueDuration.Record(Math.Max(0, queueMs) / 1000.0, p, v);
+                if (timeToFirstTokenMs.HasValue) _ModelTimeToFirstToken.Record(timeToFirstTokenMs.Value / 1000.0, p, v);
+                if (generationMs.HasValue) _ModelGenerationDuration.Record(generationMs.Value / 1000.0, p, v);
+                if (tokensPerSecond.HasValue) _ModelTokensPerSecond.Record(tokensPerSecond.Value, p, v);
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        /// <summary>
+        /// Record how long a job waited in the queue.
+        /// </summary>
+        /// <param name="mediaKind">Media kind label.</param>
+        /// <param name="seconds">Queue wait in seconds.</param>
+        public static void RecordJobQueue(string mediaKind, double seconds)
+        {
+            try
+            {
+                _JobQueueDuration.Record(Math.Max(0, seconds), new KeyValuePair<string, object?>("media_kind", mediaKind));
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        /// <summary>
+        /// Record an analysis realtime factor (analysis time divided by media duration).
+        /// </summary>
+        /// <param name="mediaKind">Media kind label.</param>
+        /// <param name="factor">Realtime factor.</param>
+        public static void RecordRealtimeFactor(string mediaKind, double factor)
+        {
+            try
+            {
+                _AnalysisRealtimeFactor.Record(factor, new KeyValuePair<string, object?>("media_kind", mediaKind));
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        /// <summary>
+        /// Record an analytics write.
+        /// </summary>
+        /// <param name="outcome">Outcome label (success or failure).</param>
+        public static void RecordAnalyticsWrite(string outcome)
+        {
+            try
+            {
+                _AnalyticsWrites.Add(1, new KeyValuePair<string, object?>("outcome", outcome));
             }
             catch (Exception)
             {

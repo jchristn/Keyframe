@@ -9,8 +9,9 @@ import ConfirmModal from '../components/ConfirmModal';
 import JsonViewer from '../components/JsonViewer';
 import Icon from '../components/Icon';
 import LanguageSelector from '../components/LanguageSelector';
+import { AppearancePanel } from '../components/AppearancePicker';
 import { EmptyState, ErrorBanner, LoadingState, Notice } from '../components/States';
-import { SETTINGS_SECTIONS, getPath, isMasked, normalizeForSave, setPath, validateSettings } from '../utils/settingsSchema';
+import { getPath, isMasked, normalizeForSave, presentSections, setPath, validateSettings } from '../utils/settingsSchema';
 import { describeError } from '../utils/errors';
 
 const RESTART_POLL_MS = 1500;
@@ -322,7 +323,9 @@ function SettingsView() {
         <EmptyState icon="lock" title={t('settings.notAdminTitle')} message={t('settings.notAdminMessage')} />
         <section className="panel">
           <h2 className="panel-title">{t('settings.preferences')}</h2>
+          <p className="help-text">{t('settings.preferencesHelp')}</p>
           <LanguageSelector />
+          <AppearancePanel />
         </section>
       </div>
     );
@@ -401,7 +404,7 @@ function SettingsView() {
       {draft ? (
         <div className="settings-layout">
           <nav className="settings-toc" aria-label={t('settings.sections')}>
-            {SETTINGS_SECTIONS.map((s) => (
+            {presentSections(draft).map((s) => (
               <a key={s.id} href={'#' + s.id} onClick={(e) => { e.preventDefault(); document.getElementById('settings-' + s.id).scrollIntoView({ behavior: 'smooth', block: 'start' }); window.history.replaceState(null, '', '#' + s.id); }}>
                 {t('settings.groups.' + s.id + '.title')}
               </a>
@@ -418,7 +421,7 @@ function SettingsView() {
             }}
             noValidate
           >
-            {SETTINGS_SECTIONS.map((section) => (
+            {presentSections(draft).map((section) => (
               <fieldset key={section.id} id={'settings-' + section.id} className="panel settings-section" disabled={busy}>
                 <legend className="panel-title">{t('settings.groups.' + section.id + '.title')}</legend>
                 <p className="help-text">{t('settings.groups.' + section.id + '.help')}</p>
@@ -495,6 +498,7 @@ function SettingsView() {
               <h2 className="panel-title">{t('settings.preferences')}</h2>
               <p className="help-text">{t('settings.preferencesHelp')}</p>
               <LanguageSelector />
+              <AppearancePanel />
             </section>
             <div className="form-actions sticky-actions">
               {showErrors && errorCount ? (

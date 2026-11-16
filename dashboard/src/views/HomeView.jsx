@@ -10,30 +10,11 @@ import ExternalServicesCard from '../components/ExternalServicesCard';
 import StatusBadge from '../components/StatusBadge';
 import { ErrorBanner, LoadingState, Notice } from '../components/States';
 import Icon from '../components/Icon';
+import KpiCard from '../components/KpiCard';
 import useRemote from '../hooks/useRemote';
 import useInterval from '../hooks/useInterval';
 import usePersistedState from '../hooks/usePersistedState';
 import { getRange, normalizeBuckets, rangeToParams } from '../utils/ranges';
-
-function KpiCard({ label, value, sub = null, to = null, tone = null, icon }) {
-  const body = (
-    <>
-      <div className="kpi-label">
-        <Icon name={icon} />
-        <span>{label}</span>
-      </div>
-      <div className={'kpi-value' + (tone ? ' text-' + tone : '')}>{value}</div>
-      {sub ? <div className="kpi-sub">{sub}</div> : null}
-    </>
-  );
-  return to ? (
-    <Link to={to} className="kpi-card clickable">
-      {body}
-    </Link>
-  ) : (
-    <div className="kpi-card">{body}</div>
-  );
-}
 
 /** Command center: health, KPIs, activity, attention items, recent jobs, CTAs, external services. */
 function HomeView() {
@@ -113,6 +94,13 @@ function HomeView() {
           <span>
             <strong>{t('home.cta.video')}</strong>
             <span className="muted">{t('home.cta.videoSub')}</span>
+          </span>
+        </Link>
+        <Link to="/dashboard/analyze/audio" className="cta-card">
+          <Icon name="audio" size={20} />
+          <span>
+            <strong>{t('home.cta.audio')}</strong>
+            <span className="muted">{t('home.cta.audioSub')}</span>
           </span>
         </Link>
         <Link to="/dashboard/api-explorer" className="cta-card">

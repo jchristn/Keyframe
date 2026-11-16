@@ -9,7 +9,7 @@ namespace Keyframe.Server.Services
     using SyslogLogging;
 
     /// <summary>
-    /// Hourly housekeeping: prunes request history and finished jobs past retention, removes orphaned media
+    /// Hourly housekeeping: prunes request history, finished jobs, and analytics past retention, removes orphaned media
     /// workspaces, and sweeps expired authentication failure windows.
     /// Thread safety: safe for concurrent use.
     /// </summary>
@@ -80,10 +80,11 @@ namespace Keyframe.Server.Services
             {
                 int history = await _Database.RequestHistory.PruneAsync(DateTime.UtcNow.AddDays(-settings.RequestHistory.RetentionDays), token).ConfigureAwait(false);
                 int jobs = await _Database.Jobs.PruneAsync(DateTime.UtcNow.AddDays(-settings.Jobs.RetentionDays), token).ConfigureAwait(false);
+                int analytics = await _Database.Analytics.PruneAsync(DateTime.UtcNow.AddDays(-settings.Analytics.RetentionDays), token).ConfigureAwait(false);
                 int workspaces = MediaWorkspace.CleanupOrphans(settings.Media.TempDirectory, TimeSpan.FromHours(6));
                 _Auth.Sweep();
-                if (history + jobs + workspaces > 0)
-                    _Logging.Info(Header + "pruned " + history + " request history row(s), " + jobs + " job(s), " + workspaces + " workspace(s)");
+                if (history + jobs + analytics + workspaces > 0)
+                    _Logging.Info(Header + "pruned " + history + " request history row(s), " + jobs + " job(s), " + analytics + " analytics row(s), " + workspaces + " workspace(s)");
             }
             catch (OperationCanceledException)
             {

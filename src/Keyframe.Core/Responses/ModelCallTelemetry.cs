@@ -1,6 +1,8 @@
 namespace Keyframe.Core.Responses
 {
     using System;
+    using System.Collections.Generic;
+    using System.Text.Json.Serialization;
     using Keyframe.Core.Enums;
 
     /// <summary>
@@ -44,9 +46,25 @@ namespace Keyframe.Core.Responses
         public double DurationMs { get; set; } = 0;
 
         /// <summary>
-        /// Time to first token in milliseconds, when streaming reports it.
+        /// Time to first token in milliseconds (request sent to the first content or reasoning token) for the last
+        /// attempt that reported one. Null when unknown.
         /// </summary>
         public double? TimeToFirstTokenMs { get; set; } = null;
+
+        /// <summary>
+        /// Generation time in milliseconds (first token to last token) for the last attempt that reported one. Null when unknown.
+        /// </summary>
+        public double? GenerationMs { get; set; } = null;
+
+        /// <summary>
+        /// Completion tokens per second of generation time for the last attempt that reported both. Null when unknown.
+        /// </summary>
+        public double? TokensPerSecond { get; set; } = null;
+
+        /// <summary>
+        /// Time spent waiting on the endpoint's concurrency gate in milliseconds, summed across attempts.
+        /// </summary>
+        public double QueueMs { get; set; } = 0;
 
         /// <summary>
         /// Attempts made (1 means no retries).
@@ -117,5 +135,23 @@ namespace Keyframe.Core.Responses
         /// Finish reason of the last attempt.
         /// </summary>
         public string? FinishReason { get; set; } = null;
+
+        /// <summary>
+        /// Per-attempt detail used for analytics. Not serialized. Never null.
+        /// </summary>
+        [JsonIgnore]
+        public List<ModelCallAttempt> AttemptDetails
+        {
+            get
+            {
+                return _AttemptDetails;
+            }
+            set
+            {
+                _AttemptDetails = value ?? new List<ModelCallAttempt>();
+            }
+        }
+
+        private List<ModelCallAttempt> _AttemptDetails = new List<ModelCallAttempt>();
     }
 }

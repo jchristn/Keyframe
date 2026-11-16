@@ -56,6 +56,7 @@ namespace Keyframe.Core.Database.Sqlite
             _ConnectionString = builder.ToString();
             RequestHistory = new RequestHistoryMethods(this);
             Jobs = new JobMethods(this);
+            Analytics = new AnalyticsMethods(this);
         }
 
         #endregion

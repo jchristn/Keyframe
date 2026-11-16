@@ -117,7 +117,7 @@ namespace Keyframe.Sdk.Clients
         }
 
         /// <summary>
-        /// Get the result of a succeeded job.
+        /// Get the result of a succeeded video job. Use GetAudioResultAsync for audio jobs.
         /// </summary>
         /// <param name="id">Job identifier.</param>
         /// <param name="token">Cancellation token.</param>
@@ -130,6 +130,22 @@ namespace Keyframe.Sdk.Clients
         {
             string segment = KeyframeClient.Segment(id, nameof(id));
             return _Client.SendAsync<VideoAnalysisResponse>(HttpMethod.Get, "/v1.0/jobs/" + segment + "/result", null, token);
+        }
+
+        /// <summary>
+        /// Get the result of a succeeded audio job.
+        /// </summary>
+        /// <param name="id">Job identifier.</param>
+        /// <param name="token">Cancellation token.</param>
+        /// <returns>Audio analysis response.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when id is null or empty.</exception>
+        /// <exception cref="KeyframeApiException">Thrown on a non-success status code (409 while the job has not succeeded, 404 when not found).</exception>
+        /// <exception cref="HttpRequestException">Thrown when the server cannot be reached.</exception>
+        /// <exception cref="TimeoutException">Thrown when the request exceeds the client timeout.</exception>
+        public Task<AudioAnalysisResponse> GetAudioResultAsync(string id, CancellationToken token = default)
+        {
+            string segment = KeyframeClient.Segment(id, nameof(id));
+            return _Client.SendAsync<AudioAnalysisResponse>(HttpMethod.Get, "/v1.0/jobs/" + segment + "/result", null, token);
         }
 
         /// <summary>

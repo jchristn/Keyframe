@@ -964,13 +964,257 @@
       }
     },
     {
+      "id": 24,
+      "type": "stat",
+      "title": "Audio analyses in range",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 9,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(increase(keyframe_analysis_total{media_kind=\"audio\"}[$__range])) or vector(0)",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 25,
+      "type": "stat",
+      "title": "Time to first token p95 in range",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 9,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le) (increase(keyframe_model_ttft_seconds_bucket[$__range])))",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "decimals": 3
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 26,
+      "type": "stat",
+      "title": "Endpoint queue p95 in range",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 9,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le) (increase(keyframe_model_queue_duration_seconds_bucket[$__range])))",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "decimals": 3
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 27,
+      "type": "stat",
+      "title": "Job queue wait p95 in range",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 9,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le) (increase(keyframe_jobs_queue_duration_seconds_bucket[$__range])))",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "decimals": 3
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "orientation": "auto"
+      }
+    },
+    {
       "id": 16,
       "type": "row",
       "title": "Traffic",
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 9,
+        "y": 13,
         "w": 24,
         "h": 1
       },
@@ -987,7 +1231,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 10,
+        "y": 14,
         "w": 12,
         "h": 8
       },
@@ -1050,7 +1294,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 10,
+        "y": 14,
         "w": 12,
         "h": 8
       },
@@ -1113,7 +1357,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 18,
+        "y": 22,
         "w": 8,
         "h": 8
       },
@@ -1176,7 +1420,7 @@
       },
       "gridPos": {
         "x": 8,
-        "y": 18,
+        "y": 22,
         "w": 8,
         "h": 8
       },
@@ -1250,7 +1494,7 @@
       },
       "gridPos": {
         "x": 16,
-        "y": 18,
+        "y": 22,
         "w": 8,
         "h": 8
       },
@@ -1319,7 +1563,7 @@
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 26,
+        "y": 30,
         "w": 24,
         "h": 1
       },
@@ -1336,7 +1580,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 27,
+        "y": 31,
         "w": 24,
         "h": 9
       },

@@ -30,7 +30,15 @@ export function TelemetryTotals({ telemetry }) {
     ['telemetry.totalTokens', formatNumber(totals.TotalTokens || 0, locale)],
     ['telemetry.inputImages', formatNumber(totals.InputImages || 0, locale) + ' (' + formatBytes(totals.InputImageBytes || 0, locale) + ')']
   ];
-  if (telemetry && telemetry.QueuedMs) items.splice(1, 0, ['telemetry.queued', formatDuration(telemetry.QueuedMs, locale)]);
+  const queued = telemetry ? (telemetry.QueueWaitMs ?? telemetry.QueuedMs) : null;
+  if (queued) items.splice(1, 0, ['telemetry.queued', formatDuration(queued, locale)]);
+  const calls = (telemetry && telemetry.ModelCalls) || [];
+  const ttft = calls.map((c) => c.TimeToFirstTokenMs).filter((v) => typeof v === 'number');
+  if (ttft.length) items.splice(3, 0, ['telemetry.avgTtft', formatDuration(ttft.reduce((a, b) => a + b, 0) / ttft.length, locale)]);
+  const tps = calls.map((c) => c.TokensPerSecond).filter((v) => typeof v === 'number');
+  if (tps.length) items.splice(4, 0, ['telemetry.avgTokensPerSecond', t('units.tokensPerSecond', { value: formatNumber(tps.reduce((a, b) => a + b, 0) / tps.length, locale, { maximumFractionDigits: 1 }) })]);
+  if (totals.CachedTokens) items.push(['telemetry.cachedTokens', formatNumber(totals.CachedTokens, locale)]);
+  if (totals.ReasoningTokens) items.push(['telemetry.reasoningTokens', formatNumber(totals.ReasoningTokens, locale)]);
   return (
     <dl className="stat-strip">
       {items.map(([k, v]) => (
@@ -70,7 +78,9 @@ function TelemetryWaterfall({ telemetry }) {
       kind: 'call',
       label: t('enums.purpose.' + c.Purpose, { defaultValue: c.Purpose }) + (c.Target ? ' ' + c.Target : ''),
       start: offsetMs(c.StartUtc, origin),
-      duration: Number(c.DurationMs || 0),
+      queue: Number(c.QueueMs || 0),
+      duration: Number(c.QueueMs || 0) + Number(c.DurationMs || 0),
+      ttft: typeof c.TimeToFirstTokenMs === 'number' ? c.TimeToFirstTokenMs : null,
       success: c.Success !== false,
       raw: c
     }));
@@ -125,6 +135,12 @@ function TelemetryWaterfall({ telemetry }) {
                   {r.label.length > 26 && !narrow ? r.label.slice(0, 25) + '…' : r.label}
                 </text>
                 <rect x={x} y={barY} width={w} height={ROW_H - 9} rx={2} className={(r.kind === 'stage' ? 'bar-stage' : 'bar-call') + (r.success ? '' : ' bar-failed')} />
+                {r.kind === 'call' && r.success && r.queue > 0 ? (
+                  <rect x={x} y={barY} width={Math.max(1, sx(r.start + r.queue) - x)} height={ROW_H - 9} rx={2} className="bar-queue" />
+                ) : null}
+                {r.kind === 'call' && r.success && r.ttft !== null ? (
+                  <rect x={sx(r.start + r.queue)} y={barY} width={Math.max(1, sx(r.start + r.queue + r.ttft) - sx(r.start + r.queue))} height={ROW_H - 9} className="bar-wait" />
+                ) : null}
               </g>
             );
           })}
@@ -145,7 +161,13 @@ function TelemetryWaterfall({ telemetry }) {
                 <>
                   <div>{t('telemetry.tooltip.model', { endpoint: hover.r.raw.Endpoint, model: hover.r.raw.Model || '' })}</div>
                   <div>{t('telemetry.tooltip.tokens', { value: formatNumber(hover.r.raw.TotalTokens || 0, locale) })}</div>
-                  <div>{t('telemetry.tooltip.attempts', { value: formatNumber(hover.r.raw.Attempts || 0, locale) })}</div>
+                  <div>{t('telemetry.tooltip.attempts', { value: formatNumber(hover.r.raw.Attempts || hover.r.raw.Attempt || 0, locale) })}</div>
+                  {hover.r.queue ? <div>{t('telemetry.tooltip.queue', { value: formatDuration(hover.r.queue, locale) })}</div> : null}
+                  {hover.r.ttft !== null ? <div>{t('telemetry.tooltip.ttft', { value: formatDuration(hover.r.ttft, locale) })}</div> : null}
+                  {typeof hover.r.raw.GenerationMs === 'number' ? <div>{t('telemetry.tooltip.generation', { value: formatDuration(hover.r.raw.GenerationMs, locale) })}</div> : null}
+                  {typeof hover.r.raw.TokensPerSecond === 'number' ? (
+                    <div>{t('telemetry.tooltip.tokensPerSecond', { value: formatNumber(hover.r.raw.TokensPerSecond, locale, { maximumFractionDigits: 1 }) })}</div>
+                  ) : null}
                   {hover.r.raw.Error ? <div className="text-danger">{hover.r.raw.Error}</div> : null}
                 </>
               ) : null}
@@ -168,9 +190,22 @@ export function ModelCallTable({ telemetry, tableId = 'modelCalls' }) {
     { key: 'Endpoint', label: t('telemetry.columns.endpoint'), sortable: true, mono: true },
     { key: 'Model', label: t('telemetry.columns.model'), sortable: true, mono: true },
     { key: 'DurationMs', label: t('telemetry.columns.duration'), sortable: true, align: 'right', nowrap: true, render: (c) => formatDuration(c.DurationMs, locale) },
-    { key: 'Attempts', label: t('telemetry.columns.attempts'), sortable: true, align: 'right' },
+    { key: 'QueueMs', label: t('telemetry.columns.queue'), sortable: true, align: 'right', nowrap: true, defaultHidden: true, render: (c) => (typeof c.QueueMs === 'number' ? formatDuration(c.QueueMs, locale) : '') },
+    { key: 'TimeToFirstTokenMs', label: t('telemetry.columns.ttft'), sortable: true, align: 'right', nowrap: true, render: (c) => (typeof c.TimeToFirstTokenMs === 'number' ? formatDuration(c.TimeToFirstTokenMs, locale) : '') },
+    { key: 'GenerationMs', label: t('telemetry.columns.generation'), sortable: true, align: 'right', nowrap: true, defaultHidden: true, render: (c) => (typeof c.GenerationMs === 'number' ? formatDuration(c.GenerationMs, locale) : '') },
+    {
+      key: 'TokensPerSecond',
+      label: t('telemetry.columns.tokensPerSecond'),
+      sortable: true,
+      align: 'right',
+      nowrap: true,
+      render: (c) => (typeof c.TokensPerSecond === 'number' ? formatNumber(c.TokensPerSecond, locale, { maximumFractionDigits: 1 }) : '')
+    },
+    { key: 'Attempts', label: t('telemetry.columns.attempts'), sortable: true, align: 'right', render: (c) => formatNumber(c.Attempts ?? c.Attempt ?? 0, locale) },
     { key: 'PromptTokens', label: t('telemetry.columns.promptTokens'), sortable: true, align: 'right', defaultHidden: true, render: (c) => formatNumber(c.PromptTokens || 0, locale) },
     { key: 'CompletionTokens', label: t('telemetry.columns.completionTokens'), sortable: true, align: 'right', defaultHidden: true, render: (c) => formatNumber(c.CompletionTokens || 0, locale) },
+    { key: 'CachedTokens', label: t('telemetry.columns.cachedTokens'), sortable: true, align: 'right', defaultHidden: true, render: (c) => formatNumber(c.CachedTokens || 0, locale) },
+    { key: 'ReasoningTokens', label: t('telemetry.columns.reasoningTokens'), sortable: true, align: 'right', defaultHidden: true, render: (c) => formatNumber(c.ReasoningTokens || 0, locale) },
     { key: 'TotalTokens', label: t('telemetry.columns.totalTokens'), sortable: true, align: 'right', render: (c) => formatNumber(c.TotalTokens || 0, locale) },
     { key: 'FinishReason', label: t('telemetry.columns.finishReason'), defaultHidden: true, mono: true },
     { key: 'Success', label: t('telemetry.columns.status'), pinned: true, render: (c) => <StatusBadge kind="custom" tone={c.Success ? 'success' : 'danger'} label={c.Success ? t('status.succeeded') : t('status.failed')} /> }

@@ -179,6 +179,8 @@ All routes are versioned under `/v1.0/`. Request history follows the requirement
 | `GET` | `/v1.0/whoami` | key | Resolved principal (key name, admin flag) |
 | `POST` | `/v1.0/image` | key | Analyze one image (synchronous) |
 | `POST` | `/v1.0/video` | key | Analyze one video (job by default, `Wait` for synchronous) |
+| `POST` | `/v1.0/audio` | key | Analyze audio or a video's audio track (job by default, `Wait` for synchronous) |
+| `POST` | `/v1.0/segment` | key | Cut a video clip, audio clip, or frame out of a source |
 | `POST` | `/v1.0/probe` | key | Deterministic media properties only, no model calls |
 | `GET` | `/v1.0/jobs` | key | List jobs (paged, filter by status, type, time range) |
 | `GET` | `/v1.0/jobs/{id}` | key | Job status and progress |
@@ -195,6 +197,11 @@ All routes are versioned under `/v1.0/`. Request history follows the requirement
 | `GET` | `/v1.0/api/request-history/{id}` | key | Full entry with headers and bodies |
 | `DELETE` | `/v1.0/api/request-history/{id}` | admin | Delete one entry |
 | `DELETE` | `/v1.0/api/request-history` | admin | Bulk delete by filter, returns `DeletedCount` |
+| `GET` | `/v1.0/analytics/summary` | admin | Percentiles, gap-filled buckets, by media kind, model, stage, purpose |
+| `GET` | `/v1.0/analytics/analyses` | admin | Stored analyses, paged |
+| `GET` | `/v1.0/analytics/analyses/{id}` | admin | One analysis with every model call attempt |
+| `DELETE` | `/v1.0/analytics/analyses/{id}` | admin | Delete one analysis |
+| `DELETE` | `/v1.0/analytics/analyses` | admin | Delete analyses older than a cutoff |
 
 ### 4.2 Image request
 
@@ -837,7 +844,7 @@ Add an entry for each working session: date, what landed, what is next, and anyt
   - Implementation decisions: provider `Implementations/` classes are thin subclasses of shared `Database/Common/*MethodsBase` because the SQL is portable; dialect differences (paging, timestamp storage, SQL Server DateTime2 parameters) live on the driver. Timestamps are truncated to microseconds everywhere. `DataTable.Load` is avoided because it merges rows that share a partial key.
   - The Voltaic version is 2.4.0 (MCP Streamable HTTP at /mcp, JSON-RPC at /rpc). MCP clients authenticate with the Keyframe access key as a bearer token.
   - Radiant 0.1.3 cannot bind Prometheus to 0.0.0.0, so the container settings use the hostname `keyframe-server` (see docker/keyframe.json).
-  - Known rough edge: ffprobe error text (including a temp path) is returned in 422 messages. Consider trimming it.
+  - Fixed in session 3: ffmpeg and ffprobe error text keeps file names but drops directories before reaching callers.
   - Phase 10 dashboard landed: `npm test` 32/32, lint clean, Playwright checks at 1280/768/390 px in both themes against a live server. The full Compose stack (server, dashboard, MCP, collector, Prometheus, Tempo, Loki, Grafana) came up healthy. `/openapi.json` CORS duplication was fixed server side; the dashboard keeps a same-origin fallback for the spec.
   - Remaining Phase 11 later work: benchmark harness, simulated user testing, EXIF beyond ffprobe tags, perceptual-hash dedup, scene merge by caption similarity, webhook on job completion.
 - **2026-11-15 (session 3, Phase 6)**: PolyPrompt 5.0.0 from NuGet. `Keyframe.Core/Inference/Providers/` has `PolyPromptClientBuilder` (provider construction, support checks, retry classification, `Register(factory)`), `PolyPromptInferenceClient`, and `PolyPromptTranscriptionClient`. `AnalysisServices` registers the integration when no factory is passed. `InferenceClientFactory` gained `CompletionProviderSupported` and `TranscriptionProviderSupported` so availability is reported without building clients, and wraps construction errors (missing key or URL) in `InferenceException` (502). Test.Automated passes 68 of 68 with the 4 live cases skipped when no keys are set (69 with the Ollama case enabled); the live Ollama case passes with `qwen3.8:latest`, and a 3-scene video job ran end to end through the server against it.
@@ -848,3 +855,18 @@ Add an entry for each working session: date, what landed, what is next, and anyt
   - Transcription asks for `verbose_json` with segment timestamps, except model names starting with `gpt-4o` on OpenAI and Azure (JSON only); those chunks become one segment each.
   - Provider clients are not disposed when an endpoint's settings object is replaced (the cache swaps the wrapper). Rare, but a long-running server that edits endpoints often will hold old HttpClients.
   - PolyPrompt logs to the console through its own default `LoggingModule` (warnings on failed calls). Passing Keyframe's logger through `ClientOptions.Logging` would unify logs.
+- **2026-11-15 (session 4, audio, analytics, segments)**: Audio analysis (`POST /v1.0/audio`, `AudioAnalyzer`, shared `TranscriptionRunner` extracted from `VideoAnalyzer`), streaming completion calls with time to first token, generation time, tokens per second, and endpoint queue time, the analytics store (migration 2: `analyses` and `modelcalls`, one row per attempt, written by `AnalyticsService` in the background) with `/v1.0/analytics` routes, segment retrieval (`POST /v1.0/segment`, `SegmentExtractor`), new default endpoints (three Ollama models and speaches Whisper; no mock in shipped settings), a `keyframe-whisper` Compose service with a one-shot model download, and docs (REST_API.md table of contents, README API overview, TELEMETRY.md rewrite, Postman folders). `dotnet build` has 0 warnings; Test.Automated passes 89 of 94 with the 5 live cases skipped by default; the database suites pass on SQLite, MySQL 8.4, PostgreSQL 17, and SQL Server 2022. Live: Ollama gemma3:4b and qwen3-vl:8b image cases, and a `say`-generated speech clip through speaches 0.8.3 plus gpt-oss:20b, pass.
+
+  Notes for the next session:
+  - The analytics summary aggregates in memory over the filtered rows. That is exact and provider-independent, but a summary over months of heavy traffic loads every row in range; add pre-aggregated rollups if that becomes slow.
+  - `modelcalls` stores attempts, so `ModelStats.Calls` and the model-call distributions count attempts; `StatBlock.ModelCalls` counts logical calls from the analyses rows.
+  - `ModelSelection` accepts `Model` as an input alias of `Name` (the analytics and audio contract used `Model`).
+  - speaches 0.8.3 needs `POST /v1/models/{id}` before transcription works; 0.9 (release candidate) adds `PRELOAD_MODELS`. The Compose `keyframe-whisper-init` job does the download.
+  - The new metrics are not on the Grafana dashboards yet. The SDKs, MCP tools, and dashboard pages for audio, segments, and analytics are separate work items.
+  - CI's SDK job now rewrites the copied `keyframe.json` with jq to use the mock endpoints.
+- **2026-11-16 (session 3, round 2)**: Owner feedback round. Audio analysis (`POST /v1.0/audio`), segment retrieval (`POST /v1.0/segment`), streaming model calls with time to first token, generation time, tokens per second, and queue waits, analytics persistence (migration 2 on all four databases) with `/v1.0/analytics/*`, real-model defaults (Ollama `gemma3:4b`, `qwen3-vl:8b`, `gpt-oss:20b`, and a speaches Whisper container) replacing mock, an Analytics dashboard tab, 16 palettes with light and dark, full i18n (12 locales plus pseudo-locales), one-column analyze pages, a full-width API Explorer, SDK and MCP coverage for the new routes, MCP key pass-through, Grafana panels for the new instruments, `test-data/`, and `TESTING.md` (run against the real models). Test.Automated 91 of 96 (5 live cases opt-in); dashboard 78; SDK harnesses C# 56 on both targets, JS 55, Python 60.
+
+  Notes for the next session:
+  - The analytics summary computes percentiles in memory over every matching row. Fine for months of moderate traffic; pre-aggregate if it gets slow.
+  - The new Keyframe meter instruments have no endpoint or model label; per-model views come from the analytics API.
+  - speaches 0.8.3 needs its model installed explicitly; compose runs `keyframe-whisper-init` for that.

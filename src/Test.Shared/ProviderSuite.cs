@@ -17,7 +17,7 @@ namespace Test.Shared
 
     /// <summary>
     /// The PolyPrompt provider integration against a local OpenAI-compatible stub server: request translation,
-    /// response and usage mapping, retry classification, transcription segments, factory availability, and an
+    /// streamed response, timing, and usage mapping, retry classification, transcription segments, factory availability, and an
     /// end-to-end image analysis.
     /// </summary>
     public static class ProviderSuite
@@ -66,7 +66,7 @@ namespace Test.Shared
                         {
                             SystemPrompt = "You are a media analyst.",
                             UserPrompt = "Describe the frames.",
-                            MaxOutputTokens = 321,
+                            MaxOutputTokens = 3210,
                             Temperature = 0.2,
                             Images = new List<InferenceImage> { new InferenceImage { Data = TinyJpeg(), MediaType = "image/jpeg", Label = "Frame at 00:01.000" } }
                         };
@@ -79,14 +79,20 @@ namespace Test.Shared
                         Check.Equal(3L, response.CompletionTokens, "completion tokens");
                         Check.Equal(14L, response.TotalTokens, "total tokens");
                         Check.Equal(ProviderTypeEnum.OpenAiCompatible, response.Provider, "provider");
+                        Check.True(response.TimeToFirstTokenMs.HasValue && response.TimeToFirstTokenMs.Value > 0, "time to first token measured");
+                        Check.True(response.GenerationMs.HasValue && response.GenerationMs.Value >= 20, "generation spans the streamed chunks: " + response.GenerationMs);
+                        Check.True(response.TokensPerSecond.HasValue && response.TokensPerSecond.Value > 0, "tokens per second computed");
+                        Check.True(Math.Abs(response.TokensPerSecond!.Value - 3 / (response.GenerationMs!.Value / 1000.0)) < 0.01, "tokens per second is completion tokens over generation seconds");
+                        Check.True(response.TimeToFirstTokenMs!.Value + response.GenerationMs.Value <= response.DurationMs + 1, "first token plus generation fits in the duration");
 
                         StubRequest sent = stub.Requests.Single();
                         Check.True(sent.Path.EndsWith("/chat/completions"), "chat route: " + sent.Path);
                         using (JsonDocument doc = JsonDocument.Parse(sent.Body))
                         {
                             JsonElement root = doc.RootElement;
+                            Check.True(root.GetProperty("stream").GetBoolean(), "completion calls stream");
                             Check.Equal("stub-model", root.GetProperty("model").GetString(), "model from endpoint");
-                            Check.Equal(321, root.GetProperty("max_tokens").GetInt32(), "max tokens override");
+                            Check.Equal(3210, root.GetProperty("max_tokens").GetInt32(), "request budget above the endpoint setting is used");
                             JsonElement messages = root.GetProperty("messages");
                             Check.Equal("system", messages[0].GetProperty("role").GetString(), "system first");
                             JsonElement parts = messages[1].GetProperty("content");
@@ -123,7 +129,7 @@ namespace Test.Shared
                     }
                 }, new[] { "provider" }),
 
-                new TestCaseDescriptor(Id, "Transcription", "Verbose JSON segments map to milliseconds", async ct =>
+                new TestCaseDescriptor(Id, "Transcription", "Verbose JSON segments map to milliseconds; segments that are likely silence are dropped", async ct =>
                 {
                     using (StubProviderServer stub = new StubProviderServer())
                     using (PolyPromptTranscriptionClient client = new PolyPromptTranscriptionClient(Endpoint(ProviderTypeEnum.OpenAiCompatible, EndpointKindEnum.Transcription, stub.BaseUrl)))
@@ -173,6 +179,8 @@ namespace Test.Shared
                             Check.Equal("A stub summary of the image.", response.Results["Summary"] as string, "summary");
                             Check.Equal(true, response.Results["hasCats"] as bool?, "typed field");
                             Check.True(response.Telemetry.ModelCalls.All(c => c.Provider == ProviderTypeEnum.OpenAiCompatible && c.TotalTokens == 14), "telemetry per call");
+                            Check.True(response.Telemetry.ModelCalls.All(c => c.TimeToFirstTokenMs > 0 && c.GenerationMs > 0 && c.TokensPerSecond > 0), "streaming timing per call");
+                            Check.True(response.Telemetry.ModelCalls.All(c => c.QueueMs >= 0 && c.AttemptDetails.Count == c.Attempts), "queue time and attempt detail per call");
                             Check.Equal(2, stub.Requests.Count, "summary and one combined extract call");
                         }
                     }

@@ -27,8 +27,11 @@ namespace Keyframe.McpServer.Settings
         }
 
         /// <summary>
-        /// Access key the MCP server presents to Keyframe. Default "default". MCP clients authenticate to the MCP
-        /// server with this same key as a bearer token when authentication is required.
+        /// Fallback key the MCP server presents to Keyframe when a request has no authenticated caller (the TCP
+        /// transport, or RequireAuthentication false). Default "default". On authenticated transports, MCP clients
+        /// send their own Keyframe key (access or admin, the same key they would use for REST) as a bearer token,
+        /// and every tool call goes to Keyframe with that key, so it carries the same rights over MCP as over REST.
+        /// The installer (--install) also writes this key into client configuration.
         /// </summary>
         public string? AccessKey { get; set; } = "default";
 

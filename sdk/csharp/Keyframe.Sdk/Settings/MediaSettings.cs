@@ -183,6 +183,38 @@ namespace Keyframe.Sdk.Settings
         }
 
         /// <summary>
+        /// Maximum length of a segment cut by POST /v1.0/segment in milliseconds. Default 600000 (10 minutes).
+        /// Minimum 1000, maximum 14400000.
+        /// </summary>
+        public long MaxSegmentMs
+        {
+            get
+            {
+                return _MaxSegmentMs;
+            }
+            set
+            {
+                _MaxSegmentMs = Math.Clamp(value, 1000L, 14400000L);
+            }
+        }
+
+        /// <summary>
+        /// Maximum accepted audio duration in milliseconds (audio analysis, including the audio track of a video file).
+        /// Default 14400000 (4 hours). Minimum 1000, maximum 86400000.
+        /// </summary>
+        public long MaxAudioDurationMs
+        {
+            get
+            {
+                return _MaxAudioDurationMs;
+            }
+            set
+            {
+                _MaxAudioDurationMs = Math.Clamp(value, 1000L, 86400000L);
+            }
+        }
+
+        /// <summary>
         /// Maximum audio chunk length in seconds sent to a transcription endpoint. Default 600. Minimum 10, maximum 7200.
         /// </summary>
         public int TranscriptionChunkSeconds
@@ -212,6 +244,8 @@ namespace Keyframe.Sdk.Settings
         private int _MaxParallelFfmpeg = 4;
         private int _FfmpegTimeoutMs = 600000;
         private long _MaxVideoDurationMs = 14400000L;
+        private long _MaxAudioDurationMs = 14400000L;
+        private long _MaxSegmentMs = 600000L;
         private int _TranscriptionChunkSeconds = 600;
 
         #endregion

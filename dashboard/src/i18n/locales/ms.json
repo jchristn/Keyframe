@@ -1,0 +1,1534 @@
+{
+  "app": {
+    "name": "Keyframe",
+    "documentTitle": "{{page}} | Keyframe",
+    "versionLabel": "v{{version}}",
+    "alpha": "ALFA"
+  },
+  "common": {
+    "actions": "Tindakan",
+    "any": "Mana-mana",
+    "cancel": "Batal",
+    "close": "Tutup",
+    "confirm": "Sahkan",
+    "copied": "Disalin",
+    "copy": "Salin",
+    "copyId": "Salin ID",
+    "delete": "Padam",
+    "disabled": "Dinyahdayakan",
+    "dismiss": "Ketepikan",
+    "download": "Muat turun JSON",
+    "empty": "Tiada apa-apa untuk dipaparkan.",
+    "emptyList": "Senarai kosong",
+    "enabled": "Didayakan",
+    "false": "Palsu",
+    "true": "Benar",
+    "language": "Bahasa",
+    "loading": "Memuatkan...",
+    "never": "Tidak pernah",
+    "no": "Tidak",
+    "yes": "Ya",
+    "none": "Tiada",
+    "notAvailable": "T/B",
+    "notYet": "Belum lagi",
+    "null": "null",
+    "refresh": "Muat semula",
+    "retry": "Cuba semula",
+    "save": "Simpan",
+    "saving": "Menyimpan...",
+    "unknown": "Tidak diketahui",
+    "updatedAt": "Dikemas kini {{time}}",
+    "view": "Lihat",
+    "viewJson": "Lihat JSON",
+    "working": "Sedang diproses..."
+  },
+  "nav": {
+    "label": "Navigasi utama",
+    "home": "Laman Utama",
+    "image": "Imej",
+    "video": "Video",
+    "jobs": "Kerja",
+    "endpoints": "Titik Akhir",
+    "requestHistory": "Sejarah Permintaan",
+    "apiExplorer": "Penjelajah API",
+    "settings": "Tetapan",
+    "server": "Maklumat Pelayan",
+    "adminOnly": "Memerlukan kunci pentadbir",
+    "groups": {
+      "analyze": "Analisis",
+      "operate": "Operasi",
+      "observability": "Kebolehcerapan",
+      "system": "Sistem"
+    },
+    "audio": "Audio",
+    "analytics": "Analitik"
+  },
+  "roles": {
+    "admin": "Pentadbir",
+    "accessKey": "Kunci akses"
+  },
+  "status": {
+    "active": "Aktif",
+    "inactive": "Tidak aktif",
+    "available": "Tersedia",
+    "missing": "Tiada",
+    "checking": "Menyemak",
+    "failed": "Gagal",
+    "succeeded": "Berjaya",
+    "partial": "Separa",
+    "healthy": "Sihat",
+    "unhealthy": "Tidak sihat",
+    "unreachable": "Tidak dapat dicapai",
+    "valid": "Sah",
+    "invalid": "Tidak sah"
+  },
+  "topbar": {
+    "toggleNav": "Togol navigasi",
+    "copyServerUrl": "Salin URL pelayan",
+    "health": "Kesihatan pelayan",
+    "principal": "Kunci yang log masuk",
+    "anonymous": "Tanpa nama",
+    "repository": "Keyframe di GitHub",
+    "lightMode": "Tukar ke tema cerah",
+    "darkMode": "Tukar ke tema gelap",
+    "logout": "Log keluar"
+  },
+  "login": {
+    "title": "Sambung ke pelayan",
+    "tagline": "Ringkasan dan metadata bertaip daripada imej dan video.",
+    "serverUrl": "URL pelayan",
+    "serverUrlHelp": "Pelayan REST Keyframe, contohnya http://127.0.0.1:8700. URL ini diingati pada peranti ini.",
+    "apiKey": "Kunci API",
+    "apiKeyPlaceholder": "Kunci akses atau kunci pentadbir",
+    "showKey": "Tunjukkan kunci",
+    "hideKey": "Sembunyikan kunci",
+    "remember": "Ingat kunci pada peranti ini",
+    "rememberHelp": "Jika tidak ditandakan, kunci hanya disimpan dalam memori dan anda perlu log masuk semula selepas muat semula.",
+    "connect": "Sambung",
+    "connecting": "Menyambung...",
+    "restoring": "Memulihkan sesi anda...",
+    "retrySaved": "Cuba semula sesi yang disimpan",
+    "localDefaults": "Pemasangan tempatan baharu menggunakan kunci akses \"default\" dan kunci pentadbir \"keyframeadmin\". Tukar kedua-duanya sebelum berkongsi pelayan.",
+    "errors": {
+      "badUrl": "Masukkan URL http atau https mutlak.",
+      "unreachable": "Tidak dapat mencapai {{url}}. Pastikan pelayan sedang berjalan, URL dan port betul, dan pelayar dapat mencapainya.",
+      "badKey": "Pelayan menolak kunci ini. Semak kunci dan cuba lagi.",
+      "rateLimited": "Terlalu banyak percubaan gagal daripada alamat ini. Tunggu seminit dan cuba lagi.",
+      "notKeyframe": "Pelayan memberikan respons tetapi tidak kelihatan seperti Keyframe (tiada /v1.0/whoami). Semak URL.",
+      "unexpected": "Pelayan memulangkan ralat yang tidak dijangka.",
+      "savedKeyRejected": "Kunci yang disimpan tidak lagi diterima oleh {{url}}. Log masuk semula.",
+      "restoreUnreachable": "Tidak dapat mencapai {{url}} untuk memulihkan sesi anda.",
+      "sessionExpired": "Pelayan menolak kunci. Log masuk semula."
+    }
+  },
+  "errors": {
+    "network": "Pelayan tidak dapat dicapai.",
+    "badRequest": "Pelayan menolak permintaan kerana tidak sah.",
+    "unauthorized": "Kunci tiada atau tidak sah.",
+    "forbidden": "Tindakan ini memerlukan kunci pentadbir.",
+    "notFound": "Tidak ditemui.",
+    "conflict": "Permintaan bercanggah dengan keadaan semasa.",
+    "unprocessable": "Media tidak dapat dimuat turun atau dinyahkod.",
+    "tooManyRequests": "Tunggu sebentar dan cuba semula. Untuk kerja video dan audio, baris gilir mungkin penuh; batalkan atau biarkan kerja yang sedang berjalan selesai.",
+    "badGateway": "Titik akhir model tidak dapat dicapai.",
+    "timeout": "Permintaan tamat masa.",
+    "server": "Pelayan mengalami ralat dalaman (HTTP {{status}}).",
+    "unknown": "Sesuatu tidak kena (HTTP {{status}}).",
+    "requestId": "ID permintaan",
+    "hints": {
+      "network": "Pastikan pelayan sedang berjalan dan boleh dicapai dari pelayar ini, kemudian cuba semula.",
+      "badRequest": "Betulkan masalah yang disenaraikan di atas dan hantar semula.",
+      "forbidden": "Log masuk dengan kunci pentadbir untuk melakukan tindakan ini.",
+      "unprocessable": "Pastikan URL boleh dicapai dari pelayan dan menghala ke imej atau video yang disokong, atau muat naik fail sebaliknya.",
+      "tooManyRequests": "Tunggu sebentar dan cuba semula. Untuk kerja video, baris gilir mungkin penuh; batalkan atau biarkan kerja yang sedang berjalan selesai.",
+      "badGateway": "Buka Titik Akhir untuk menguji sambungan, atau pilih titik akhir lain dan cuba semula.",
+      "timeout": "Cuba semula, gunakan input yang lebih kecil, atau naikkan had masa dalam Tetapan."
+    }
+  },
+  "pagination": {
+    "label": "Penomboran halaman",
+    "showing": "Memaparkan {{from}}-{{to}} daripada {{total}}",
+    "pageOf": "Halaman {{page}} daripada {{pages}}",
+    "first": "Halaman pertama",
+    "previous": "Halaman sebelumnya",
+    "next": "Halaman seterusnya",
+    "last": "Halaman terakhir",
+    "jump": "Pergi ke halaman",
+    "pageSize": "Setiap halaman"
+  },
+  "table": {
+    "empty": "Tiada rekod",
+    "selectColumns": "Pilih Lajur",
+    "showAllColumns": "Tunjukkan semua lajur",
+    "sortBy": "Isih mengikut {{column}}",
+    "sortPage": "Pengisihan digunakan pada baris di halaman ini; pelayan memulangkan yang terbaharu dahulu.",
+    "sortLocal": "Pengisihan digunakan pada baris yang dipaparkan.",
+    "selectAll": "Pilih semua baris di halaman ini",
+    "selectRow": "Pilih baris",
+    "selectedCount_other": "{{count}} dipilih",
+    "clearSelection": "Kosongkan pilihan",
+    "bulkActions": "Tindakan pukal"
+  },
+  "filters": {
+    "from": "Dari",
+    "to": "Hingga",
+    "apply": "Guna",
+    "clear": "Kosongkan penapis"
+  },
+  "chart": {
+    "title": "Aktiviti permintaan",
+    "range": "Julat masa",
+    "refresh": "Muat semula carta",
+    "success": "Berjaya",
+    "failure": "Gagal",
+    "noData": "Belum ada permintaan dalam julat ini.",
+    "ariaSummary_other": "Carta aktiviti permintaan, {{count}} permintaan dalam julat",
+    "ranges": {
+      "hour": "Sejam Lalu",
+      "day": "Sehari Lalu",
+      "week": "Seminggu Lalu",
+      "month": "Sebulan Lalu"
+    },
+    "tooltip": {
+      "total": "Jumlah: {{value}}",
+      "success": "Berjaya: {{value}}",
+      "failure": "Gagal: {{value}}",
+      "avg": "Tempoh purata: {{value}}"
+    }
+  },
+  "telemetry": {
+    "totalTime": "Jumlah masa",
+    "queued": "Dalam baris gilir",
+    "modelTime": "Masa model",
+    "modelCalls": "Panggilan model",
+    "failedCalls": "Panggilan gagal",
+    "promptTokens": "Token prompt",
+    "completionTokens": "Token pelengkapan",
+    "totalTokens": "Jumlah token",
+    "inputImages": "Imej input",
+    "noCalls": "Tiada panggilan model dibuat.",
+    "waterfallAria": "Air terjun telemetri dengan {{stages}} peringkat dan {{calls}} panggilan model",
+    "showAll": "Tunjukkan kesemua {{count}} panggilan model",
+    "showFewer": "Tunjukkan kurang panggilan model",
+    "tooltip": {
+      "start": "Bermula pada {{value}}",
+      "duration": "Tempoh {{value}}",
+      "model": "{{endpoint}} {{model}}",
+      "tokens": "Token {{value}}",
+      "attempts": "Percubaan {{value}}",
+      "queue": "Dalam baris gilir {{value}}",
+      "ttft": "Token pertama selepas {{value}}",
+      "generation": "Penjanaan {{value}}",
+      "tokensPerSecond": "{{value}} token sesaat"
+    },
+    "columns": {
+      "purpose": "Tujuan",
+      "target": "Sasaran",
+      "endpoint": "Titik akhir",
+      "model": "Model",
+      "duration": "Tempoh",
+      "attempts": "Percubaan",
+      "promptTokens": "Token prompt",
+      "completionTokens": "Token pelengkapan",
+      "totalTokens": "Jumlah token",
+      "finishReason": "Sebab tamat",
+      "status": "Status",
+      "queue": "Baris gilir",
+      "ttft": "Token pertama",
+      "generation": "Penjanaan",
+      "tokensPerSecond": "Token/s",
+      "cachedTokens": "Token dicache",
+      "reasoningTokens": "Token penaakulan"
+    },
+    "avgTtft": "Purata masa ke token pertama",
+    "avgTokensPerSecond": "Purata token sesaat",
+    "cachedTokens": "Token dicache",
+    "reasoningTokens": "Token penaakulan"
+  },
+  "fieldBuilder": {
+    "title": "Medan",
+    "empty": "Belum ada medan. Tambah satu untuk mengekstrak nilai bertaip.",
+    "fieldNumber": "Medan {{n}}",
+    "key": "Kunci",
+    "keyPlaceholder": "dogCount",
+    "type": "Jenis",
+    "prompt": "Prompt",
+    "promptPlaceholder": "Soalan yang dijawab oleh model untuk medan ini",
+    "options": "Pilihan",
+    "optionsPlaceholder": "Taip pilihan dan tekan Enter",
+    "removeOption": "Alih keluar pilihan {{option}}",
+    "minimum": "Minimum",
+    "maximum": "Maksimum",
+    "maxLength": "Panjang maksimum",
+    "maxItems": "Item maksimum",
+    "schema": "JSON Schema",
+    "schemaPlaceholder": "{\"type\": \"object\", \"properties\": {}}",
+    "default": "Lalai",
+    "noDefault": "Tiada lalai",
+    "defaultListPlaceholder": "Nilai dipisahkan koma",
+    "optional": "Pilihan",
+    "required": "Wajib",
+    "add": "Tambah medan",
+    "newFieldType": "Jenis untuk medan baharu",
+    "moveUp": "Alih ke atas",
+    "moveDown": "Alih ke bawah",
+    "duplicate": "Pendua medan",
+    "remove": "Alih keluar medan",
+    "dragToReorder": "Seret untuk menyusun semula",
+    "errors": {
+      "keyInvalid": "Gunakan 1 hingga 64 huruf, digit, garis bawah, tanda sempang, atau titik.",
+      "keyDuplicate": "Kunci \"{{key}}\" digunakan lebih daripada sekali.",
+      "keySummary": "Kunci \"{{key}}\" bertembung dengan kunci ringkasan.",
+      "promptRequired": "Prompt diperlukan.",
+      "promptTooLong": "Prompt dihadkan kepada {{max}} aksara.",
+      "optionsRequired": "Medan enum memerlukan sekurang-kurangnya satu pilihan.",
+      "optionsTooMany": "Paling banyak {{max}} pilihan.",
+      "notNumber": "Masukkan nombor.",
+      "minAboveMax": "Minimum tidak boleh melebihi maksimum.",
+      "atLeastOne": "Mesti sekurang-kurangnya 1.",
+      "schemaJson": "Skema bukan JSON yang sah.",
+      "defaultJson": "Nilai lalai bukan JSON yang sah.",
+      "defaultNotOption": "Nilai lalai mestilah salah satu daripada pilihan."
+    }
+  },
+  "context": {
+    "help": "Latar belakang yang dikongsi dengan setiap prompt dalam permintaan: ringkasan, setiap medan, dan bagi video, setiap adegan. Konteks dianggap sebagai data, bukan arahan.",
+    "label": "Label",
+    "labelPlaceholder": "Sumber",
+    "text": "Teks",
+    "textPlaceholder": "Foto yang dihantar oleh sukarelawan pengambilan haiwan angkat.",
+    "add": "Tambah konteks",
+    "remove": "Alih keluar item konteks {{n}}",
+    "errors": {
+      "tooMany": "Paling banyak {{max}} item konteks.",
+      "textRequired": "Item konteks {{n}} memerlukan teks.",
+      "labelTooLong": "Label item konteks {{n}} melebihi {{max}} aksara.",
+      "tooLong": "Konteks melebihi {{max}} aksara secara keseluruhan."
+    }
+  },
+  "media": {
+    "source": "Sumber media",
+    "upload": "Muat naik",
+    "url": "URL",
+    "dropImage": "Lepaskan imej di sini atau pilih fail.",
+    "dropVideo": "Lepaskan video di sini atau pilih fail.",
+    "chooseFile": "Pilih fail",
+    "chooseAnother": "Pilih yang lain",
+    "previewAlt": "Pratonton imej yang dipilih",
+    "imageUrl": "URL imej",
+    "videoUrl": "URL video",
+    "urlHint": "Pelayan memuat turun URL itu sendiri, jadi URL mesti boleh dicapai dari pelayan. Alamat rangkaian peribadi disekat melainkan Media.AllowPrivateNetworkUrls dihidupkan.",
+    "videoUploadHint": "Muat naik dihantar sebagai base64 dalam badan permintaan, yang menambah kira-kira satu pertiga pada saiz. Gunakan URL untuk video yang besar.",
+    "errors": {
+      "fileRequired": "Pilih fail untuk dianalisis.",
+      "urlInvalid": "Masukkan URL http atau https mutlak."
+    },
+    "dropAudio": "Lepaskan fail audio atau video di sini atau pilih fail.",
+    "audioUrl": "URL audio atau video",
+    "audioUploadHint": "Audio MP3, WAV, FLAC, M4A, OGG, Opus, dan WebM disokong. Bagi fail video, hanya trek audio digunakan. Muat naik dihantar sebagai base64, yang menambah kira-kira satu pertiga pada saiz."
+  },
+  "model": {
+    "endpoint": "Titik akhir",
+    "visionEndpoint": "Titik akhir penglihatan",
+    "textEndpoint": "Titik akhir teks",
+    "useDefault": "Lalai pelayan",
+    "name": "Ganti model",
+    "namePlaceholder": "Model lalai titik akhir",
+    "textHelp": "Titik akhir teks mengendalikan langkah teks sahaja seperti ringkasan keseluruhan video. Lalainya ialah Inference.DefaultText, kemudian titik akhir penglihatan.",
+    "transcriptionEndpoint": "Titik akhir transkripsi"
+  },
+  "summarize": {
+    "enable": "Ringkaskan",
+    "key": "Kunci hasil",
+    "keyInvalid": "Gunakan 1 hingga 64 huruf, digit, garis bawah, tanda sempang, atau titik.",
+    "maxWords": "Perkataan maksimum",
+    "style": "Gaya",
+    "instructions": "Arahan",
+    "instructionsPlaceholder": "Panduan pilihan, contohnya: nyatakan latar tempat dan sebarang haiwan."
+  },
+  "extract": {
+    "enable": "Ekstrak medan bertaip",
+    "mode": "Mod ekstrak"
+  },
+  "results": {
+    "title": "Hasil",
+    "noResults": "Tiada hasil dipulangkan.",
+    "noFields": "Tiada medan diminta.",
+    "noProperties": "Sifat media tidak diminta.",
+    "copyValue": "Salin nilai {{key}}",
+    "errors_other": "{{count}} ralat",
+    "errorsHint": "Panggilan model gagal selepas percubaan semula. Hasil separa dipaparkan. Cuba semula, atau uji titik akhir dari halaman Titik Akhir.",
+    "warnings_other": "{{count}} amaran",
+    "tabs": {
+      "results": "Hasil",
+      "fields": "Medan",
+      "telemetry": "Telemetri",
+      "properties": "Sifat",
+      "raw": "JSON mentah"
+    },
+    "columns": {
+      "key": "Kunci",
+      "type": "Jenis",
+      "value": "Nilai",
+      "valid": "Sah",
+      "raw": "Output model mentah",
+      "notes": "Ralat dan amaran"
+    }
+  },
+  "properties": {
+    "mediaKind": "Jenis media",
+    "contentType": "Jenis kandungan",
+    "format": "Format",
+    "size": "Saiz",
+    "dimensions": "Dimensi",
+    "duration": "Tempoh",
+    "frameRate": "Kadar bingkai",
+    "bitRate": "Kadar bit",
+    "videoCodec": "Kodek video",
+    "hasAudio": "Ada audio",
+    "audioCodec": "Kodek audio",
+    "audioChannels": "Saluran audio",
+    "audioSampleRate": "Kadar sampel audio",
+    "sha256": "SHA-256",
+    "tags": "Tag"
+  },
+  "snippets": {
+    "title": "Salin sebagai kod",
+    "keyNote": "Coretan membaca kunci daripada pemboleh ubah persekitaran KEYFRAME_API_KEY dan tidak sekali-kali mengandungi kunci anda. Media yang dimuat naik ditunjukkan sebagai pemegang tempat.",
+    "languages": {
+      "curl": "cURL",
+      "fetch": "JavaScript",
+      "python": "Python",
+      "csharp": "C#"
+    }
+  },
+  "presets": {
+    "label": "Praset",
+    "choose": "Muatkan praset",
+    "none": "Tiada praset disimpan",
+    "save": "Simpan praset",
+    "saveTitle": "Simpan praset",
+    "name": "Nama praset",
+    "saveHelp": "Menyimpan konteks, model, fungsi, dan medan dalam pelayar ini. Media dan kunci tidak sekali-kali disimpan.",
+    "delete": "Padam praset",
+    "deleteTitle": "Padam praset",
+    "deleteMessage": "Padam praset \"{{name}}\" daripada pelayar ini?"
+  },
+  "analyze": {
+    "sections": {
+      "media": "Media",
+      "context": "Konteks",
+      "model": "Model",
+      "summary": "Ringkasan",
+      "fields": "Medan bertaip"
+    },
+    "includeProperties": "Sertakan sifat media dalam respons",
+    "run": "Analisis",
+    "running": "Menganalisis...",
+    "errors": {
+      "fixFields": "Betulkan masalah yang diserlahkan dahulu.",
+      "noFields": "Tambah sekurang-kurangnya satu medan, atau matikan pengekstrakan.",
+      "noFunction": "Dayakan Ringkaskan atau Ekstrak."
+    },
+    "toast": {
+      "done": "Analisis selesai dalam {{duration}}.",
+      "partial": "Analisis selesai dengan ralat dalam {{duration}}. Semak hasilnya.",
+      "canceled": "Analisis dibatalkan."
+    }
+  },
+  "analyzeImage": {
+    "title": "Analisis imej",
+    "summary": "Ringkaskan imej dan ekstrak medan bertaip. Hasil termasuk kesahihan setiap medan dan pecahan masa.",
+    "emptyTitle": "Belum ada analisis",
+    "emptyMessage": "Pilih imej, laraskan medan, dan pilih Analisis. Hasil, pengesahan medan, telemetri, dan JSON mentah dipaparkan di sini."
+  },
+  "analyzeVideo": {
+    "title": "Analisis video",
+    "summary": "Hantar kerja video: pengesanan adegan, ringkasan dan medan setiap adegan, transkripsi, dan hasil keseluruhan video. Anda dibawa ke kerja tersebut apabila ia diterima.",
+    "sections": {
+      "whole": "Keseluruhan video",
+      "scenes": "Adegan",
+      "transcribe": "Transkripsi"
+    },
+    "wholeHelp": "Ringkasan dan medan untuk video secara keseluruhan.",
+    "sampleFrames": "Bingkai sampel",
+    "sampleFramesHelp": "Bingkai yang disampel merentas video apabila adegan dimatikan (1 hingga 64).",
+    "scenesEnable": "Kesan adegan dan analisis setiap satu",
+    "threshold": "Ambang adegan",
+    "thresholdHelp": "Skor adegan ffmpeg dari 0.01 hingga 1. Nilai lebih rendah menemui lebih banyak potongan.",
+    "minSceneMs": "Adegan min (ms)",
+    "maxSceneMs": "Adegan maks (ms)",
+    "maxScenes": "Adegan maksimum",
+    "maxScenesHelp": "Mengehadkan kos. Adegan tambahan digabungkan.",
+    "framesPerScene": "Bingkai setiap adegan",
+    "sceneSummary": "Ringkasan setiap adegan",
+    "sceneExtract": "Ekstrak medan untuk setiap adegan",
+    "includeKeyframeData": "Sertakan lakaran kecil bingkai utama (digunakan oleh garis masa adegan)",
+    "transcribeEnable": "Transkripsikan trek audio",
+    "transcribeEndpoint": "Titik akhir transkripsi",
+    "language": "Bahasa",
+    "transcribePrompt": "Prompt transkripsi",
+    "transcribePromptPlaceholder": "Petunjuk perbendaharaan kata atau ejaan (pilihan)",
+    "submit": "Hantar kerja",
+    "submitting": "Menghantar...",
+    "errors": {
+      "sceneRange": "Adegan min mesti kurang daripada adegan maks.",
+      "language": "Gunakan kod ISO-639 seperti en atau pt-BR.",
+      "noFunction": "Dayakan sekurang-kurangnya satu daripada Ringkaskan, Ekstrak, Adegan, atau Transkripsi.",
+      "queueFull": "Baris gilir kerja penuh."
+    },
+    "toast": {
+      "submitted": "Kerja {{id}} diterima."
+    },
+    "languagePlaceholder": "en"
+  },
+  "samples": {
+    "image": {
+      "hasPeople": "Adakah terdapat orang dalam imej ini?",
+      "objects": "Senaraikan objek utama yang dapat anda lihat.",
+      "setting": "Di manakah gambar ini diambil?",
+      "indoors": "Dalam bangunan",
+      "outdoors": "Luar bangunan",
+      "unknown": "Tidak diketahui"
+    },
+    "video": {
+      "topics": "Senaraikan topik utama yang dibincangkan.",
+      "showsText": "Adakah teks yang ketara kelihatan pada skrin?"
+    },
+    "audio": {
+      "speakerCount": "Berapa ramai penutur yang berbeza?"
+    }
+  },
+  "home": {
+    "title": "Laman Utama",
+    "summary": "Apa yang sedang dilakukan oleh Keyframe sekarang: kesihatan pelayan, trafik permintaan, kerja analisis, dan titik akhir model.",
+    "ctaLabel": "Aliran kerja biasa",
+    "cta": {
+      "image": "Analisis imej",
+      "imageSub": "Ringkasan dan medan bertaip dalam satu panggilan",
+      "video": "Analisis video",
+      "videoSub": "Adegan, transkrip, dan medan sebagai kerja",
+      "explorer": "Buka Penjelajah API",
+      "explorerSub": "Panggil sebarang laluan dari pelayar",
+      "audio": "Analisis audio",
+      "audioSub": "Transkrip, ringkasan, dan medan sebagai kerja"
+    },
+    "kpiLabel": "Penunjuk utama",
+    "kpi": {
+      "requests": "Permintaan ({{range}})",
+      "successRate": "Kadar kejayaan",
+      "failures_other": "{{value}} kegagalan",
+      "avgLatency": "Purata kependaman",
+      "jobs": "Kerja aktif",
+      "queued": "{{value}} dalam baris gilir",
+      "endpoints": "Titik akhir sihat",
+      "healthyOf": "{{healthy}} daripada {{total}}",
+      "server": "Pelayan",
+      "ffmpegAvailable": "ffmpeg tersedia",
+      "ffmpegMissing": "ffmpeg tiada"
+    },
+    "attention": {
+      "title": "Perlu perhatian",
+      "none": "Tiada apa-apa yang perlu perhatian.",
+      "open": "Buka",
+      "unreachable": "Titik akhir kesihatan tidak memberikan respons.",
+      "ffmpegMissing": "ffmpeg tidak tersedia pada pelayan. Analisis video dan penormalan imej akan gagal sehingga ia dipasang.",
+      "endpointUnhealthy": "Titik akhir {{name}} tidak sihat. {{message}}",
+      "noActiveEndpoints": "Tiada titik akhir model yang aktif. Tambah atau dayakan satu dalam Tetapan.",
+      "failedJobs_other": "{{count}} kerja telah gagal.",
+      "failedRequests_other": "{{count}} permintaan gagal dalam julat ini.",
+      "authDisabled": "Pengesahan dimatikan. Sesiapa sahaja yang dapat mencapai pelayan boleh menggunakannya."
+    },
+    "activityTitle": "Aktiviti permintaan",
+    "noTraffic": {
+      "title": "Belum ada trafik",
+      "message": "Jalankan analisis atau panggil API, dan permintaan akan dipaparkan di sini."
+    },
+    "recentJobs": "Kerja terkini",
+    "viewAllJobs": "Lihat semua kerja",
+    "noJobs": "Belum ada kerja."
+  },
+  "externalServices": {
+    "title": "Perkhidmatan luaran",
+    "summary": "Alat kebolehcerapan yang disertakan dengan tindanan Docker Compose. Pautan menggunakan hos yang anda sambungkan.",
+    "credentials": "Log masuk lalai",
+    "noLogin": "Tiada log masuk",
+    "copyUrl": "Salin URL",
+    "note": "Ini ialah lalai pembangunan tempatan. Tukar kata laluan Grafana sebelum mendedahkan tindanan, dan jauhkan Prometheus dan Tempo daripada antara muka awam. Perkhidmatan yang bukan sebahagian daripada penggunaan ini tidak akan dimuatkan.",
+    "services": {
+      "grafana": {
+        "name": "Grafana",
+        "purpose": "Papan pemuka untuk trafik, peringkat saluran paip, dan panggilan model"
+      },
+      "prometheus": {
+        "name": "Prometheus",
+        "purpose": "Stor metrik dan UI pertanyaan"
+      },
+      "tempo": {
+        "name": "Tempo",
+        "purpose": "Stor jejak (titik akhir kesediaan)"
+      }
+    }
+  },
+  "jobs": {
+    "title": "Kerja",
+    "summary": "Kerja analisis video dan audio dengan kemajuan langsung. Buka satu untuk melihat adegan, transkrip, dan telemetri; batalkan kerja yang sedang berjalan atau padam kerja yang telah selesai.",
+    "newJob": "Kerja video baharu",
+    "upload": "Data dimuat naik",
+    "columns": {
+      "id": "Kerja",
+      "status": "Status",
+      "progress": "Kemajuan",
+      "kind": "Jenis",
+      "principal": "Dihantar oleh",
+      "source": "Sumber",
+      "size": "Saiz",
+      "duration": "Panjang media",
+      "created": "Dicipta",
+      "completed": "Selesai",
+      "error": "Ralat"
+    },
+    "filters": {
+      "status": "Status",
+      "kind": "Jenis",
+      "principal": "Dihantar oleh",
+      "principalPlaceholder": "Nama kunci"
+    },
+    "cancel": "Batalkan kerja",
+    "cancelTitle": "Batalkan kerja",
+    "cancelMessage": "Batalkan kerja {{id}}? Kerja yang sedang dijalankan akan dibuang.",
+    "deleteTitle_other": "Padam {{count}} kerja",
+    "deleteMessage_other": "Padam {{count}} kerja yang telah selesai beserta hasil yang disimpan? Tindakan ini tidak boleh dibuat asal.",
+    "deleteSelected_other": "Padam {{count}} kerja yang selesai",
+    "jsonTitle": "JSON kerja",
+    "autoRefresh": "Dimuat semula setiap beberapa saat semasa kerja dalam baris gilir atau sedang berjalan.",
+    "emptyTitle": "Belum ada kerja",
+    "emptyMessage": "Analisis video dijalankan sebagai kerja. Hantar satu dari Analisis video.",
+    "emptyFiltered": "Tiada kerja yang sepadan dengan penapis ini",
+    "emptyFilteredMessage": "Kosongkan atau ubah penapis untuk melihat lebih banyak kerja.",
+    "toast": {
+      "canceled": "Kerja {{id}} dibatalkan.",
+      "deleted_other": "{{count}} kerja dipadam."
+    }
+  },
+  "jobDetail": {
+    "title": "Kerja",
+    "summary": "Status, kemajuan, dan hasil untuk satu kerja analisis.",
+    "back": "Semua kerja",
+    "jobJson": "JSON kerja",
+    "download": "Muat turun hasil",
+    "notFound": "Kerja ini tidak wujud atau telah dipadam.",
+    "progress": "Kemajuan",
+    "progressCount": "{{completed}} daripada {{total}} langkah",
+    "liveNote": "Halaman ini dikemas kini secara langsung sehingga kerja selesai.",
+    "failedTitle": "Kerja gagal",
+    "noErrorDetail": "Pelayan tidak melaporkan mesej ralat.",
+    "failedHint": "Semak URL media dan titik akhir, kemudian hantar kerja sekali lagi.",
+    "interruptedTitle": "Kerja telah terganggu",
+    "interruptedMessage": "Pelayan dimulakan semula semasa kerja ini berjalan, jadi ia tidak selesai. Hantar sekali lagi.",
+    "canceledTitle": "Kerja telah dibatalkan",
+    "canceledMessage": "Tiada hasil disimpan untuk kerja yang dibatalkan.",
+    "details": "Butiran",
+    "meta": {
+      "kind": "Jenis",
+      "principal": "Dihantar oleh",
+      "source": "Sumber",
+      "size": "Saiz",
+      "duration": "Panjang media",
+      "created": "Dicipta",
+      "started": "Dimulakan",
+      "completed": "Selesai"
+    },
+    "loadingResult": "Memuatkan hasil...",
+    "resultTabs": "Bahagian hasil",
+    "tabs": {
+      "overview": "Gambaran keseluruhan",
+      "scenes": "Adegan",
+      "transcript": "Transkrip",
+      "telemetry": "Telemetri",
+      "raw": "JSON mentah"
+    },
+    "wholeResults": "Hasil keseluruhan video",
+    "noScenes": "Pengesanan adegan dimatikan atau tiada adegan ditemui.",
+    "sceneStrip": "Garis masa adegan",
+    "sceneTitle": "Adegan {{n}}: {{start}} hingga {{end}}",
+    "sceneHeading": "Adegan {{n}} daripada {{count}}",
+    "prevScene": "Adegan sebelumnya",
+    "nextScene": "Adegan seterusnya",
+    "keyframeAlt": "Bingkai utama pada {{time}}",
+    "noThumbnail": "Tiada lakaran kecil",
+    "sceneResults": "Hasil adegan",
+    "sceneFields": "Medan adegan",
+    "sceneTranscript": "Transkrip semasa adegan ini",
+    "noTranscript": "Transkripsi dimatikan atau video tidak mempunyai audio.",
+    "noTranscriptMatches": "Tiada segmen transkrip yang sepadan.",
+    "transcriptLanguage": "Bahasa: {{language}}",
+    "searchTranscript": "Cari transkrip"
+  },
+  "endpoints": {
+    "title": "Titik Akhir",
+    "summary": "Titik akhir model yang dikonfigurasikan pada pelayan, dengan penyedia, model, dan kesihatan terakhir yang diperhatikan. Pentadbir boleh menguji sambungan.",
+    "add": "Tambah titik akhir",
+    "readOnlyNote": "Titik akhir diedit dalam Tetapan dengan kunci pentadbir. Pengujian juga memerlukan kunci pentadbir.",
+    "columns": {
+      "name": "Nama",
+      "health": "Kesihatan",
+      "kind": "Jenis",
+      "provider": "Penyedia",
+      "model": "Model",
+      "url": "URL",
+      "default": "Lalai",
+      "concurrency": "Serentak maks",
+      "timeout": "Had masa",
+      "apiKey": "Kunci API",
+      "lastChecked": "Terakhir disemak",
+      "test": "Uji"
+    },
+    "filters": {
+      "kind": "Jenis",
+      "search": "Cari",
+      "searchPlaceholder": "Nama, penyedia, atau model"
+    },
+    "localFilterNote": "Memaparkan {{shown}} daripada {{total}}. Penapisan dibuat secara tempatan; pelayan memulangkan setiap titik akhir.",
+    "default": "Lalai",
+    "noUrl": "Lalai penyedia",
+    "keySet": "Ditetapkan (berakhir {{last4}})",
+    "keyNotSet": "Tidak ditetapkan",
+    "test": "Uji",
+    "testing": "Menguji...",
+    "detailSubtitle": "Konfigurasi dan kesihatan titik akhir",
+    "editInSettings": "Edit dalam Tetapan",
+    "providerUnavailable": "penyedia tidak tersedia dalam binaan ini",
+    "healthMessage": "Mesej kesihatan",
+    "testPassed": "Ujian lulus",
+    "testFailedTitle": "Ujian gagal",
+    "testDetail": "Mengambil masa {{duration}}. Model: {{model}}",
+    "jsonTitle": "JSON titik akhir",
+    "emptyTitle": "Tiada titik akhir dikonfigurasikan",
+    "emptyMessage": "Tambah titik akhir model dalam Tetapan di bawah Inferens supaya analisis mempunyai model untuk dipanggil.",
+    "emptyFiltered": "Tiada titik akhir yang sepadan dengan penapis ini",
+    "toast": {
+      "testOk": "Titik akhir {{name}} memberikan respons dalam {{duration}}.",
+      "testFailed": "Titik akhir {{name}} gagal ujian selepas {{duration}}.",
+      "testError": "Tidak dapat menguji titik akhir {{name}}."
+    }
+  },
+  "requestHistory": {
+    "title": "Sejarah Permintaan",
+    "summary": "Setiap permintaan API yang ditangkap oleh pelayan, dengan status, masa, serta pengepala dan badan yang disunting. Tapis, periksa, dan kosongkan trafik yang disimpan.",
+    "kpi": {
+      "inRange": "Permintaan ({{range}})",
+      "failures": "Kegagalan",
+      "successRate": "Kadar kejayaan",
+      "avgDuration": "Tempoh purata",
+      "matching": "Sepadan dengan penapis"
+    },
+    "filters": {
+      "method": "Kaedah",
+      "status": "Kod status",
+      "statusPlaceholder": "500",
+      "path": "Laluan mengandungi",
+      "pathPlaceholder": "/v1.0/image",
+      "principal": "Prinsipal",
+      "principalPlaceholder": "Nama kunci"
+    },
+    "columns": {
+      "time": "Masa",
+      "method": "Kaedah",
+      "path": "Laluan",
+      "status": "Status",
+      "duration": "Tempoh",
+      "principal": "Prinsipal",
+      "sourceIp": "IP sumber",
+      "id": "Entri",
+      "ago": "Usia"
+    },
+    "filterByPath": "Tapis mengikut laluan ini",
+    "deleteMatching": "Padam yang sepadan",
+    "clearAll": "Kosongkan semua",
+    "deleteTitle": "Padam permintaan",
+    "deleteMessage": "Padam permintaan {{method}} {{path}} yang ditangkap?",
+    "bulkTitle": "Padam permintaan yang ditangkap",
+    "bulkMessageFiltered_other": "Padam {{count}} permintaan yang sepadan dengan {{filters}}? Tindakan ini tidak boleh dibuat asal.",
+    "bulkMessageAll_other": "Tiada penapis ditetapkan. Padam {{count}} permintaan yang disimpan? Tindakan ini tidak boleh dibuat asal.",
+    "filterParts": {
+      "method": "kaedah {{value}}",
+      "status": "status {{value}}",
+      "path": "laluan mengandungi \"{{value}}\"",
+      "principal": "prinsipal {{value}}",
+      "from": "dari {{value}}",
+      "to": "sebelum {{value}}"
+    },
+    "jsonTitle": "JSON permintaan",
+    "emptyTitle": "Tiada trafik disimpan",
+    "emptyMessage": "Permintaan dipaparkan di sini apabila pelayan mengendalikannya. Jika ini kekal kosong, pastikan RequestHistory.Enabled dihidupkan dalam Tetapan.",
+    "emptyFiltered": "Tiada permintaan yang sepadan dengan penapis ini",
+    "emptyFilteredMessage": "Kosongkan atau luaskan penapis, atau pilih julat masa yang lain.",
+    "inspector": {
+      "title": "Butiran permintaan",
+      "metadata": "Metadata",
+      "url": "URL",
+      "requestId": "ID permintaan",
+      "created": "Diterima",
+      "completed": "Selesai",
+      "requestHeaders": "Pengepala permintaan",
+      "requestBody": "Badan permintaan",
+      "responseHeaders": "Pengepala respons",
+      "responseBody": "Badan respons",
+      "raw": "JSON mentah",
+      "noHeaders": "Tiada pengepala ditangkap.",
+      "noBody": "Tiada badan ditangkap.",
+      "truncated": "Dipangkas (asal {{size}})"
+    },
+    "toast": {
+      "deleted": "Permintaan dipadam.",
+      "bulkDeleted_other": "{{count}} permintaan dipadam.",
+      "loadFailed": "Tidak dapat memuatkan permintaan."
+    }
+  },
+  "explorer": {
+    "title": "Penjelajah API",
+    "summary": "Setiap laluan daripada dokumen OpenAPI langsung pelayan. Permintaan menggunakan kunci yang anda log masuk.",
+    "loadingSpec": "Memuatkan /openapi.json...",
+    "specMissing": "Dokumen OpenAPI tidak tersedia",
+    "specMissingMessage": "Penjelajah memerlukan GET /openapi.json daripada pelayan. Pastikan pelayan boleh dicapai dan menyediakan dokumen tersebut, kemudian cuba semula.",
+    "viaProxyTitle": "Dokumen OpenAPI dimuatkan melalui proksi papan pemuka",
+    "viaProxyMessage": "Pelayar tidak dapat membaca /openapi.json terus daripada pelayan (kegagalan rangkaian atau CORS), jadi ia dimuatkan daripada asal papan pemuka. Permintaan masih dihantar terus ke pelayan yang anda log masuk.",
+    "search": "Cari kaedah, laluan, atau ringkasan",
+    "noMatches": "Tiada operasi yang sepadan.",
+    "operations": "Operasi",
+    "pickOperation": "Pilih operasi daripada senarai di atas.",
+    "resolvedUrl": "URL yang diselesaikan",
+    "copyUrl": "Salin URL",
+    "pathParams": "Parameter laluan",
+    "queryParams": "Parameter pertanyaan",
+    "required": "Wajib",
+    "headers": "Pengepala",
+    "authInherited": "Kebenaran ditambah daripada sesi anda secara automatik.",
+    "headerName": "Nama pengepala",
+    "headerValue": "Nilai",
+    "addHeader": "Tambah pengepala",
+    "removeHeader": "Alih keluar pengepala",
+    "body": "Badan permintaan",
+    "format": "Format JSON",
+    "resetTemplate": "Set semula ke templat",
+    "copyBody": "Salin badan",
+    "invalidJson": "JSON tidak sah: {{message}}",
+    "missingPath": "Isikan: {{names}}",
+    "destructive": "Operasi ini mengubah atau memadam data.",
+    "execute": "Laksana",
+    "running": "Sedang berjalan...",
+    "stop": "Henti",
+    "response": "Respons",
+    "responseTabs": "Bahagian respons",
+    "noResponse": "Laksanakan permintaan untuk melihat respons.",
+    "aborted": "Permintaan telah dihentikan.",
+    "emptyBody": "Respons tidak mempunyai badan.",
+    "streaming": "Penstriman",
+    "tabs": {
+      "body": "Badan",
+      "headers": "Pengepala",
+      "code": "Kod"
+    },
+    "history": "Sejarah ({{count}})",
+    "historyTitle": "Permintaan terkini",
+    "noHistory": "Permintaan yang anda laksanakan disenaraikan di sini. Kunci tidak sekali-kali disimpan.",
+    "load": "Muatkan",
+    "confirmTitle": "Jalankan permintaan yang memusnahkan?",
+    "confirmMessage": "{{method}} {{path}} mengubah atau memadam data pada pelayan. Teruskan?",
+    "pickerLabel": "Pilih operasi API",
+    "operationCount_other": "{{count}} operasi",
+    "binaryTitle": "Respons binari",
+    "binaryMessage": "{{type}}, {{size}}. Muat turun untuk membukanya.",
+    "binaryFilename": "response.bin",
+    "downloadBody": "Muat turun"
+  },
+  "settings": {
+    "title": "Tetapan",
+    "summary": "Edit fail tetapan pelayan. Tetapan Langsung digunakan semasa disimpan; tetapan bertanda Mula semula berkuat kuasa selepas mula semula.",
+    "file": "Fail tetapan",
+    "notAdminTitle": "Tetapan memerlukan kunci pentadbir",
+    "notAdminMessage": "Anda log masuk dengan kunci akses, yang tidak boleh membaca atau mengubah tetapan pelayan. Log keluar dan sambung dengan kunci pentadbir untuk mengedit tetapan atau memulakan semula pelayan.",
+    "preferences": "Keutamaan papan pemuka",
+    "preferencesHelp": "Disimpan dalam pelayar ini sahaja.",
+    "sections": "Bahagian tetapan",
+    "showRaw": "Lihat JSON",
+    "hideRaw": "Sembunyikan JSON",
+    "rawTitle": "JSON tetapan",
+    "rawHelp": "Paparan baca sahaja bagi tetapan yang disimpan seperti yang dipulangkan oleh pelayan, dengan rahsia disembunyikan.",
+    "restart": "Mula semula pelayan",
+    "restartNow": "Mula semula sekarang",
+    "restartTitle": "Mula semula pelayan?",
+    "restartMessage": "Pelayan menyelesaikan respons ini dan keluar. Di bawah Docker Compose (restart: unless-stopped), ia kembali dengan tetapan yang disimpan. Kerja yang sedang berjalan ditandakan sebagai Terganggu.",
+    "restartUnsaved": "Anda mempunyai perubahan yang belum disimpan. Perubahan tersebut akan hilang melainkan anda menyimpannya dahulu.",
+    "restarting": "Memulakan semula",
+    "restartingMessage": "Menunggu pelayan kembali. Pengeditan dijeda.",
+    "restartDone": "Pelayan telah kembali.",
+    "restartTimeout": "Pelayan belum kembali",
+    "restartTimeoutMessage": "Jika pelayan tidak dijalankan oleh masa jalan bekas atau pengurus perkhidmatan dengan dasar mula semula, mulakannya semula secara manual.",
+    "restartRequired": "Mula semula diperlukan",
+    "restartRequiredMessage": "Sesetengah perubahan yang disimpan hanya berkuat kuasa selepas pelayan dimulakan semula.",
+    "saveFailed": "Pelayan menolak tetapan.",
+    "unsaved": "Perubahan belum disimpan",
+    "noChanges": "Tiada perubahan",
+    "discard": "Buang perubahan",
+    "range": "Julat {{min}} hingga {{max}}",
+    "unset": "Tidak ditetapkan",
+    "noEndpoint": "Tiada",
+    "envOverride": "Ditetapkan oleh pemboleh ubah persekitaran {{name}}. Nilai persekitaran diutamakan, jadi medan ini adalah baca sahaja di sini.",
+    "arrayEmpty": "Tiada yang dikonfigurasikan.",
+    "newItem": "Item baharu",
+    "removeItem": "Alih keluar",
+    "badges": {
+      "live": "Langsung",
+      "liveHelp": "Digunakan sebaik sahaja anda menyimpan.",
+      "restart": "Mula semula",
+      "restartHelp": "Berkuat kuasa selepas pelayan dimulakan semula.",
+      "env": "Persekitaran: {{name}}",
+      "envHelp": "Diganti oleh {{name}}."
+    },
+    "secret": {
+      "set": "Ditetapkan (berakhir {{last4}})",
+      "notSet": "Tidak ditetapkan",
+      "change": "Tukar",
+      "keep": "Kekalkan semasa",
+      "clear": "Kosongkan"
+    },
+    "errors": {
+      "required": "Wajib.",
+      "number": "Masukkan nombor.",
+      "duplicateName": "Nama mestilah unik.",
+      "summary_other": "{{count}} medan perlu perhatian."
+    },
+    "toast": {
+      "savedLive": "Tetapan disimpan dan digunakan.",
+      "savedRestart": "Tetapan disimpan. Mulakan semula pelayan untuk menggunakan setiap perubahan.",
+      "restarted": "Pelayan telah dimulakan semula."
+    },
+    "options": {
+      "Sqlite": "SQLite",
+      "Mysql": "MySQL",
+      "Postgresql": "PostgreSQL",
+      "SqlServer": "SQL Server",
+      "grpc": "gRPC",
+      "httpprotobuf": "HTTP (protobuf)",
+      "Completion": "Pelengkapan",
+      "Transcription": "Transkripsi"
+    },
+    "severity": {
+      "0": "0 Nyahpepijat",
+      "1": "1 Maklumat",
+      "2": "2 Amaran",
+      "3": "3 Ralat",
+      "4": "4 Makluman",
+      "5": "5 Kritikal",
+      "6": "6 Kecemasan",
+      "7": "7 Tertinggi"
+    },
+    "addItem": {
+      "Auth": {
+        "AccessKeys": "Tambah kunci akses"
+      },
+      "Inference": {
+        "Endpoints": "Tambah titik akhir"
+      },
+      "Logging": {
+        "Servers": "Tambah pelayan syslog"
+      }
+    },
+    "groups": {
+      "rest": {
+        "title": "Pelayan REST",
+        "help": "Alamat pendengar dan had saiz permintaan."
+      },
+      "auth": {
+        "title": "Pengesahan",
+        "help": "Kunci pentadbir dan kunci akses bernama yang digunakan oleh pemanggil. Kunci disembunyikan; tukar hanya apabila anda benar-benar berniat."
+      },
+      "database": {
+        "title": "Pangkalan data",
+        "help": "Tempat kerja, hasil, dan sejarah permintaan disimpan."
+      },
+      "inference": {
+        "title": "Inferens",
+        "help": "Titik akhir model, lalai, percubaan semula, dan had masa."
+      },
+      "media": {
+        "title": "Media",
+        "help": "ffmpeg, had muat turun, dan saiz imej."
+      },
+      "jobs": {
+        "title": "Kerja",
+        "help": "Keserentakan kerja video dan audio, saiz baris gilir, dan tempoh penyimpanan."
+      },
+      "requestHistory": {
+        "title": "Sejarah permintaan",
+        "help": "Tangkapan permintaan dan badan untuk halaman Sejarah Permintaan."
+      },
+      "logging": {
+        "title": "Pengelogan",
+        "help": "Output konsol, fail, dan syslog."
+      },
+      "telemetry": {
+        "title": "Telemetri",
+        "help": "Eksport OpenTelemetry, titik akhir scrape Prometheus, dan log Loki."
+      },
+      "analytics": {
+        "title": "Analitik",
+        "help": "Rekod prestasi setiap analisis yang dipaparkan pada halaman Analitik, dan tempoh rekod tersebut disimpan."
+      }
+    },
+    "fields": {
+      "Rest": {
+        "Hostname": "Nama hos",
+        "Port": "Port",
+        "Ssl": "TLS",
+        "MaxRequestBodyBytes": "Badan permintaan maks"
+      },
+      "Auth": {
+        "RequireAuthentication": "Wajibkan pengesahan",
+        "AdminApiKey": "Kunci API pentadbir",
+        "MaxFailedAttemptsPerMinute": "Percubaan gagal maks seminit",
+        "AccessKeys": {
+          "_": "Kunci akses",
+          "Name": "Nama",
+          "Key": "Kunci",
+          "Active": "Aktif"
+        }
+      },
+      "Database": {
+        "Type": "Jenis",
+        "Filename": "Fail",
+        "Hostname": "Nama hos",
+        "Port": "Port",
+        "DatabaseName": "Nama pangkalan data",
+        "Username": "Nama pengguna",
+        "Password": "Kata laluan",
+        "TrustServerCertificate": "Percayai sijil pelayan",
+        "CommandTimeoutSeconds": "Had masa arahan (saat)"
+      },
+      "Inference": {
+        "DefaultVision": "Titik akhir penglihatan lalai",
+        "DefaultText": "Titik akhir teks lalai",
+        "DefaultTranscription": "Titik akhir transkripsi lalai",
+        "MaxRetries": "Percubaan semula maks",
+        "MaxRepairAttempts": "Percubaan pembaikan JSON maks",
+        "RetryBackoffMs": "Sela undur percubaan semula (ms)",
+        "RequestTimeoutMs": "Had masa permintaan (ms)",
+        "MaxTranscriptCharacters": "Aksara transkrip maks",
+        "Endpoints": {
+          "_": "Titik akhir",
+          "Name": "Nama",
+          "Provider": "Penyedia",
+          "Kind": "Jenis",
+          "Endpoint": "URL",
+          "ApiKey": "Kunci API",
+          "Model": "Model",
+          "MaxConcurrentRequests": "Permintaan serentak maks",
+          "TimeoutMs": "Had masa (ms)",
+          "Temperature": "Suhu",
+          "MaxOutputTokens": "Token output maks",
+          "Active": "Aktif"
+        }
+      },
+      "Media": {
+        "TempDirectory": "Direktori sementara",
+        "FfmpegPath": "Laluan ffmpeg",
+        "FfprobePath": "Laluan ffprobe",
+        "MaxDownloadBytes": "Saiz muat turun maks",
+        "DownloadTimeoutMs": "Had masa muat turun (ms)",
+        "AllowPrivateNetworkUrls": "Benarkan URL rangkaian peribadi",
+        "ImageMaxEdge": "Sisi maks imej (px)",
+        "ThumbnailMaxEdge": "Sisi maks lakaran kecil (px)",
+        "JpegQuality": "Kualiti JPEG (1 terbaik, 31 terburuk)",
+        "MaxParallelFfmpeg": "ffmpeg selari maks",
+        "FfmpegTimeoutMs": "Had masa ffmpeg (ms)",
+        "MaxVideoDurationMs": "Tempoh video maks (ms)",
+        "TranscriptionChunkSeconds": "Cebisan transkripsi (saat)",
+        "MaxSegmentMs": "Panjang segmen maks (ms)"
+      },
+      "Jobs": {
+        "MaxConcurrentJobs": "Kerja serentak maks",
+        "MaxQueuedJobs": "Kerja dalam baris gilir maks",
+        "RetentionDays": "Tempoh simpanan (hari)",
+        "MaxWaitTimeoutMs": "Had masa menunggu maks (ms)"
+      },
+      "RequestHistory": {
+        "Enabled": "Tangkap permintaan",
+        "MaxRequestBodyBytes": "Badan permintaan maks yang ditangkap",
+        "MaxResponseBodyBytes": "Badan respons maks yang ditangkap",
+        "RetentionDays": "Tempoh simpanan (hari)"
+      },
+      "Logging": {
+        "ConsoleLogging": "Pengelogan konsol",
+        "EnableColors": "Warna konsol",
+        "LogDirectory": "Direktori log",
+        "LogFilename": "Nama fail log",
+        "MinimumSeverity": "Keterukan minimum",
+        "Servers": {
+          "_": "Pelayan syslog",
+          "Hostname": "Nama hos",
+          "Port": "Port"
+        }
+      },
+      "Telemetry": {
+        "Enable": "Telemetri",
+        "ServiceName": "Nama perkhidmatan",
+        "OtlpEnable": "Eksport OTLP",
+        "OtlpEndpoint": "Titik akhir OTLP",
+        "OtlpProtocol": "Protokol OTLP",
+        "PrometheusEnable": "Titik akhir Prometheus",
+        "PrometheusHostname": "Nama hos Prometheus",
+        "PrometheusPort": "Port Prometheus",
+        "PrometheusPath": "Laluan Prometheus",
+        "LokiEnable": "Eksport Loki",
+        "LokiEndpoint": "Titik akhir Loki",
+        "ExportLogs": "Eksport log",
+        "MetricExportIntervalMs": "Sela eksport metrik (ms)",
+        "TraceSamplingRatio": "Nisbah pensampelan jejak"
+      },
+      "Analytics": {
+        "Enabled": "Rekod analitik",
+        "RetentionDays": "Tempoh simpanan (hari)"
+      }
+    }
+  },
+  "server": {
+    "title": "Maklumat Pelayan",
+    "summary": "Versi, kesihatan, kunci yang anda gunakan untuk log masuk, dan URL pelayan yang boleh disalin.",
+    "health": "Kesihatan",
+    "status": "Status",
+    "version": "Versi pelayan",
+    "started": "Dimulakan",
+    "uptime": "Masa hidup",
+    "database": "Pangkalan data",
+    "jobs": "Kerja",
+    "jobsValue": "{{active}} aktif, {{queued}} dalam baris gilir",
+    "ffmpeg": "ffmpeg",
+    "ffmpegMissingHelp": "Pasang ffmpeg dan ffprobe pada hos pelayan, atau tetapkan Media.FfmpegPath dalam Tetapan.",
+    "endpoints": "Kesihatan titik akhir",
+    "noEndpoints": "Tiada titik akhir aktif",
+    "identity": "Identiti",
+    "principal": "Prinsipal",
+    "role": "Peranan",
+    "authRequired": "Pengesahan diperlukan",
+    "dashboardVersion": "Versi papan pemuka",
+    "repository": "Repositori",
+    "copyUrl": "Salin {{name}}",
+    "urls": {
+      "title": "URL pelayan",
+      "base": "URL asas",
+      "health": "Kesihatan",
+      "openapi": "Dokumen OpenAPI",
+      "swagger": "Swagger UI",
+      "whoami": "Siapa saya",
+      "dashboard": "Papan pemuka ini"
+    }
+  },
+  "notFound": {
+    "title": "Halaman tidak ditemui",
+    "message": "Laluan papan pemuka ini tidak wujud.",
+    "home": "Pergi ke Laman Utama"
+  },
+  "enums": {
+    "jobStatus": {
+      "Queued": "Dalam baris gilir",
+      "Running": "Sedang berjalan",
+      "Succeeded": "Berjaya",
+      "Failed": "Gagal",
+      "Canceled": "Dibatalkan",
+      "Interrupted": "Terganggu"
+    },
+    "fieldType": {
+      "Boolean": "Boolean",
+      "String": "Rentetan",
+      "Integer": "Integer",
+      "Number": "Nombor",
+      "Enum": "Enum",
+      "StringList": "Senarai rentetan",
+      "Object": "Objek"
+    },
+    "mediaKind": {
+      "Unknown": "Tidak diketahui",
+      "Image": "Imej",
+      "Video": "Video",
+      "Audio": "Audio"
+    },
+    "summaryStyle": {
+      "Paragraph": "Perenggan",
+      "Bullets": "Senarai titik",
+      "Caption": "Kapsyen"
+    },
+    "extractMode": {
+      "Combined": "Gabungan",
+      "PerField": "Setiap medan"
+    },
+    "extractModeHelp": {
+      "Combined": "Satu panggilan model memulangkan setiap medan. Paling pantas dan paling murah.",
+      "PerField": "Satu panggilan bagi setiap medan, dijalankan secara selari. Kos lebih tinggi tetapi mengasingkan kegagalan dan mengukur masa setiap medan."
+    },
+    "endpointKind": {
+      "Completion": "Pelengkapan",
+      "Transcription": "Transkripsi"
+    },
+    "provider": {
+      "Mock": "Mock (ujian sahaja)",
+      "Ollama": "Ollama",
+      "OllamaCloud": "Ollama Cloud",
+      "OpenAi": "OpenAI",
+      "OpenAiCompatible": "Serasi OpenAI",
+      "AzureOpenAi": "Azure OpenAI",
+      "Anthropic": "Anthropic",
+      "Gemini": "Gemini",
+      "VertexAi": "Vertex AI",
+      "Bedrock": "Bedrock",
+      "XAi": "xAI",
+      "Cohere": "Cohere"
+    },
+    "stage": {
+      "Resolve": "Selesaikan",
+      "Probe": "Siasat",
+      "Normalize": "Normalkan",
+      "SceneDetection": "Pengesanan adegan",
+      "FrameExtraction": "Pengekstrakan bingkai",
+      "AudioExtraction": "Pengekstrakan audio",
+      "Transcribe": "Transkripsi",
+      "Scenes": "Adegan",
+      "Summarize": "Ringkaskan",
+      "Extract": "Ekstrak",
+      "Reduce": "Kurangkan"
+    },
+    "progressStage": {
+      "Queued": "Dalam baris gilir",
+      "Done": "Selesai",
+      "Resolve": "Menyelesaikan media",
+      "Probe": "Menyiasat",
+      "AudioExtraction": "Mengekstrak audio",
+      "Transcribe": "Mentranskripsi",
+      "SceneDetection": "Mengesan adegan",
+      "FrameExtraction": "Mengekstrak bingkai",
+      "Scenes": "Menganalisis adegan",
+      "Reduce": "Meringkaskan video",
+      "Summarize": "Meringkaskan",
+      "Extract": "Mengekstrak medan"
+    },
+    "purpose": {
+      "Summarize": "Ringkaskan",
+      "Extract": "Ekstrak",
+      "SceneSummarize": "Ringkasan adegan",
+      "SceneExtract": "Medan adegan",
+      "Transcribe": "Transkripsi"
+    },
+    "health": {
+      "Healthy": "Sihat",
+      "Degraded": "Merosot"
+    }
+  },
+  "units": {
+    "tokensPerSecond": "{{value}} tok/s",
+    "realtimeFactor": "{{value}}x"
+  },
+  "appearance": {
+    "title": "Penampilan",
+    "open": "Penampilan: palet dan mod cerah atau gelap",
+    "mode": "Mod",
+    "palette": "Palet",
+    "modes": {
+      "light": "Cerah",
+      "dark": "Gelap",
+      "system": "Sistem"
+    },
+    "help": "Disimpan dalam pelayar ini. Sistem mengikut tetapan cerah atau gelap sistem pengendalian anda.",
+    "palettes": {
+      "slate": "Batu Loh",
+      "indigoNight": "Malam Nila",
+      "fjord": "Fjord",
+      "nocturne": "Nokturna",
+      "solstice": "Solstis",
+      "cocoa": "Koko",
+      "duskRose": "Mawar Senja",
+      "metroNight": "Malam Metro",
+      "forest": "Hutan",
+      "ocean": "Lautan",
+      "amber": "Ambar",
+      "graphite": "Grafit",
+      "lavender": "Lavender",
+      "mint": "Pudina",
+      "sandstone": "Batu Pasir",
+      "terracotta": "Terakota"
+    }
+  },
+  "analyzeAudio": {
+    "title": "Analisis audio",
+    "summary": "Transkripsikan fail audio (atau trek audio video), kemudian ringkaskan dan ekstrak medan bertaip daripada transkrip. Dijalankan sebagai kerja; kemajuan dan transkrip dipaparkan di bawah.",
+    "modelHelp": "Titik akhir transkripsi menukar pertuturan kepada teks (lalai Inference.DefaultTranscription). Titik akhir teks menulis ringkasan dan medan daripada transkrip (lalai Inference.DefaultText).",
+    "languageHelp": "Kod ISO-639 pilihan. Biarkan kosong untuk membenarkan model mengesan bahasa.",
+    "transcribeRequired": "Transkripsi diperlukan: ringkasan dan medan dihasilkan daripada transkrip.",
+    "summaryHelp": "Ditulis oleh titik akhir teks daripada transkrip.",
+    "submit": "Hantar kerja audio",
+    "jobTitle": "Kerja",
+    "openJob": "Buka kerja",
+    "polling": "Menyemak kemajuan setiap beberapa saat. Anda boleh meninggalkan halaman ini; kerja akan terus berjalan.",
+    "emptyTitle": "Belum ada kerja audio",
+    "emptyMessage": "Pilih fail atau URL di atas dan hantar. Kemajuan, transkrip, dan hasil dipaparkan di sini.",
+    "toast": {
+      "submitted": "Kerja audio {{id}} dimasukkan ke dalam baris gilir.",
+      "cancelFailed": "Tidak dapat membatalkan kerja: {{message}}"
+    },
+    "errors": {
+      "notSupported": "Pelayan ini tidak menyokong analisis audio (POST /v1.0/audio tidak ditemui)."
+    }
+  },
+  "segments": {
+    "uploadedTitle": "Media sumber telah dimuat naik",
+    "uploadedMessage": "Keyframe tidak menyimpan media yang dimuat naik, jadi klip, audio, dan bingkai memerlukan fail asal sekali lagi. Pilih fail tersebut dari cakera untuk mendayakan butang muat turun.",
+    "usingFile": "Menggunakan {{name}} ({{size}}) sebagai sumber untuk muat turun.",
+    "chooseFile": "Pilih fail asal",
+    "chooseOther": "Pilih fail lain",
+    "clearFile": "Kosongkan",
+    "reading": "Membaca...",
+    "needSource": "Pilih fail asal dahulu",
+    "download": {
+      "Video": "Muat turun klip",
+      "Audio": "Muat turun audio",
+      "Frame": "Muat turun bingkai"
+    },
+    "hint": {
+      "Video": "Potong julat ini sebagai klip MP4",
+      "Audio": "Potong julat ini sebagai audio MP3",
+      "Frame": "Simpan bingkai pada permulaan adegan ini sebagai JPEG"
+    },
+    "toast": {
+      "downloaded": "{{name}} disimpan.",
+      "failed": "Muat turun gagal: {{message}}"
+    }
+  },
+  "analytics": {
+    "title": "Analitik",
+    "summary": "Prestasi dari semasa ke semasa untuk analisis imej, video, dan audio: volum, kadar kejayaan, persentil kependaman, masa model, token, dan butiran setiap analisis.",
+    "loading": "Memuatkan analitik...",
+    "notAdminTitle": "Analitik memerlukan kunci pentadbir",
+    "notAdminMessage": "Log masuk dengan kunci pentadbir untuk melihat prestasi dan telemetri merentas semua analisis.",
+    "unavailableTitle": "Analitik tidak tersedia pada pelayan ini",
+    "unavailableMessage": "GET /v1.0/analytics/summary tidak ditemui. Naik taraf pelayan kepada versi yang mempunyai analitik, dan pastikan Analytics.Enabled dihidupkan dalam Tetapan.",
+    "emptyTitle": "Tiada analisis dalam julat ini",
+    "emptyMessage": "Jalankan analisis atau luaskan julat masa. Setiap analisis imej, video, dan audio yang selesai direkodkan di sini.",
+    "windowNote": "Memaparkan {{from}} hingga {{to}}, dikumpulkan mengikut {{bucket}}.",
+    "ranges": {
+      "1h": "1 jam",
+      "24h": "24 jam",
+      "7d": "7 hari",
+      "30d": "30 hari",
+      "custom": "Tersuai"
+    },
+    "buckets": {
+      "minute": "minit",
+      "hour": "jam",
+      "day": "hari"
+    },
+    "filters": {
+      "label": "Penapis analitik",
+      "range": "Julat masa",
+      "mediaKind": "Media",
+      "endpoint": "Titik akhir",
+      "model": "Model",
+      "modelPlaceholder": "Mana-mana model"
+    },
+    "kpi": {
+      "label": "Penunjuk analitik",
+      "analyses": "Analisis",
+      "analysesSub": "{{ok}} berjaya, {{failed}} gagal",
+      "successRate": "Kadar kejayaan",
+      "analysisP50": "Masa analisis (p50)",
+      "queueP95": "Tempoh menunggu baris gilir (p95)",
+      "ttftP50": "Masa ke token pertama (p50)",
+      "tokensPerSecond": "Token sesaat (p50)",
+      "modelCalls": "Panggilan model",
+      "modelCallsSub": "{{failed}} gagal, {{retries}} percubaan semula",
+      "totalTokens": "Jumlah token",
+      "perAnalysis": "Purata {{value}} setiap analisis",
+      "p95": "p95 {{value}}",
+      "avg": "Purata {{value}}",
+      "generationP50": "Penjanaan p50 {{value}}"
+    },
+    "byKind": {
+      "label": "Mengikut jenis media",
+      "count_other": "{{value}} analisis",
+      "none": "Tiada analisis jenis ini dalam julat.",
+      "analysisP50": "Analisis p50",
+      "analysisP95": "Analisis p95",
+      "realtimeP50": "Faktor masa nyata p50",
+      "imagesIn": "Imej masuk",
+      "mediaSizeP50": "Saiz p50",
+      "mediaDurationP50": "Tempoh p50",
+      "tokens": "Token"
+    },
+    "charts": {
+      "volume": "Analisis dari semasa ke semasa",
+      "volumeHint": "Klik bar untuk menyenaraikan analisisnya di bawah.",
+      "volumeAria_other": "Analisis dari semasa ke semasa, {{count}} analisis dalam julat",
+      "latency": "Masa dari semasa ke semasa",
+      "metric": "Metrik",
+      "latencyAria": "Persentil {{metric}} dari semasa ke semasa",
+      "noSamples": "Tiada sampel untuk metrik ini dalam julat.",
+      "tokens": "Token dari semasa ke semasa",
+      "successRate": "Kadar kejayaan dari semasa ke semasa"
+    },
+    "series": {
+      "succeeded": "Berjaya",
+      "failed": "Gagal",
+      "promptTokens": "Token prompt",
+      "completionTokens": "Token pelengkapan",
+      "successRate": "Kadar kejayaan"
+    },
+    "stats": {
+      "avg": "Purata",
+      "p50": "p50",
+      "p90": "p90",
+      "p95": "p95",
+      "p99": "p99",
+      "max": "Maks"
+    },
+    "metrics": {
+      "AnalysisMs": "Masa analisis",
+      "QueueWaitMs": "Tempoh menunggu baris gilir",
+      "ModelCallMs": "Masa panggilan model",
+      "TimeToFirstTokenMs": "Masa ke token pertama",
+      "GenerationMs": "Masa penjanaan",
+      "TokensPerSecond": "Token sesaat",
+      "TokensPerAnalysis": "Token setiap analisis",
+      "RealtimeFactor": "Faktor masa nyata",
+      "MediaDurationMs": "Tempoh media",
+      "MediaBytes": "Saiz media"
+    },
+    "columns": {
+      "metric": "Metrik",
+      "samples": "Sampel"
+    },
+    "distributions": {
+      "title": "Taburan",
+      "help": "Metrik panggilan model diukur bagi setiap panggilan; yang lain bagi setiap analisis. Faktor masa nyata ialah masa analisis dibahagikan dengan tempoh media (video dan audio sahaja); nilai di bawah 1 lebih pantas daripada masa nyata."
+    },
+    "totals": {
+      "title": "Token dan input",
+      "promptTokens": "Token prompt",
+      "completionTokens": "Token pelengkapan",
+      "cachedTokens": "Token dicache",
+      "reasoningTokens": "Token penaakulan",
+      "totalTokens": "Jumlah token",
+      "tokensPerAnalysisP50": "Token setiap analisis (p50)",
+      "tokensPerAnalysisP95": "Token setiap analisis (p95)",
+      "modelCalls": "Panggilan model",
+      "failedModelCalls": "Panggilan model gagal",
+      "retries": "Percubaan semula",
+      "repairAttempts": "Percubaan pembaikan",
+      "inputImages": "Imej input",
+      "inputImageBytes": "Bait imej dihantar",
+      "inputAudioBytes": "Bait audio dihantar",
+      "scenes": "Adegan",
+      "transcriptCharacters": "Aksara transkrip"
+    },
+    "byModel": {
+      "title": "Mengikut model",
+      "empty": "Tiada panggilan model dalam julat.",
+      "endpoint": "Titik akhir",
+      "provider": "Penyedia",
+      "model": "Model",
+      "calls": "Panggilan",
+      "failed": "Gagal",
+      "durationP50": "Tempoh p50",
+      "durationP95": "Tempoh p95",
+      "ttftP50": "Token pertama p50",
+      "ttftP95": "Token pertama p95",
+      "generationP50": "Penjanaan p50",
+      "tokensPerSecondP50": "Token/s p50",
+      "promptTokens": "Token prompt",
+      "completionTokens": "Token pelengkapan"
+    },
+    "byStage": {
+      "title": "Mengikut peringkat",
+      "empty": "Tiada masa peringkat dalam julat.",
+      "stage": "Peringkat",
+      "share": "p50 relatif"
+    },
+    "byPurpose": {
+      "title": "Mengikut tujuan",
+      "empty": "Tiada panggilan model dalam julat.",
+      "purpose": "Tujuan",
+      "calls": "Panggilan",
+      "failed": "Gagal",
+      "durationP50": "Tempoh p50",
+      "durationP95": "Tempoh p95",
+      "ttftP50": "Token pertama p50"
+    },
+    "list": {
+      "title": "Analisis terkini",
+      "empty": "Tiada analisis yang sepadan",
+      "emptyMessage": "Luaskan julat masa atau kosongkan penapis.",
+      "filterNote": "Menggunakan julat masa dan penapis media di atas. Penapis titik akhir dan model hanya digunakan pada carta.",
+      "statusFilter": "Status",
+      "started": "Dimulakan",
+      "kind": "Jenis",
+      "status": "Status",
+      "analysisTime": "Masa analisis",
+      "queueWait": "Tempoh menunggu baris gilir",
+      "mediaDuration": "Tempoh media",
+      "mediaSize": "Saiz media",
+      "realtimeFactor": "Masa nyata",
+      "model": "Model",
+      "calls": "Panggilan",
+      "tokens": "Token",
+      "principal": "Prinsipal",
+      "id": "ID",
+      "bucketTitle": "Ditapis kepada satu baldi carta",
+      "bucketMessage": "Analisis dari {{from}} hingga {{to}}.",
+      "bucketClear": "Tunjukkan keseluruhan julat"
+    },
+    "detail": {
+      "title": "Butiran analisis",
+      "subtitle": "Analisis {{kind}}, {{time}}",
+      "notFound": "Rekod analisis ini tidak lagi wujud.",
+      "error": "Ralat",
+      "timeline": "Garis masa",
+      "timelineHelp": "Peringkat, kemudian setiap percubaan panggilan model. Bar panggilan menunjukkan tempoh menunggu baris gilir (paling cerah), menunggu token pertama, dan penjanaan.",
+      "calls": "Panggilan model",
+      "jsonTitle": "Rekod analisis",
+      "openJob": "Buka kerja",
+      "deleteTitle": "Padam rekod analisis",
+      "deleteMessage": "Padam rekod analitik {{id}}? Kerja dan hasilnya tidak terjejas.",
+      "callsValue": "{{calls}} ({{failed}} gagal)",
+      "retriesValue": "{{retries}} percubaan semula, {{repairs}} pembaikan",
+      "imagesValue": "{{count}} ({{size}})",
+      "fieldsValue": "{{count}} ({{invalid}} tidak sah)",
+      "fields": {
+        "kind": "Jenis media",
+        "principal": "Prinsipal",
+        "started": "Dimulakan",
+        "completed": "Selesai",
+        "analysisTime": "Masa analisis",
+        "queueWait": "Tempoh menunggu baris gilir",
+        "mediaDuration": "Tempoh media",
+        "mediaSize": "Saiz media",
+        "realtimeFactor": "Faktor masa nyata",
+        "visionModel": "Model penglihatan",
+        "textModel": "Model teks",
+        "transcriptionModel": "Model transkripsi",
+        "modelCalls": "Panggilan model",
+        "retries": "Percubaan semula dan pembaikan",
+        "promptTokens": "Token prompt",
+        "completionTokens": "Token pelengkapan",
+        "cachedTokens": "Token dicache",
+        "reasoningTokens": "Token penaakulan",
+        "totalTokens": "Jumlah token",
+        "inputImages": "Imej input",
+        "inputAudio": "Audio dihantar",
+        "scenes": "Adegan",
+        "transcriptCharacters": "Aksara transkrip",
+        "fields": "Medan"
+      }
+    },
+    "toast": {
+      "deleted": "Rekod analisis {{id}} dipadam."
+    }
+  }
+}

@@ -3,7 +3,7 @@
     "name": "Keyframe",
     "_postman_id": "5b8c3f0e-6a4d-4f1e-9a37-0c2d9e5b7a10",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Keyframe v0.1.0 (ALPHA) REST API: summaries and typed metadata from images and video.\n\nSet the collection variables before sending: protocol, host, and port build baseUrl; accessKey is sent as x-api-key on every request; adminKey is used by admin-only requests (settings, restart, endpoint tests, request history deletion). sampleImageUrl and sampleVideoUrl must be publicly reachable, because the server refuses private-network URLs by default.\n\nRun order that exercises everything: System, Image, Video / Analyze video (job), Jobs / Get job until Succeeded, Jobs / Get job result, then Endpoints, Settings, and Request History. Full reference: REST_API.md in the repository."
+    "description": "Keyframe v0.1.0 (ALPHA) REST API: summaries and typed metadata from images, video, and audio, segment retrieval, and analytics.\n\nSet the collection variables before sending: protocol, host, and port build baseUrl; accessKey is sent as x-api-key on every request; adminKey is used by admin-only requests (settings, restart, endpoint tests, request history deletion, analytics). sampleImageUrl, sampleVideoUrl, and sampleAudioUrl must be publicly reachable, because the server refuses private-network URLs by default.\n\nRun order that exercises everything: System, Image, Video / Analyze video (job), Audio / Analyze audio (job), Jobs / Get job until Succeeded, Jobs / Get job result, Segments, then Endpoints, Analytics, Settings, and Request History. Full reference: REST_API.md in the repository."
   },
   "auth": {
     "type": "apikey",
@@ -58,7 +58,7 @@
     },
     {
       "key": "endpointName",
-      "value": "mock",
+      "value": "ollama-gemma3-4b",
       "description": "Endpoint name from Inference.Endpoints"
     },
     {
@@ -70,6 +70,11 @@
       "key": "sampleVideoUrl",
       "value": "https://download.samplelib.com/mp4/sample-5s.mp4",
       "description": "Publicly reachable video URL"
+    },
+    {
+      "key": "sampleAudioUrl",
+      "value": "https://download.samplelib.com/mp3/sample-9s.mp3",
+      "description": "Publicly reachable audio URL (mp3, wav, flac, m4a, ogg, or webm)"
     },
     {
       "key": "sampleImageBase64",
@@ -90,6 +95,11 @@
       "key": "settingsBody",
       "value": "",
       "description": "Set by Get settings; sent by Update settings"
+    },
+    {
+      "key": "analysisId",
+      "value": "",
+      "description": "Set by Analytics / List analyses and Audio / Analyze audio (wait, defaults)"
     }
   ],
   "item": [
@@ -553,6 +563,333 @@
       ]
     },
     {
+      "name": "Audio",
+      "description": "Audio analysis runs as a background job, like video: 202 with the job (MediaKind Audio), or 200 with the full AudioAnalysisResponse when Wait is true and the job finishes in time. Accepts audio files (mp3, wav, flac, m4a or aac, ogg or opus, webm audio) and video files (audio track only). Transcribe and Summarize are on by default; Summarize and Extract run on the transcript with the text model. The test scripts store the job id in jobId for the Jobs folder and the analysis id in analysisId for the Analytics folder.",
+      "item": [
+        {
+          "name": "Analyze audio (job)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/audio",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "audio"
+              ]
+            },
+            "description": "Queues a job that transcribes the recording with the whisper endpoint, then summarizes it and extracts fields with the text model. Poll Jobs / Get job, then Jobs / Get job result.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Audio\": {\n    \"Url\": \"{{sampleAudioUrl}}\"\n  },\n  \"Context\": [\n    \"Daily standup of the platform team.\"\n  ],\n  \"TranscriptionModel\": {\n    \"Endpoint\": \"whisper\"\n  },\n  \"TextModel\": {\n    \"Endpoint\": \"ollama-gpt-oss-20b\"\n  },\n  \"Functions\": {\n    \"Transcribe\": {\n      \"Enable\": true,\n      \"Language\": \"en\"\n    },\n    \"Summarize\": {\n      \"Enable\": true,\n      \"Style\": \"Bullets\",\n      \"MaxWords\": 120\n    },\n    \"Extract\": {\n      \"Enable\": true,\n      \"Fields\": [\n        {\n          \"Key\": \"speakerNames\",\n          \"Type\": \"StringList\",\n          \"Prompt\": \"Names of the people who speak or are mentioned.\"\n        },\n        {\n          \"Key\": \"blockers\",\n          \"Type\": \"Boolean\",\n          \"Prompt\": \"Does anyone report a blocker?\"\n        }\n      ]\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('job accepted or finished', function () { pm.expect([200, 202]).to.include(pm.response.code); });",
+                  "const body = pm.response.json();",
+                  "if (body.Id && body.Id.startsWith('kfj_')) { pm.collectionVariables.set('jobId', body.Id); }",
+                  "const header = pm.response.headers.get('x-keyframe-job-id');",
+                  "if (header) { pm.collectionVariables.set('jobId', header); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Analyze audio (wait, defaults)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/audio",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "audio"
+              ]
+            },
+            "description": "Only the source and Wait: the defaults transcribe and summarize. Returns 200 with the AudioAnalysisResponse (Transcript, Results.Summary, Telemetry) when the job finishes within WaitTimeoutMs.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Audio\": {\n    \"Url\": \"{{sampleAudioUrl}}\"\n  },\n  \"Wait\": true,\n  \"WaitTimeoutMs\": 600000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200 or 202', function () { pm.expect([200, 202]).to.include(pm.response.code); });",
+                  "const body = pm.response.json();",
+                  "if (pm.response.code === 200 && body.Id && body.Id.startsWith('kfa_')) {",
+                  "  pm.collectionVariables.set('analysisId', body.Id);",
+                  "  pm.test('audio result', function () { pm.expect(body.MediaKind).to.eql('Audio'); });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Analyze audio track of a video",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/audio",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "audio"
+              ]
+            },
+            "description": "A video file as the source: only its audio track is transcribed, no frames are extracted, and the response carries a warning.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Audio\": {\n    \"Url\": \"{{sampleVideoUrl}}\"\n  },\n  \"Functions\": {\n    \"Transcribe\": {\n      \"Enable\": true\n    },\n    \"Summarize\": {\n      \"Enable\": true,\n      \"MaxWords\": 60\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('job accepted or finished', function () { pm.expect([200, 202]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Segments",
+      "description": "Cut a time range out of a video or audio source: a video clip (Output Video, mp4 or webm), an audio clip (Output Audio, mp3, wav, flac, m4a, or ogg), or a still frame at StartMs (Output Frame, jpg or png). Use StartMs and EndMs from Scenes or Transcript.Segments of an analysis result and resend the same Source; Keyframe does not keep uploaded media. Binary responses carry Content-Disposition and x-keyframe-segment-start-ms, -end-ms, and -duration-ms headers. Use Send and Download in Postman to save the media.",
+      "item": [
+        {
+          "name": "Segment as video (binary)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/segment",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "segment"
+              ]
+            },
+            "description": "A re-encoded mp4 clip of 1000 to 3500 ms, scaled to 480 pixels on the long edge. EndMs past the end of the media is clamped.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Source\": {\n    \"Url\": \"{{sampleVideoUrl}}\"\n  },\n  \"StartMs\": 1000,\n  \"EndMs\": 3500,\n  \"Output\": \"Video\",\n  \"Format\": \"mp4\",\n  \"MaxEdge\": 480\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('mp4', function () { pm.expect(pm.response.headers.get('Content-Type')).to.include('video/mp4'); });",
+                  "pm.test('range headers', function () { pm.expect(pm.response.headers.get('x-keyframe-segment-start-ms')).to.eql('1000'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Segment as audio (binary)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/segment",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "segment"
+              ]
+            },
+            "description": "The audio of the same range as mp3. Works on video and audio sources; a source without an audio track is 422.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Source\": {\n    \"Url\": \"{{sampleAudioUrl}}\"\n  },\n  \"StartMs\": 0,\n  \"EndMs\": 4000,\n  \"Output\": \"Audio\",\n  \"Format\": \"mp3\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('mp3', function () { pm.expect(pm.response.headers.get('Content-Type')).to.include('audio/mpeg'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Segment as frame (JSON)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/segment",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "segment"
+              ]
+            },
+            "description": "A JPEG still at StartMs returned as a SegmentResponse with base64 Data. EndMs is ignored for frames.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Source\": {\n    \"Url\": \"{{sampleVideoUrl}}\"\n  },\n  \"StartMs\": 2000,\n  \"Output\": \"Frame\",\n  \"Format\": \"jpg\",\n  \"ResponseFormat\": \"Json\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('jpeg data', function () { pm.expect(body.MediaType).to.eql('image/jpeg'); pm.expect(body.Data.length).to.be.above(0); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Segment validation error",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/segment",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "segment"
+              ]
+            },
+            "description": "EndMs before StartMs and an audio format for video output: 400 with every problem in Details.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Source\": {\n    \"Url\": \"{{sampleVideoUrl}}\"\n  },\n  \"StartMs\": 5000,\n  \"EndMs\": 1000,\n  \"Output\": \"Video\",\n  \"Format\": \"mp3\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "Jobs",
       "description": "Durable background jobs. Status is Queued, Running, Succeeded, Failed, Canceled, or Interrupted (the server stopped mid-job). Finished jobs are pruned after Jobs.RetentionDays.",
       "item": [
@@ -580,7 +917,7 @@
                 {
                   "key": "mediaKind",
                   "value": "Video",
-                  "description": "Image or Video",
+                  "description": "Video or Audio",
                   "disabled": true
                 },
                 {
@@ -676,7 +1013,7 @@
                 "result"
               ]
             },
-            "description": "The VideoAnalysisResponse of a succeeded job. Returns 409 until the job has succeeded."
+            "description": "The VideoAnalysisResponse (video job) or AudioAnalysisResponse (audio job) of a succeeded job. Returns 409 until the job has succeeded."
           }
         },
         {
@@ -803,6 +1140,330 @@
               }
             }
           ]
+        }
+      ]
+    },
+    {
+      "name": "Analytics",
+      "description": "Every finished image, video, and audio analysis is stored as an analysis row plus one row per model call attempt. These requests read and delete them, and all use the admin key. Summary distributions report Count, Min, Max, Avg, P50, P90, P95, P99, StdDev, and Sum; every bucket in the range is present. Analytics.Enabled and Analytics.RetentionDays control writing and pruning.",
+      "item": [
+        {
+          "name": "Get analytics summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/analytics/summary?bucket=hour",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "analytics",
+                "summary"
+              ],
+              "query": [
+                {
+                  "key": "fromUtc",
+                  "value": "2026-01-01T00:00:00Z",
+                  "description": "Inclusive lower bound on completion time. Default 24 hours before toUtc",
+                  "disabled": true
+                },
+                {
+                  "key": "toUtc",
+                  "value": "2030-01-01T00:00:00Z",
+                  "description": "Exclusive upper bound. Default now",
+                  "disabled": true
+                },
+                {
+                  "key": "bucket",
+                  "value": "hour",
+                  "description": "minute, hour, or day. Default by range",
+                  "disabled": false
+                },
+                {
+                  "key": "mediaKind",
+                  "value": "Audio",
+                  "description": "Image, Video, or Audio",
+                  "disabled": true
+                },
+                {
+                  "key": "endpoint",
+                  "value": "ollama-gpt-oss-20b",
+                  "description": "Endpoint name",
+                  "disabled": true
+                },
+                {
+                  "key": "model",
+                  "value": "gpt-oss:20b",
+                  "description": "Model name",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Totals, ByMediaKind, gap-filled Buckets, ByModel, ByStage, and ByPurpose for the range, with time to first token, generation time, and tokens per second per model.",
+            "auth": {
+              "type": "apikey",
+              "apikey": [
+                {
+                  "key": "key",
+                  "value": "x-api-key",
+                  "type": "string"
+                },
+                {
+                  "key": "value",
+                  "value": "{{adminKey}}",
+                  "type": "string"
+                },
+                {
+                  "key": "in",
+                  "value": "header",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('media kinds present', function () { pm.expect(body.ByMediaKind).to.have.all.keys('Image', 'Video', 'Audio'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List analyses",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/analytics/analyses?maxResults=50&skip=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "analytics",
+                "analyses"
+              ],
+              "query": [
+                {
+                  "key": "mediaKind",
+                  "value": "Image",
+                  "description": "Image, Video, or Audio",
+                  "disabled": true
+                },
+                {
+                  "key": "success",
+                  "value": "false",
+                  "description": "true or false",
+                  "disabled": true
+                },
+                {
+                  "key": "fromUtc",
+                  "value": "2026-01-01T00:00:00Z",
+                  "description": "Lower bound",
+                  "disabled": true
+                },
+                {
+                  "key": "toUtc",
+                  "value": "2030-01-01T00:00:00Z",
+                  "description": "Upper bound",
+                  "disabled": true
+                },
+                {
+                  "key": "maxResults",
+                  "value": "50",
+                  "description": "1 to 1000, default 50",
+                  "disabled": false
+                },
+                {
+                  "key": "skip",
+                  "value": "0",
+                  "description": "Rows to skip",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Stored analyses, newest first, without model calls. The test script stores the first id in analysisId.",
+            "auth": {
+              "type": "apikey",
+              "apikey": [
+                {
+                  "key": "key",
+                  "value": "x-api-key",
+                  "type": "string"
+                },
+                {
+                  "key": "value",
+                  "value": "{{adminKey}}",
+                  "type": "string"
+                },
+                {
+                  "key": "in",
+                  "value": "header",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "if (body.Items && body.Items.length > 0) { pm.collectionVariables.set('analysisId', body.Items[0].Id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get analysis",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/analytics/analyses/{{analysisId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "analytics",
+                "analyses",
+                "{{analysisId}}"
+              ]
+            },
+            "description": "One analysis with Calls: every model call attempt with QueueMs, TimeToFirstTokenMs, GenerationMs, TokensPerSecond, and tokens.",
+            "auth": {
+              "type": "apikey",
+              "apikey": [
+                {
+                  "key": "key",
+                  "value": "x-api-key",
+                  "type": "string"
+                },
+                {
+                  "key": "value",
+                  "value": "{{adminKey}}",
+                  "type": "string"
+                },
+                {
+                  "key": "in",
+                  "value": "header",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete analysis",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/analytics/analyses/{{analysisId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "analytics",
+                "analyses",
+                "{{analysisId}}"
+              ]
+            },
+            "description": "Deletes one analysis and its model calls. Returns DeletedCount 1, or 404.",
+            "auth": {
+              "type": "apikey",
+              "apikey": [
+                {
+                  "key": "key",
+                  "value": "x-api-key",
+                  "type": "string"
+                },
+                {
+                  "key": "value",
+                  "value": "{{adminKey}}",
+                  "type": "string"
+                },
+                {
+                  "key": "in",
+                  "value": "header",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete analyses older than",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/analytics/analyses?olderThanUtc=2026-01-01T00:00:00Z",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "analytics",
+                "analyses"
+              ],
+              "query": [
+                {
+                  "key": "olderThanUtc",
+                  "value": "2026-01-01T00:00:00Z",
+                  "description": "Exclusive cutoff on completion time",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Deletes analyses that completed before olderThanUtc, with their model calls. Without olderThanUtc, deletes all.",
+            "auth": {
+              "type": "apikey",
+              "apikey": [
+                {
+                  "key": "key",
+                  "value": "x-api-key",
+                  "type": "string"
+                },
+                {
+                  "key": "value",
+                  "value": "{{adminKey}}",
+                  "type": "string"
+                },
+                {
+                  "key": "in",
+                  "value": "header",
+                  "type": "string"
+                }
+              ]
+            }
+          }
         }
       ]
     },

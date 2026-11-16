@@ -6,6 +6,8 @@ their wire strings (``JobStatus.SUCCEEDED == "Succeeded"``). Timestamps are ISO 
 
 from __future__ import annotations
 
+import base64 as _base64
+import os as _os
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, Iterable, List, Optional, Union
@@ -87,6 +89,17 @@ class ProviderType(str, Enum):
     BEDROCK = "Bedrock"
     X_AI = "XAi"
     COHERE = "Cohere"
+
+
+class SegmentOutput(str, Enum):
+    VIDEO = "Video"
+    AUDIO = "Audio"
+    FRAME = "Frame"
+
+
+class SegmentResponseFormat(str, Enum):
+    BINARY = "Binary"
+    JSON = "Json"
 
 
 class DatabaseType(str, Enum):
@@ -278,6 +291,44 @@ class VideoAnalysisRequest(Model):
 
 
 @dataclass
+class AudioFunctionsSpec(FunctionsSpec):
+    """Audio functions. Transcribe and Summarize default on, Extract off."""
+
+    summarize: SummarizeSpec = field(default_factory=lambda: SummarizeSpec(enable=True))
+    transcribe: TranscribeSpec = field(default_factory=lambda: TranscribeSpec(enable=True))
+
+
+@dataclass
+class AudioAnalysisRequest(Model):
+    audio: Optional[MediaSource] = None
+    context: Any = field(default_factory=list)
+    wait: bool = False
+    wait_timeout_ms: int = 120000
+    transcription_model: Optional[ModelSelection] = None
+    text_model: Optional[ModelSelection] = None
+    include_properties: bool = True
+    functions: AudioFunctionsSpec = field(default_factory=AudioFunctionsSpec)
+    extra: Dict[str, Any] = _extra()
+
+    def __post_init__(self) -> None:
+        self.context = normalize_context(self.context)
+
+
+@dataclass
+class SegmentRequest(Model):
+    """Body of POST /v1.0/segment. ``end_ms`` is required except for Frame output."""
+
+    source: Optional[MediaSource] = None
+    start_ms: int = 0
+    end_ms: Optional[int] = None
+    output: Union[SegmentOutput, str] = SegmentOutput.VIDEO
+    format: Optional[str] = None
+    max_edge: Optional[int] = None
+    response_format: Union[SegmentResponseFormat, str] = SegmentResponseFormat.BINARY
+    extra: Dict[str, Any] = _extra()
+
+
+@dataclass
 class ProbeRequest(Model):
     media: Optional[MediaSource] = None
     extra: Dict[str, Any] = _extra()
@@ -339,6 +390,27 @@ class StageTiming(Model):
 
 
 @dataclass
+class ModelCallAttempt(Model):
+    attempt: int = 1
+    start_utc: Optional[str] = None
+    success: bool = False
+    error: Optional[str] = None
+    status_code: Optional[int] = None
+    duration_ms: float = 0.0
+    queue_ms: float = 0.0
+    time_to_first_token_ms: Optional[float] = None
+    generation_ms: Optional[float] = None
+    tokens_per_second: Optional[float] = None
+    prompt_tokens: Optional[int] = None
+    completion_tokens: Optional[int] = None
+    total_tokens: Optional[int] = None
+    cached_tokens: Optional[int] = None
+    reasoning_tokens: Optional[int] = None
+    finish_reason: Optional[str] = None
+    extra: Dict[str, Any] = _extra()
+
+
+@dataclass
 class ModelCallTelemetry(Model):
     purpose: ModelCallPurpose = ModelCallPurpose.SUMMARIZE
     target: Optional[str] = None
@@ -348,6 +420,9 @@ class ModelCallTelemetry(Model):
     start_utc: Optional[str] = None
     duration_ms: float = 0.0
     time_to_first_token_ms: Optional[float] = None
+    generation_ms: Optional[float] = None
+    tokens_per_second: Optional[float] = None
+    queue_ms: float = 0.0
     attempts: int = 1
     repair_attempts: int = 0
     success: bool = False
@@ -362,6 +437,7 @@ class ModelCallTelemetry(Model):
     cached_tokens: Optional[int] = None
     reasoning_tokens: Optional[int] = None
     finish_reason: Optional[str] = None
+    attempt_details: List[ModelCallAttempt] = field(default_factory=list)
     extra: Dict[str, Any] = _extra()
 
 
@@ -386,6 +462,7 @@ class AnalysisTelemetry(Model):
     end_utc: Optional[str] = None
     total_ms: float = 0.0
     queued_ms: Optional[float] = None
+    queue_wait_ms: float = 0.0
     stages: List[StageTiming] = field(default_factory=list)
     model_calls: List[ModelCallTelemetry] = field(default_factory=list)
     totals: TokenTotals = field(default_factory=TokenTotals)
@@ -395,6 +472,7 @@ class AnalysisTelemetry(Model):
 @dataclass
 class AnalysisResponse(Model):
     id: str = ""
+    request_id: Optional[str] = None
     success: bool = False
     media_kind: MediaKind = MediaKind.UNKNOWN
     properties: Optional[MediaProperties] = None
@@ -462,6 +540,11 @@ class VideoAnalysisResponse(AnalysisResponse):
 
 
 @dataclass
+class AudioAnalysisResponse(AnalysisResponse):
+    transcript: Optional[TranscriptResult] = None
+
+
+@dataclass
 class JobProgress(Model):
     stage: Optional[str] = None
     completed: int = 0
@@ -500,6 +583,53 @@ class VideoSubmitResult:
     job_id: str
     job: Optional[JobResponse] = None
     result: Optional[VideoAnalysisResponse] = None
+
+
+@dataclass
+class AudioSubmitResult:
+    """Outcome of POST /v1.0/audio. Exactly one of ``job`` or ``result`` is set."""
+
+    status_code: int
+    job_id: str
+    job: Optional[JobResponse] = None
+    result: Optional[AudioAnalysisResponse] = None
+
+
+@dataclass
+class SegmentResponse(Model):
+    """JSON form of POST /v1.0/segment (ResponseFormat Json). ``data`` is base64."""
+
+    media_type: str = ""
+    filename: str = ""
+    start_ms: int = 0
+    end_ms: int = 0
+    duration_ms: int = 0
+    size_bytes: int = 0
+    data: str = ""
+    extra: Dict[str, Any] = _extra()
+
+    def decode_data(self) -> bytes:
+        """The segment media decoded from base64."""
+        return _base64.b64decode(self.data) if self.data else b""
+
+
+@dataclass
+class SegmentMedia:
+    """Binary form of POST /v1.0/segment. Metadata comes from the response headers."""
+
+    data: bytes
+    media_type: Optional[str] = None
+    filename: Optional[str] = None
+    start_ms: Optional[int] = None
+    end_ms: Optional[int] = None
+    duration_ms: Optional[int] = None
+    size_bytes: int = 0
+    request_id: Optional[str] = None
+
+    def save(self, path: Union[str, "_os.PathLike[str]"]) -> None:
+        """Write the media bytes to a file."""
+        with open(path, "wb") as handle:
+            handle.write(self.data)
 
 
 @dataclass
@@ -542,6 +672,9 @@ class EndpointResponse(Model):
     active: bool = True
     is_default: bool = False
     provider_available: bool = False
+    supports_images: bool = False
+    supports_structured_output: bool = False
+    supports_transcription: bool = False
     healthy: bool = False
     health_message: Optional[str] = None
     last_checked_utc: Optional[str] = None
@@ -624,6 +757,190 @@ class DeleteResult(Model):
     extra: Dict[str, Any] = _extra()
 
 
+# Analytics
+
+
+@dataclass
+class Distribution(Model):
+    count: int = 0
+    min: float = 0.0
+    max: float = 0.0
+    avg: float = 0.0
+    p50: float = 0.0
+    p90: float = 0.0
+    p95: float = 0.0
+    p99: float = 0.0
+    std_dev: float = 0.0
+    sum: float = 0.0
+    extra: Dict[str, Any] = _extra()
+
+
+@dataclass
+class StatBlock(Model):
+    count: int = 0
+    succeeded: int = 0
+    failed: int = 0
+    success_rate: float = 0.0
+    analysis_ms: Optional[Distribution] = None
+    queue_wait_ms: Optional[Distribution] = None
+    media_duration_ms: Optional[Distribution] = None
+    realtime_factor: Optional[Distribution] = None
+    media_bytes: Optional[Distribution] = None
+    model_calls: int = 0
+    failed_model_calls: int = 0
+    retries: int = 0
+    repair_attempts: int = 0
+    model_call_ms: Optional[Distribution] = None
+    time_to_first_token_ms: Optional[Distribution] = None
+    generation_ms: Optional[Distribution] = None
+    tokens_per_second: Optional[Distribution] = None
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    total_tokens: int = 0
+    cached_tokens: int = 0
+    reasoning_tokens: int = 0
+    tokens_per_analysis: Optional[Distribution] = None
+    input_images: int = 0
+    input_image_bytes: int = 0
+    input_audio_bytes: int = 0
+    scenes: int = 0
+    transcript_characters: int = 0
+    extra: Dict[str, Any] = _extra()
+
+
+@dataclass
+class AnalyticsBucket(Model):
+    start_utc: Optional[str] = None
+    stats: StatBlock = field(default_factory=StatBlock)
+    extra: Dict[str, Any] = _extra()
+
+
+@dataclass
+class ModelStats(Model):
+    endpoint: str = ""
+    provider: Union[ProviderType, str] = ProviderType.MOCK
+    model: Optional[str] = None
+    calls: int = 0
+    failed: int = 0
+    duration_ms: Optional[Distribution] = None
+    time_to_first_token_ms: Optional[Distribution] = None
+    generation_ms: Optional[Distribution] = None
+    tokens_per_second: Optional[Distribution] = None
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    extra: Dict[str, Any] = _extra()
+
+
+@dataclass
+class StageStats(Model):
+    stage: str = ""
+    duration_ms: Optional[Distribution] = None
+    extra: Dict[str, Any] = _extra()
+
+
+@dataclass
+class PurposeStats(Model):
+    purpose: Union[ModelCallPurpose, str] = ModelCallPurpose.SUMMARIZE
+    calls: int = 0
+    failed: int = 0
+    duration_ms: Optional[Distribution] = None
+    time_to_first_token_ms: Optional[Distribution] = None
+    extra: Dict[str, Any] = _extra()
+
+
+@dataclass
+class AnalyticsSummary(Model):
+    from_utc: Optional[str] = None
+    to_utc: Optional[str] = None
+    bucket: str = "hour"
+    media_kind: Optional[Union[MediaKind, str]] = None
+    endpoint: Optional[str] = None
+    model: Optional[str] = None
+    totals: StatBlock = field(default_factory=StatBlock)
+    by_media_kind: Dict[str, StatBlock] = field(default_factory=dict)
+    buckets: List[AnalyticsBucket] = field(default_factory=list)
+    by_model: List[ModelStats] = field(default_factory=list)
+    by_stage: List[StageStats] = field(default_factory=list)
+    by_purpose: List[PurposeStats] = field(default_factory=list)
+    extra: Dict[str, Any] = _extra()
+
+
+@dataclass
+class ModelCallRecord(Model):
+    id: str = ""
+    analysis_id: str = ""
+    purpose: Union[ModelCallPurpose, str] = ModelCallPurpose.SUMMARIZE
+    target: Optional[str] = None
+    endpoint: str = ""
+    provider: Union[ProviderType, str] = ProviderType.MOCK
+    model: Optional[str] = None
+    attempt: int = 1
+    start_utc: Optional[str] = None
+    success: bool = False
+    error: Optional[str] = None
+    status_code: Optional[int] = None
+    duration_ms: float = 0.0
+    queue_ms: float = 0.0
+    time_to_first_token_ms: Optional[float] = None
+    generation_ms: Optional[float] = None
+    tokens_per_second: Optional[float] = None
+    prompt_tokens: Optional[int] = None
+    completion_tokens: Optional[int] = None
+    total_tokens: Optional[int] = None
+    cached_tokens: Optional[int] = None
+    reasoning_tokens: Optional[int] = None
+    input_images: int = 0
+    input_image_bytes: int = 0
+    input_audio_bytes: int = 0
+    finish_reason: Optional[str] = None
+    extra: Dict[str, Any] = _extra()
+
+
+@dataclass
+class AnalysisRecord(Model):
+    """A stored analysis. ``calls`` is filled by ``analytics.get_analysis`` and None in listings."""
+
+    id: str = ""
+    request_id: Optional[str] = None
+    job_id: Optional[str] = None
+    media_kind: MediaKind = MediaKind.UNKNOWN
+    principal_name: Optional[str] = None
+    success: bool = False
+    error: Optional[str] = None
+    started_utc: Optional[str] = None
+    completed_utc: Optional[str] = None
+    analysis_ms: float = 0.0
+    queue_wait_ms: float = 0.0
+    media_duration_ms: Optional[int] = None
+    media_bytes: int = 0
+    realtime_factor: Optional[float] = None
+    vision_endpoint: Optional[str] = None
+    vision_model: Optional[str] = None
+    text_endpoint: Optional[str] = None
+    text_model: Optional[str] = None
+    transcription_endpoint: Optional[str] = None
+    transcription_model: Optional[str] = None
+    model_calls: int = 0
+    failed_model_calls: int = 0
+    retries: int = 0
+    repair_attempts: int = 0
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    total_tokens: int = 0
+    cached_tokens: int = 0
+    reasoning_tokens: int = 0
+    input_images: int = 0
+    input_image_bytes: int = 0
+    input_audio_bytes: int = 0
+    scenes: int = 0
+    transcript_characters: int = 0
+    field_count: int = 0
+    invalid_fields: int = 0
+    stages: List[StageTiming] = field(default_factory=list)
+    calls: Optional[List[ModelCallRecord]] = None
+    extra: Dict[str, Any] = _extra()
+
+
 @dataclass
 class RestartResponse(Model):
     accepted: bool = True
@@ -692,9 +1009,9 @@ class EndpointSettings(Model):
 
 @dataclass
 class InferenceSettings(Model):
-    default_vision: Optional[str] = "mock"
-    default_text: Optional[str] = None
-    default_transcription: Optional[str] = "mock-stt"
+    default_vision: Optional[str] = "ollama-gemma3-4b"
+    default_text: Optional[str] = "ollama-gpt-oss-20b"
+    default_transcription: Optional[str] = "whisper"
     max_retries: int = 2
     max_repair_attempts: int = 1
     retry_backoff_ms: int = 500
@@ -718,6 +1035,8 @@ class MediaSettings(Model):
     max_parallel_ffmpeg: int = 4
     ffmpeg_timeout_ms: int = 600000
     max_video_duration_ms: int = 14400000
+    max_segment_ms: int = 600000
+    max_audio_duration_ms: int = 14400000
     transcription_chunk_seconds: int = 600
     extra: Dict[str, Any] = _extra()
 
@@ -737,6 +1056,13 @@ class RequestHistorySettings(Model):
     max_request_body_bytes: int = 65536
     max_response_body_bytes: int = 65536
     retention_days: int = 30
+    extra: Dict[str, Any] = _extra()
+
+
+@dataclass
+class AnalyticsSettings(Model):
+    enabled: bool = True
+    retention_days: int = 90
     extra: Dict[str, Any] = _extra()
 
 
@@ -787,6 +1113,7 @@ class KeyframeSettings(Model):
     media: MediaSettings = field(default_factory=MediaSettings)
     jobs: JobSettings = field(default_factory=JobSettings)
     request_history: RequestHistorySettings = field(default_factory=RequestHistorySettings)
+    analytics: AnalyticsSettings = field(default_factory=AnalyticsSettings)
     logging: LoggingSettings = field(default_factory=LoggingSettings)
     telemetry: TelemetrySettings = field(default_factory=TelemetrySettings)
     extra: Dict[str, Any] = _extra()

@@ -2,8 +2,8 @@
 rem Factory reset for the Keyframe Docker stack. DESTRUCTIVE.
 rem
 rem Stops the stack, deletes its named volumes (database, media temp, logs, Prometheus, Tempo, Loki, Grafana,
-rem and Ollama models), removes any local data directories, restores keyframe.json from the factory copy (mock
-rem provider, default keys), and brings the stack back up.
+rem Whisper and Ollama models), removes any local data directories, restores keyframe.json from the factory copy (Ollama
+rem and Whisper endpoints, default keys), and brings the stack back up.
 rem
 rem Usage: reset.bat [-y]    (-y skips the confirmation prompt)
 

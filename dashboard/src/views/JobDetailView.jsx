@@ -13,6 +13,7 @@ import Tabs from '../components/Tabs';
 import JsonViewer, { JsonViewerModal } from '../components/JsonViewer';
 import Icon from '../components/Icon';
 import SceneTimeline, { TranscriptViewer } from '../components/SceneTimeline';
+import { SegmentSourceProvider } from '../components/SegmentDownloads';
 import TelemetryWaterfall, { ModelCallTable, TelemetryTotals } from '../components/TelemetryWaterfall';
 import { FieldsTable, PropertiesGrid, Problems, ResultsList } from '../components/AnalysisParts';
 import { ErrorBanner, LoadingState, Notice } from '../components/States';
@@ -117,7 +118,7 @@ function JobDetailView() {
     { id: 'transcript', label: t('jobDetail.tabs.transcript'), badge: result && result.Transcript ? formatNumber(transcriptCount, locale) : null },
     { id: 'telemetry', label: t('jobDetail.tabs.telemetry') },
     { id: 'raw', label: t('jobDetail.tabs.raw') }
-  ];
+  ].filter((tb) => !(job.MediaKind === 'Audio' && tb.id === 'scenes'));
 
   const meta = [
     ['jobDetail.meta.kind', t('enums.mediaKind.' + job.MediaKind, { defaultValue: job.MediaKind })],
@@ -230,8 +231,10 @@ function JobDetailView() {
                     <PropertiesGrid properties={result.Properties} />
                   </div>
                 ) : null}
-                {tab === 'scenes' ? <SceneTimeline scenes={scenes} durationMs={result.Properties && result.Properties.DurationMs} /> : null}
-                {tab === 'transcript' ? <TranscriptViewer transcript={result.Transcript} /> : null}
+                <SegmentSourceProvider job={job}>
+                  {tab === 'scenes' ? <SceneTimeline scenes={scenes} durationMs={result.Properties && result.Properties.DurationMs} /> : null}
+                  {tab === 'transcript' ? <TranscriptViewer transcript={result.Transcript} /> : null}
+                </SegmentSourceProvider>
                 {tab === 'telemetry' ? (
                   <>
                     <TelemetryTotals telemetry={result.Telemetry} />

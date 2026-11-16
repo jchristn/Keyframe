@@ -162,7 +162,7 @@ function JobsView() {
         </label>
         <select id={ids + 'kind'} className="select-compact" value={filters.mediaKind} onChange={(e) => setFilter({ mediaKind: e.target.value })}>
           <option value="">{t('common.any')}</option>
-          {['Image', 'Video'].map((s) => (
+          {['Image', 'Video', 'Audio'].map((s) => (
             <option key={s} value={s}>
               {t('enums.mediaKind.' + s)}
             </option>

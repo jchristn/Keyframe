@@ -164,6 +164,109 @@ namespace Test.Shared
                     Check.True(result.Scenes.Count >= 1, "scenes returned inline");
                 }, new[] { "server", "ffmpeg" }, skip),
 
+                new TestCaseDescriptor(Id, "AudioRoute", "Audio jobs: 202 and poll, Wait, MediaKind filter, validation", async ct =>
+                {
+                    ServerFixture f = await ServerFixture.SharedAsync(ct).ConfigureAwait(false);
+                    string data = await TestEnvironment.Base64Async(await TestEnvironment.Mp3Async(ct).ConfigureAwait(false), ct).ConfigureAwait(false);
+                    string body = "{\"Audio\":{\"Data\":\"" + data + "\",\"Filename\":\"tone.mp3\"},\"Context\":[\"A test tone.\"],"
+                        + "\"Functions\":{\"Transcribe\":{\"Enable\":true,\"Language\":\"en\"},\"Summarize\":{\"Enable\":true,\"MaxWords\":50},"
+                        + "\"Extract\":{\"Enable\":true,\"Fields\":[{\"Key\":\"speakerCount\",\"Type\":\"Integer\",\"Prompt\":\"Speakers?\"}]}}}";
+
+                    JobResponse accepted = await f.JsonAsync<JobResponse>(HttpMethod.Post, "/v1.0/audio", Key, body, HttpStatusCode.Accepted, ct).ConfigureAwait(false);
+                    Check.Equal(MediaKindEnum.Audio, accepted.MediaKind, "audio job");
+                    JobResponse job = await WaitForAsync(f, accepted.Id, ct).ConfigureAwait(false);
+                    Check.Equal(JobStatusEnum.Succeeded, job.Status, "succeeded: " + job.Error);
+                    AudioAnalysisResponse result = await f.JsonAsync<AudioAnalysisResponse>(HttpMethod.Get, job.ResultUrl!, Key, null, HttpStatusCode.OK, ct).ConfigureAwait(false);
+                    Check.Equal(MediaKindEnum.Audio, result.MediaKind, "result kind");
+                    Check.True(result.Transcript != null && result.Transcript.Segments.Count > 0, "transcript");
+                    Check.True(result.Results["Summary"] != null && result.Results.ContainsKey("speakerCount"), "summary and field");
+                    Check.True(result.RequestId != null && result.RequestId.Length > 0, "request id recorded");
+                    Check.True(result.Telemetry.QueuedMs.HasValue && result.Telemetry.QueueWaitMs >= 0, "queue wait recorded");
+
+                    EnumerationResult<JobResponse> list = await f.JsonAsync<EnumerationResult<JobResponse>>(HttpMethod.Get, "/v1.0/jobs?mediaKind=Audio&pageSize=100", Key, null, HttpStatusCode.OK, ct).ConfigureAwait(false);
+                    Check.True(list.Items.Any(j => j.Id == job.Id) && list.Items.All(j => j.MediaKind == MediaKindEnum.Audio), "media kind filter");
+
+                    string wait = "{\"Audio\":{\"Data\":\"" + data + "\"},\"Wait\":true,\"WaitTimeoutMs\":60000}";
+                    AudioAnalysisResponse inline = await f.JsonAsync<AudioAnalysisResponse>(HttpMethod.Post, "/v1.0/audio", Key, wait, HttpStatusCode.OK, ct).ConfigureAwait(false);
+                    Check.True(inline.Success && inline.Results.ContainsKey("Summary") && inline.Transcript != null, "defaults transcribe and summarize");
+
+                    ApiErrorResponse invalid = await f.JsonAsync<ApiErrorResponse>(HttpMethod.Post, "/v1.0/audio", Key,
+                        "{\"Audio\":{\"Data\":\"" + data + "\"},\"Functions\":{\"Transcribe\":{\"Enable\":false},\"Summarize\":{\"Enable\":true}}}", HttpStatusCode.BadRequest, ct).ConfigureAwait(false);
+                    Check.True(invalid.Details.Any(d => d.Contains("Transcribe")), "summary needs transcription");
+                    await f.JsonAsync<ApiErrorResponse>(HttpMethod.Post, "/v1.0/audio", Key, "{\"Audio\":{\"Data\":\"" + data + "\"},\"TranscriptionModel\":{\"Endpoint\":\"nope\"}}", HttpStatusCode.BadRequest, ct).ConfigureAwait(false);
+                    await f.JsonAsync<ApiErrorResponse>(HttpMethod.Post, "/v1.0/audio", null, wait, HttpStatusCode.Unauthorized, ct).ConfigureAwait(false);
+                }, new[] { "server", "ffmpeg" }, skip),
+
+                new TestCaseDescriptor(Id, "AnalyticsRoutes", "Image and audio analyses are recorded; summary, list, read, delete need admin", async ct =>
+                {
+                    using (ServerFixture f = await ServerFixture.StartAsync(null, ct).ConfigureAwait(false))
+                    {
+                        string png = await TestEnvironment.Base64Async(await TestEnvironment.PngAsync(ct).ConfigureAwait(false), ct).ConfigureAwait(false);
+                        ImageAnalysisResponse image = await f.JsonAsync<ImageAnalysisResponse>(HttpMethod.Post, "/v1.0/image", Key,
+                            "{\"Image\":{\"Data\":\"" + png + "\"},\"Functions\":{\"Summarize\":{\"Enable\":true}}}", HttpStatusCode.OK, ct).ConfigureAwait(false);
+                        Check.True(!String.IsNullOrEmpty(image.RequestId), "image request id");
+                        Check.Equal(0.0, image.Telemetry.QueueWaitMs, "no queue wait for images");
+
+                        string mp3 = await TestEnvironment.Base64Async(await TestEnvironment.Mp3Async(ct).ConfigureAwait(false), ct).ConfigureAwait(false);
+                        AudioAnalysisResponse audio = await f.JsonAsync<AudioAnalysisResponse>(HttpMethod.Post, "/v1.0/audio", Key,
+                            "{\"Audio\":{\"Data\":\"" + mp3 + "\"},\"Wait\":true}", HttpStatusCode.OK, ct).ConfigureAwait(false);
+                        await f.JsonAsync<ApiErrorResponse>(HttpMethod.Post, "/v1.0/image", Key, "{\"Image\":{\"Data\":\"aGVsbG8gd29ybGQ=\"},\"Functions\":{\"Summarize\":{\"Enable\":true}}}", (HttpStatusCode)422, ct).ConfigureAwait(false);
+                        Check.True(await f.Server.Context.Analytics.FlushAsync(10000, ct).ConfigureAwait(false), "analytics written");
+
+                        await f.JsonAsync<ApiErrorResponse>(HttpMethod.Get, "/v1.0/analytics/summary", Key, null, HttpStatusCode.Forbidden, ct).ConfigureAwait(false);
+                        AnalyticsSummary summary = await f.JsonAsync<AnalyticsSummary>(HttpMethod.Get, "/v1.0/analytics/summary", Admin, null, HttpStatusCode.OK, ct).ConfigureAwait(false);
+                        Check.Equal("hour", summary.Bucket, "24 hour default range uses hourly buckets");
+                        Check.True(summary.Buckets.Count >= 24 && summary.Buckets.Count <= 25, "every hour present: " + summary.Buckets.Count);
+                        Check.Equal(3L, summary.Totals.Count, "three analyses");
+                        Check.Equal(1L, summary.Totals.Failed, "the undecodable image counts as a failure");
+                        Check.Equal(2L, summary.ByMediaKind["Image"].Count, "two images");
+                        Check.Equal(1L, summary.ByMediaKind["Audio"].Count, "one audio");
+                        Check.True(summary.Totals.TimeToFirstTokenMs != null && summary.Totals.TimeToFirstTokenMs.Count >= 2, "time to first token");
+                        Check.True(summary.Totals.TokensPerSecond != null && summary.Totals.GenerationMs != null, "generation stats");
+                        Check.True(summary.ByMediaKind["Audio"].RealtimeFactor != null && summary.ByMediaKind["Audio"].MediaDurationMs!.Avg > 7000, "audio realtime factor and duration");
+                        Check.True(summary.ByModel.Any(m => m.Endpoint == "mock") && summary.ByModel.Any(m => m.Endpoint == "mock-stt"), "by model");
+                        Check.True(summary.ByStage.Any(s => s.Stage == "Transcribe") && summary.ByStage.Any(s => s.Stage == "Normalize"), "by stage");
+                        Check.True(summary.ByPurpose.Any(p => p.Purpose == ModelCallPurposeEnum.Transcribe), "by purpose");
+
+                        AnalyticsSummary minute = await f.JsonAsync<AnalyticsSummary>(HttpMethod.Get, "/v1.0/analytics/summary?bucket=minute&mediaKind=Audio&fromUtc=" + Uri.EscapeDataString(DateTime.UtcNow.AddMinutes(-30).ToString("o")), Admin, null, HttpStatusCode.OK, ct).ConfigureAwait(false);
+                        Check.True(minute.Bucket == "minute" && minute.Buckets.Count >= 30 && minute.Totals.Count == 1 && minute.MediaKind == MediaKindEnum.Audio, "minute buckets and media filter");
+                        await f.JsonAsync<ApiErrorResponse>(HttpMethod.Get, "/v1.0/analytics/summary?bucket=minute&fromUtc=2020-01-01T00:00:00Z", Admin, null, HttpStatusCode.BadRequest, ct).ConfigureAwait(false);
+                        await f.JsonAsync<ApiErrorResponse>(HttpMethod.Get, "/v1.0/analytics/summary?bucket=week", Admin, null, HttpStatusCode.BadRequest, ct).ConfigureAwait(false);
+
+                        EnumerationResult<AnalysisRecord> list = await f.JsonAsync<EnumerationResult<AnalysisRecord>>(HttpMethod.Get, "/v1.0/analytics/analyses?maxResults=2", Admin, null, HttpStatusCode.OK, ct).ConfigureAwait(false);
+                        Check.Equal(3L, list.TotalCount, "listed");
+                        Check.Equal(2, list.Items.Count, "maxResults");
+                        EnumerationResult<AnalysisRecord> failures = await f.JsonAsync<EnumerationResult<AnalysisRecord>>(HttpMethod.Get, "/v1.0/analytics/analyses?success=false", Admin, null, HttpStatusCode.OK, ct).ConfigureAwait(false);
+                        Check.True(failures.TotalCount == 1 && failures.Items[0].Error != null, "failure listed with error");
+
+                        AnalysisRecord audioRecord = await f.JsonAsync<AnalysisRecord>(HttpMethod.Get, "/v1.0/analytics/analyses/" + audio.Id, Admin, null, HttpStatusCode.OK, ct).ConfigureAwait(false);
+                        Check.Equal(MediaKindEnum.Audio, audioRecord.MediaKind, "audio record");
+                        Check.True(audioRecord.JobId != null && audioRecord.JobId.StartsWith("kfj_"), "job id");
+                        Check.Equal(audio.RequestId, audioRecord.RequestId, "request id");
+                        Check.Equal("tester", audioRecord.PrincipalName, "principal");
+                        Check.Equal("mock-stt", audioRecord.TranscriptionEndpoint, "transcription endpoint");
+                        Check.Equal("mock", audioRecord.TextEndpoint, "text endpoint");
+                        Check.True(audioRecord.Calls != null && audioRecord.Calls.Count == audio.Telemetry.ModelCalls.Count, "one row per attempt");
+                        Check.True(audioRecord.Calls!.All(c => c.Id.StartsWith("kfc_")), "call ids");
+                        Check.True(audioRecord.TranscriptCharacters > 0 && audioRecord.InputAudioBytes > 0, "transcript and audio bytes");
+
+                        DeleteResult one = await f.JsonAsync<DeleteResult>(HttpMethod.Delete, "/v1.0/analytics/analyses/" + image.Id, Admin, null, HttpStatusCode.OK, ct).ConfigureAwait(false);
+                        Check.Equal(1, one.DeletedCount, "deleted one");
+                        await f.JsonAsync<ApiErrorResponse>(HttpMethod.Get, "/v1.0/analytics/analyses/" + image.Id, Admin, null, HttpStatusCode.NotFound, ct).ConfigureAwait(false);
+                        await f.JsonAsync<ApiErrorResponse>(HttpMethod.Delete, "/v1.0/analytics/analyses/" + image.Id, Admin, null, HttpStatusCode.NotFound, ct).ConfigureAwait(false);
+                        DeleteResult none = await f.JsonAsync<DeleteResult>(HttpMethod.Delete, "/v1.0/analytics/analyses?olderThanUtc=2020-01-01T00:00:00Z", Admin, null, HttpStatusCode.OK, ct).ConfigureAwait(false);
+                        Check.Equal(0, none.DeletedCount, "nothing older than 2020");
+                        DeleteResult rest = await f.JsonAsync<DeleteResult>(HttpMethod.Delete, "/v1.0/analytics/analyses", Admin, null, HttpStatusCode.OK, ct).ConfigureAwait(false);
+                        Check.Equal(2, rest.DeletedCount, "deleted the rest");
+
+                        f.Settings.Settings.Analytics.Enabled = false;
+                        await f.JsonAsync<ImageAnalysisResponse>(HttpMethod.Post, "/v1.0/image", Key, "{\"Image\":{\"Data\":\"" + png + "\"},\"Functions\":{\"Summarize\":{\"Enable\":true}}}", HttpStatusCode.OK, ct).ConfigureAwait(false);
+                        await f.Server.Context.Analytics.FlushAsync(5000, ct).ConfigureAwait(false);
+                        EnumerationResult<AnalysisRecord> disabled = await f.JsonAsync<EnumerationResult<AnalysisRecord>>(HttpMethod.Get, "/v1.0/analytics/analyses", Admin, null, HttpStatusCode.OK, ct).ConfigureAwait(false);
+                        Check.Equal(0L, disabled.TotalCount, "nothing written while disabled");
+                    }
+                }, new[] { "server", "ffmpeg" }, skip),
+
                 new TestCaseDescriptor(Id, "JobCancel", "A queued job can be canceled", async ct =>
                 {
                     using (ServerFixture f = await ServerFixture.StartAsync(s => s.Jobs.MaxConcurrentJobs = 1, ct).ConfigureAwait(false))

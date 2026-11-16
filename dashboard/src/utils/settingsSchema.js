@@ -2,7 +2,9 @@
 // server's Math.Clamp bounds so the UI never offers a value the server would silently change.
 // Labels and help are i18n keys under settings.fields.<path>.
 
-export const PROVIDERS = ['Mock', 'Ollama', 'OllamaCloud', 'OpenAi', 'OpenAiCompatible', 'AzureOpenAi', 'Anthropic', 'Gemini', 'VertexAi', 'Bedrock', 'XAi', 'Cohere'];
+// Mock is a test double: listed last, never a default, and nothing in the dashboard assumes an
+// endpoint with that name exists.
+export const PROVIDERS = ['Ollama', 'OllamaCloud', 'OpenAi', 'OpenAiCompatible', 'AzureOpenAi', 'Anthropic', 'Gemini', 'VertexAi', 'Bedrock', 'XAi', 'Cohere', 'Mock'];
 export const ENDPOINT_KINDS = ['Completion', 'Transcription'];
 export const DATABASE_TYPES = ['Sqlite', 'Mysql', 'Postgresql', 'SqlServer'];
 export const OTLP_PROTOCOLS = ['grpc', 'httpprotobuf'];
@@ -115,7 +117,8 @@ export const SETTINGS_SECTIONS = [
       { path: 'Media.MaxParallelFfmpeg', type: 'number', min: 1, max: 64 },
       { path: 'Media.FfmpegTimeoutMs', type: 'number', min: 1000, max: 14400000, unit: 'ms' },
       { path: 'Media.MaxVideoDurationMs', type: 'number', min: 1000, max: 86400000, unit: 'ms' },
-      { path: 'Media.TranscriptionChunkSeconds', type: 'number', min: 10, max: 7200 }
+      { path: 'Media.TranscriptionChunkSeconds', type: 'number', min: 10, max: 7200 },
+      { path: 'Media.MaxSegmentMs', type: 'number', min: 1000, max: 14400000, unit: 'ms', showIf: (s) => getPath(s, 'Media.MaxSegmentMs') !== undefined }
     ]
   },
   {
@@ -136,6 +139,15 @@ export const SETTINGS_SECTIONS = [
       { path: 'RequestHistory.MaxRequestBodyBytes', type: 'number', min: 0, max: 1048576, unit: 'bytes' },
       { path: 'RequestHistory.MaxResponseBodyBytes', type: 'number', min: 0, max: 1048576, unit: 'bytes' },
       { path: 'RequestHistory.RetentionDays', type: 'number', min: 1, max: 3650 }
+    ]
+  },
+  {
+    id: 'analytics',
+    key: 'Analytics',
+    optional: true,
+    fields: [
+      { path: 'Analytics.Enabled', type: 'bool' },
+      { path: 'Analytics.RetentionDays', type: 'number', min: 1, max: 3650 }
     ]
   },
   {
@@ -181,6 +193,11 @@ export const SETTINGS_SECTIONS = [
   }
 ];
 
+/** Sections the loaded settings actually contain (optional sections appear only when the server sends them). */
+export function presentSections(settings) {
+  return SETTINGS_SECTIONS.filter((s) => !s.optional || (settings && settings[s.key] !== undefined));
+}
+
 export function getPath(obj, path) {
   return path.split('.').reduce((o, k) => (o === null || o === undefined ? undefined : o[k]), obj);
 }
@@ -208,7 +225,7 @@ export function validateSettings(settings) {
   const need = (path, value) => {
     if (value === null || value === undefined || String(value).trim() === '') errors[path] = 'settings.errors.required';
   };
-  for (const section of SETTINGS_SECTIONS) {
+  for (const section of presentSections(settings)) {
     for (const f of section.fields) {
       if (f.showIf && !f.showIf(settings)) continue;
       const v = getPath(settings, f.path);
@@ -246,8 +263,9 @@ export function normalizeForSave(settings) {
     if (f.max !== undefined) n = Math.min(f.max, n);
     return f.float || f.step ? n : Math.trunc(n);
   };
-  for (const section of SETTINGS_SECTIONS) {
+  for (const section of presentSections(settings)) {
     for (const f of section.fields) {
+      if (f.showIf && !f.showIf(settings)) continue;
       if (f.type === 'number' || f.type === 'nullableNumber') out = setPath(out, f.path, clamp(f, getPath(out, f.path)));
       if (f.type === 'select' && typeof f.options[0] === 'number') out = setPath(out, f.path, Number(getPath(out, f.path)));
       if (f.type === 'nullableText' || f.type === 'endpointRef') {

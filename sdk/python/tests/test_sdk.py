@@ -14,6 +14,11 @@ import pytest
 from conftest import ACCESS_KEY, ADMIN_KEY, URL, Media
 from keyframe_sdk import (
     AccessKeySettings,
+    AnalysisRecord,
+    AnalyticsSummary,
+    AudioAnalysisRequest,
+    AudioAnalysisResponse,
+    AudioFunctionsSpec,
     ContextItem,
     EndpointKind,
     ExtractMode,
@@ -35,6 +40,10 @@ from keyframe_sdk import (
     ProbeRequest,
     ProviderType,
     SceneDetectionSpec,
+    SegmentMedia,
+    SegmentOutput,
+    SegmentRequest,
+    SegmentResponse,
     ScenesSpec,
     SummarizeSpec,
     SummaryStyle,
@@ -379,6 +388,220 @@ class TestVideo:
         expect_api_error(404, lambda: user.jobs.delete("kfj_doesnotexist"))
 
 
+# Audio
+
+
+def audio_request(path, wait: bool) -> AudioAnalysisRequest:
+    return AudioAnalysisRequest(
+        audio=media_from_file(path),
+        context="Synthetic test tone.",
+        wait=wait,
+        wait_timeout_ms=60000,
+        functions=AudioFunctionsSpec(
+            transcribe=TranscribeSpec(enable=True, language="en"),
+            summarize=SummarizeSpec(enable=True, max_words=30),
+            extract=ExtractSpec(enable=True, fields=[FieldSpec(key="speakerCount", type=FieldType.INTEGER, prompt="How many speakers?")]),
+        ),
+    )
+
+
+def check_audio_result(result: AudioAnalysisResponse) -> None:
+    assert isinstance(result, AudioAnalysisResponse)
+    assert result.success, "; ".join(result.errors)
+    assert result.media_kind == MediaKind.AUDIO
+    assert result.id.startswith("kfa_")
+    assert result.request_id
+    assert result.transcript is not None and result.transcript.text and result.transcript.segments
+    assert "Summary" in result.results and "speakerCount" in result.results
+    assert result.properties is not None and result.properties.has_audio and result.properties.duration_ms
+
+
+@pytest.fixture(scope="module")
+def audio_analysis(user: KeyframeClient, media: Media) -> AudioAnalysisResponse:
+    media.require()
+    return user.audio.analyze_and_wait(audio_request(media.audio, False), poll_interval_s=0.2, timeout_s=120)
+
+
+class TestAudio:
+    def test_defaults(self) -> None:
+        body = AudioAnalysisRequest().to_dict(omit_none=True)
+        assert body["Functions"]["Transcribe"]["Enable"] is True
+        assert body["Functions"]["Summarize"]["Enable"] is True
+        assert body["Functions"]["Extract"]["Enable"] is False
+        assert body["WaitTimeoutMs"] == 120000
+
+    def test_lifecycle(self, user: KeyframeClient, media: Media) -> None:
+        media.require()
+        submitted = user.audio.analyze(audio_request(media.audio, False))
+        assert submitted.status_code == 202
+        assert submitted.job is not None and submitted.result is None
+        assert submitted.job_id.startswith("kfj_")
+        assert submitted.job.media_kind == MediaKind.AUDIO
+
+        done = user.jobs.wait(submitted.job_id, poll_interval_s=0.2, timeout_s=120)
+        assert done.status == JobStatus.SUCCEEDED, done.error
+        check_audio_result(user.jobs.get_audio_result(submitted.job_id))
+
+        page = user.jobs.list(media_kind="Audio", page_size=100)
+        assert any(j.id == submitted.job_id for j in page.items)
+        assert all(j.media_kind == MediaKind.AUDIO for j in page.items)
+        user.jobs.delete(submitted.job_id)
+
+    def test_wait_returns_result(self, user: KeyframeClient, media: Media) -> None:
+        media.require()
+        submitted = user.audio.analyze(audio_request(media.audio, True))
+        assert submitted.status_code == 200
+        assert submitted.result is not None and submitted.job is None
+        assert submitted.job_id.startswith("kfj_")
+        check_audio_result(submitted.result)
+        user.jobs.delete(submitted.job_id)
+
+    def test_analyze_and_wait(self, audio_analysis: AudioAnalysisResponse) -> None:
+        check_audio_result(audio_analysis)
+
+    def test_result_content(self, audio_analysis: AudioAnalysisResponse) -> None:
+        t = audio_analysis.telemetry
+        assert t.queue_wait_ms is not None and t.queue_wait_ms >= 0
+        assert t.queued_ms is not None
+        stages = [s.name for s in t.stages]
+        assert "AudioExtraction" in stages and "Transcribe" in stages and "Summarize" in stages
+        transcribe = [c for c in t.model_calls if c.purpose == ModelCallPurpose.TRANSCRIBE]
+        assert transcribe and all(c.input_audio_bytes > 0 for c in transcribe)
+        completion = [c for c in t.model_calls if c.purpose in (ModelCallPurpose.SUMMARIZE, ModelCallPurpose.EXTRACT)]
+        assert completion, "no completion calls"
+        for call in completion:
+            assert call.success, call.error
+            assert call.queue_ms >= 0
+            assert call.generation_ms is not None
+            assert call.tokens_per_second is not None
+        field = audio_analysis.field_result("speakerCount")
+        assert field is not None and field.type == FieldType.INTEGER
+
+    def test_validation_400(self, user: KeyframeClient) -> None:
+        expect_api_error(400, lambda: user.audio.analyze(AudioAnalysisRequest()))
+        expect_api_error(400, lambda: user.audio.analyze(AudioAnalysisRequest(
+            audio=MediaSource(url="https://example.com/a.mp3"), transcription_model=ModelSelection(endpoint="no-such-endpoint"))))
+
+
+# Segments
+
+
+class TestSegments:
+    def test_audio_binary(self, user: KeyframeClient, media: Media) -> None:
+        media.require()
+        seg = user.segments.get(SegmentRequest(source=media_from_file(media.video), start_ms=1000, end_ms=3000, output=SegmentOutput.AUDIO))
+        assert isinstance(seg, SegmentMedia)
+        assert seg.data and seg.size_bytes == len(seg.data)
+        assert seg.media_type == "audio/mpeg"
+        assert seg.filename == "segment-1000-3000.mp3"
+        assert (seg.start_ms, seg.end_ms, seg.duration_ms) == (1000, 3000, 2000)
+        assert seg.request_id
+
+    def test_audio_binary_from_audio_source(self, user: KeyframeClient, media: Media) -> None:
+        media.require()
+        seg = user.segments.get({"Source": media_from_file(media.audio), "StartMs": 0, "EndMs": 60000, "Output": "Audio", "Format": "wav",
+                                 "ResponseFormat": "Json"})
+        assert seg.media_type == "audio/wav"
+        assert seg.data[:4] == b"RIFF"
+        assert seg.start_ms == 0 and seg.end_ms is not None and seg.end_ms <= 5100, "EndMs not clamped"
+        assert seg.duration_ms == seg.end_ms - seg.start_ms
+
+    def test_frame_binary(self, user: KeyframeClient, media: Media) -> None:
+        media.require()
+        seg = user.segments.get(SegmentRequest(source=media_from_file(media.video), start_ms=2000, output="Frame", max_edge=160))
+        assert seg.media_type == "image/jpeg"
+        assert seg.data[:2] == b"\xff\xd8"
+        assert seg.filename == "segment-2000.jpg"
+        assert seg.start_ms == 2000
+
+    def test_video_json(self, user: KeyframeClient, media: Media) -> None:
+        media.require()
+        seg = user.segments.get_json(SegmentRequest(source=media_from_file(media.video), start_ms=0, end_ms=1500))
+        assert isinstance(seg, SegmentResponse)
+        assert seg.media_type == "video/mp4"
+        assert seg.filename == "segment-0-1500.mp4"
+        data = seg.decode_data()
+        assert len(data) == seg.size_bytes > 0
+        assert data[4:8] == b"ftyp"
+
+    def test_validation_400(self, user: KeyframeClient, media: Media) -> None:
+        media.require()
+        source = media_from_file(media.video)
+        expect_api_error(400, lambda: user.segments.get(SegmentRequest(source=source, start_ms=3000, end_ms=3000, output="Audio")))
+        expect_api_error(400, lambda: user.segments.get(SegmentRequest(source=source, start_ms=3000, end_ms=1000)))
+        expect_api_error(400, lambda: user.segments.get_json(SegmentRequest(source=source, start_ms=0, end_ms=1000, output="Audio", format="png")))
+
+    def test_audio_only_frame_422(self, user: KeyframeClient, media: Media) -> None:
+        media.require()
+        expect_api_error(422, lambda: user.segments.get(SegmentRequest(source=media_from_file(media.audio), start_ms=0, output="Frame")))
+
+
+# Analytics
+
+
+class TestAnalytics:
+    def test_summary(self, admin: KeyframeClient, audio_analysis: AudioAnalysisResponse) -> None:
+        summary = admin.analytics.summary(bucket="hour")
+        assert isinstance(summary, AnalyticsSummary)
+        assert summary.bucket == "hour"
+        assert summary.totals.count > 0
+        assert summary.totals.count == summary.totals.succeeded + summary.totals.failed
+        assert summary.totals.analysis_ms is not None and summary.totals.analysis_ms.count > 0
+        assert len(summary.buckets) >= 24
+        assert sum(b.stats.count for b in summary.buckets) == summary.totals.count
+        assert set(summary.by_media_kind) >= {"Image", "Video", "Audio"}
+        assert summary.by_media_kind["Audio"].count > 0
+        assert summary.by_model and summary.by_purpose and summary.by_stage
+
+    def test_summary_filters(self, admin: KeyframeClient, audio_analysis: AudioAnalysisResponse) -> None:
+        now = datetime.now(timezone.utc)
+        summary = admin.analytics.summary(from_utc=now - timedelta(minutes=30), to_utc=now + timedelta(minutes=1),
+                                          bucket="minute", media_kind=MediaKind.AUDIO)
+        assert summary.bucket == "minute" and summary.media_kind == MediaKind.AUDIO
+        assert summary.totals.count > 0
+        assert summary.by_media_kind["Image"].count == 0
+        expect_api_error(400, lambda: admin.analytics.summary(bucket="fortnight"))
+
+    def test_list_by_media_kind(self, admin: KeyframeClient, audio_analysis: AudioAnalysisResponse) -> None:
+        page = admin.analytics.list_analyses(media_kind="Audio", success=True, max_results=5)
+        assert page.items and page.total_count > 0
+        assert all(isinstance(a, AnalysisRecord) for a in page.items)
+        assert all(a.media_kind == MediaKind.AUDIO and a.success and a.calls is None for a in page.items)
+        assert any(a.id == audio_analysis.id for a in admin.analytics.list_analyses(media_kind="Audio", max_results=100).items)
+
+    def test_get_with_calls(self, admin: KeyframeClient, audio_analysis: AudioAnalysisResponse) -> None:
+        record = admin.analytics.get_analysis(audio_analysis.id)
+        assert record.id == audio_analysis.id
+        assert record.media_kind == MediaKind.AUDIO and record.job_id and record.job_id.startswith("kfj_")
+        assert record.request_id == audio_analysis.request_id
+        assert record.transcription_endpoint and record.stages
+        assert record.calls, "no model calls"
+        assert all(c.id.startswith("kfc_") and c.analysis_id == record.id for c in record.calls)
+        assert any(c.purpose == ModelCallPurpose.TRANSCRIBE for c in record.calls)
+        assert any(c.generation_ms is not None for c in record.calls if c.purpose == ModelCallPurpose.SUMMARIZE)
+        expect_api_error(404, lambda: admin.analytics.get_analysis("kfa_doesnotexist"))
+
+    def test_delete_one(self, admin: KeyframeClient, user: KeyframeClient, media: Media) -> None:
+        media.require()
+        result = user.analyze_image_file(media.image, {"Functions": {"Summarize": {"Enable": True}}})
+        record = admin.analytics.get_analysis(result.id)
+        assert record.media_kind == MediaKind.IMAGE and record.job_id is None
+        assert admin.analytics.delete_analysis(result.id).deleted_count == 1
+        expect_api_error(404, lambda: admin.analytics.get_analysis(result.id))
+        expect_api_error(404, lambda: admin.analytics.delete_analysis(result.id))
+
+    def test_delete_older_than(self, admin: KeyframeClient) -> None:
+        result = admin.analytics.delete_analyses(older_than_utc=datetime(2000, 1, 1, tzinfo=timezone.utc))
+        assert isinstance(result.deleted_count, int) and result.deleted_count == 0
+
+    def test_non_admin_403(self, user: KeyframeClient) -> None:
+        expect_api_error(403, user.analytics.summary)
+        expect_api_error(403, user.analytics.list_analyses)
+        expect_api_error(403, lambda: user.analytics.get_analysis("kfa_doesnotexist"))
+        expect_api_error(403, lambda: user.analytics.delete_analysis("kfa_doesnotexist"))
+        expect_api_error(403, lambda: user.analytics.delete_analyses(older_than_utc="2000-01-01T00:00:00Z"))
+
+
 # Endpoints
 
 
@@ -390,6 +613,8 @@ class TestEndpoints:
         assert mock.provider == ProviderType.MOCK
         assert mock.is_default
         assert any(e.kind == EndpointKind.TRANSCRIPTION for e in endpoints)
+        assert all(e.supports_transcription for e in endpoints if e.kind == EndpointKind.TRANSCRIPTION)
+        assert not mock.extra, f"unmapped endpoint fields: {sorted(mock.extra)}"
 
     def test_test_admin(self, admin: KeyframeClient) -> None:
         result = admin.endpoints.test("mock")
@@ -435,6 +660,16 @@ class TestSettings:
         bad = copy.deepcopy(original.settings)
         bad.auth.access_keys.append(AccessKeySettings(name="sdk-harness-invalid", key="****nope", active=True))
         expect_api_error(400, lambda: admin.settings.update(bad))
+
+    def test_analytics_and_segment_settings(self, admin: KeyframeClient) -> None:
+        s = admin.settings.get().settings
+        assert isinstance(s.analytics.enabled, bool)
+        assert 1 <= s.analytics.retention_days <= 3650
+        assert 1000 <= s.media.max_segment_ms <= 14400000
+        assert s.media.max_audio_duration_ms > 0
+        assert not s.analytics.extra and not s.media.extra
+        raw = json.loads(admin.send_raw("GET", "/v1.0/settings").body)["Settings"]
+        assert "Analytics" in raw and "MaxSegmentMs" in raw["Media"]
 
     def test_round_trip_is_lossless(self, admin: KeyframeClient) -> None:
         raw = json.loads(admin.send_raw("GET", "/v1.0/settings").body)["Settings"]
