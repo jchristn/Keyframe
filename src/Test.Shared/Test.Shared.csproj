@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Test.Shared</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Keyframe.Core\Keyframe.Core.csproj" />
+    <ProjectReference Include="..\Keyframe.Server\Keyframe.Server.csproj" />
+    <ProjectReference Include="..\Keyframe.McpServer\Keyframe.McpServer.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Touchstone.Core" Version="1.1.0" />
+  </ItemGroup>
+
+</Project>

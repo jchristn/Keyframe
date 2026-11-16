@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <RootNamespace>Keyframe.Sdk</RootNamespace>
+    <AssemblyName>Keyframe.Sdk</AssemblyName>
+    <Version>0.1.0</Version>
+    <Authors>Joel Christner</Authors>
+    <Copyright>(c)2026 Joel Christner</Copyright>
+    <Description>C# client SDK for Keyframe: summaries and typed metadata fields extracted from images and video.</Description>
+    <PackageId>Keyframe.Sdk</PackageId>
+    <PackageTags>keyframe;video;image;metadata;extraction;summarization;vision;sdk</PackageTags>
+    <PackageProjectUrl>https://github.com/jchristn/Keyframe</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/jchristn/Keyframe</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>glyph.png</PackageIcon>
+    <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\..\assets\glyph.png" Pack="true" PackagePath="\" />
+    <None Include="..\..\..\LICENSE.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="RestWrapper" Version="3.3.2" />
+  </ItemGroup>
+
+</Project>

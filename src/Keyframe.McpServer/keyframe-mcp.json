@@ -1,0 +1,40 @@
+{
+  "Keyframe": {
+    "Endpoint": "http://127.0.0.1:8700",
+    "AccessKey": "default",
+    "TimeoutMs": 600000
+  },
+  "RequireAuthentication": true,
+  "Http": {
+    "Enable": true,
+    "Hostname": "127.0.0.1",
+    "Port": 8702
+  },
+  "Tcp": {
+    "Enable": true,
+    "Hostname": "127.0.0.1",
+    "Port": 8703
+  },
+  "WebSocket": {
+    "Enable": true,
+    "Hostname": "127.0.0.1",
+    "Port": 8704
+  },
+  "Logging": {
+    "ConsoleLogging": true,
+    "EnableColors": true,
+    "LogDirectory": "logs/",
+    "LogFilename": "keyframe-mcp.log",
+    "MinimumSeverity": 1
+  },
+  "Telemetry": {
+    "Enable": true,
+    "ServiceName": "keyframe-mcp",
+    "OtlpEnable": false,
+    "OtlpEndpoint": "http://127.0.0.1:4717",
+    "OtlpProtocol": "grpc",
+    "PrometheusEnable": true,
+    "PrometheusHostname": "127.0.0.1",
+    "PrometheusPort": 9465
+  }
+}

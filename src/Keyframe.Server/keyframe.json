@@ -1,0 +1,134 @@
+{
+  "CreatedUtc": "2026-11-15T00:00:00Z",
+  "Rest": {
+    "Hostname": "127.0.0.1",
+    "Port": 8700,
+    "Ssl": false,
+    "MaxRequestBodyBytes": 268435456
+  },
+  "Auth": {
+    "RequireAuthentication": true,
+    "AdminApiKey": "keyframeadmin",
+    "AccessKeys": [
+      {
+        "Name": "default",
+        "Key": "default",
+        "Active": true
+      }
+    ],
+    "MaxFailedAttemptsPerMinute": 30
+  },
+  "Database": {
+    "Type": "Sqlite",
+    "Filename": "data/keyframe.db",
+    "Hostname": null,
+    "Port": 0,
+    "DatabaseName": null,
+    "Username": null,
+    "Password": null,
+    "TrustServerCertificate": true,
+    "CommandTimeoutSeconds": 30
+  },
+  "Inference": {
+    "DefaultVision": "mock",
+    "DefaultText": null,
+    "DefaultTranscription": "mock-stt",
+    "MaxRetries": 2,
+    "MaxRepairAttempts": 1,
+    "RetryBackoffMs": 500,
+    "RequestTimeoutMs": 300000,
+    "MaxTranscriptCharacters": 60000,
+    "Endpoints": [
+      {
+        "Name": "mock",
+        "Provider": "Mock",
+        "Kind": "Completion",
+        "Endpoint": null,
+        "ApiKey": null,
+        "Model": "mock-vision",
+        "MaxConcurrentRequests": 4,
+        "TimeoutMs": 120000,
+        "Temperature": null,
+        "MaxOutputTokens": 2048,
+        "Active": true
+      },
+      {
+        "Name": "mock-stt",
+        "Provider": "Mock",
+        "Kind": "Transcription",
+        "Endpoint": null,
+        "ApiKey": null,
+        "Model": "mock-whisper",
+        "MaxConcurrentRequests": 4,
+        "TimeoutMs": 120000,
+        "Temperature": null,
+        "MaxOutputTokens": 2048,
+        "Active": true
+      },
+      {
+        "Name": "local-ollama",
+        "Provider": "Ollama",
+        "Kind": "Completion",
+        "Endpoint": "http://127.0.0.1:11434",
+        "ApiKey": null,
+        "Model": "qwen3-vl:8b",
+        "MaxConcurrentRequests": 2,
+        "TimeoutMs": 300000,
+        "Temperature": null,
+        "MaxOutputTokens": 2048,
+        "Active": false
+      }
+    ]
+  },
+  "Media": {
+    "TempDirectory": "temp",
+    "FfmpegPath": "ffmpeg",
+    "FfprobePath": "ffprobe",
+    "MaxDownloadBytes": 2147483648,
+    "DownloadTimeoutMs": 300000,
+    "AllowPrivateNetworkUrls": false,
+    "ImageMaxEdge": 1568,
+    "ThumbnailMaxEdge": 320,
+    "JpegQuality": 3,
+    "MaxParallelFfmpeg": 4,
+    "FfmpegTimeoutMs": 600000,
+    "MaxVideoDurationMs": 14400000,
+    "TranscriptionChunkSeconds": 600
+  },
+  "Jobs": {
+    "MaxConcurrentJobs": 2,
+    "MaxQueuedJobs": 100,
+    "RetentionDays": 7,
+    "MaxWaitTimeoutMs": 600000
+  },
+  "RequestHistory": {
+    "Enabled": true,
+    "MaxRequestBodyBytes": 65536,
+    "MaxResponseBodyBytes": 65536,
+    "RetentionDays": 30
+  },
+  "Logging": {
+    "ConsoleLogging": true,
+    "EnableColors": true,
+    "LogDirectory": "logs/",
+    "LogFilename": "keyframe.log",
+    "MinimumSeverity": 0,
+    "Servers": []
+  },
+  "Telemetry": {
+    "Enable": true,
+    "ServiceName": "keyframe-server",
+    "OtlpEnable": false,
+    "OtlpEndpoint": "http://127.0.0.1:4717",
+    "OtlpProtocol": "grpc",
+    "PrometheusEnable": true,
+    "PrometheusHostname": "127.0.0.1",
+    "PrometheusPort": 9464,
+    "PrometheusPath": "/metrics",
+    "LokiEnable": false,
+    "LokiEndpoint": "http://127.0.0.1:3100",
+    "ExportLogs": false,
+    "MetricExportIntervalMs": 15000,
+    "TraceSamplingRatio": 1
+  }
+}

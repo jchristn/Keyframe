@@ -1,0 +1,238 @@
+# Keyframe stack: server, dashboard, MCP server, and the observability stack
+# (OpenTelemetry Collector, Prometheus, Tempo, Loki, Grafana).
+#
+#   docker compose up -d                    # everything
+#   docker compose --profile ollama up -d   # also start a local Ollama for vision models
+#
+# Host ports (plan D7): server 8700, dashboard 8701, MCP 8702 (HTTP) / 8703 (TCP) / 8704 (WebSocket),
+# Grafana 3700, Prometheus 9700, Tempo 3710, OTLP 4717 (gRPC) / 4718 (HTTP).
+# Observability ports are bound to host loopback only: Prometheus, Tempo, Loki, and the collector have no
+# authentication of their own.
+
+name: keyframe
+
+services:
+
+  # ------------------------------------------------------------------
+  # Keyframe REST server
+  # ------------------------------------------------------------------
+  keyframe-server:
+    container_name: keyframe-server
+    # The Prometheus scrape endpoint binds this hostname and answers only requests addressed to it.
+    hostname: keyframe-server
+    image: 'jchristn77/keyframe-server:v0.1.0'
+    ports:
+      - "8700:8700"
+    # The in-process Prometheus endpoint (9464) stays on the compose network: it is anonymous.
+    environment:
+      KEYFRAME_SETTINGS_FILE: /app/config/keyframe.json
+      # Optional overrides; uncomment or set in an untracked .env file. Never commit real keys.
+      # KEYFRAME_ADMIN_API_KEY: "${KEYFRAME_ADMIN_API_KEY}"
+      # KEYFRAME_ACCESS_KEY: "${KEYFRAME_ACCESS_KEY}"
+    volumes:
+      - ./keyframe.json:/app/config/keyframe.json
+      - data:/app/data
+      - temp:/app/temp
+      - logs:/app/logs
+    depends_on:
+      # The collector image is distroless (no shell, curl, or wget), so it cannot carry a healthcheck.
+      otel-collector:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8700/v1.0/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 2
+      start_period: 20s
+    # POST /v1.0/restart exits with code 0; the runtime relaunches the server and it rereads keyframe.json.
+    restart: unless-stopped
+
+  # ------------------------------------------------------------------
+  # Keyframe dashboard (React, served by nginx)
+  # ------------------------------------------------------------------
+  keyframe-dashboard:
+    container_name: keyframe-dashboard
+    image: 'jchristn77/keyframe-dashboard:v0.1.0'
+    ports:
+      - "8701:8701"
+    environment:
+      # Address the operator's browser uses to reach the server.
+      KEYFRAME_SERVER_URL: "http://keyframe-server:8700"
+    depends_on:
+      keyframe-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8701/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 2
+      start_period: 10s
+    restart: unless-stopped
+
+  # ------------------------------------------------------------------
+  # Keyframe MCP server (Voltaic): HTTP 8702, TCP 8703, WebSocket 8704
+  # ------------------------------------------------------------------
+  keyframe-mcp:
+    container_name: keyframe-mcp
+    image: 'jchristn77/keyframe-mcp:v0.1.0'
+    ports:
+      - "8702:8702"
+      - "8703:8703"
+      - "8704:8704"
+    environment:
+      KEYFRAME_URL: "http://keyframe-server:8700"
+      KEYFRAME_ACCESS_KEY: "${KEYFRAME_ACCESS_KEY:-default}"
+      KEYFRAME_MCP_HOSTNAME: "*"
+    depends_on:
+      keyframe-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8702/"]
+      interval: 5s
+      timeout: 3s
+      retries: 2
+      start_period: 10s
+    restart: unless-stopped
+
+  # ------------------------------------------------------------------
+  # Optional local model server: docker compose --profile ollama up -d
+  # Activate the "local-ollama" endpoint in keyframe.json (Endpoint http://ollama:11434) and pull a vision
+  # model, for example: docker exec keyframe-ollama ollama pull qwen3-vl:8b
+  # ------------------------------------------------------------------
+  ollama:
+    container_name: keyframe-ollama
+    image: ollama/ollama:0.12.6
+    profiles: ["ollama"]
+    ports:
+      - "127.0.0.1:11434:11434"
+    volumes:
+      - ollama:/root/.ollama
+    healthcheck:
+      # The ollama image ships no curl; the CLI queries the local API instead.
+      test: ["CMD", "ollama", "list"]
+      interval: 5s
+      timeout: 3s
+      retries: 2
+      start_period: 20s
+    restart: unless-stopped
+
+  # ------------------------------------------------------------------
+  # Observability
+  #
+  # The server pushes traces and logs over OTLP to the collector, which forwards traces to Tempo and logs to
+  # Loki. Prometheus scrapes the server's in-process /metrics endpoint directly.
+  # ------------------------------------------------------------------
+  otel-collector:
+    container_name: keyframe-otel-collector
+    image: otel/opentelemetry-collector-contrib:0.135.0
+    command: ["--config=/etc/otel-collector.yaml"]
+    ports:
+      - "127.0.0.1:4717:4317"
+      - "127.0.0.1:4718:4318"
+    volumes:
+      - ./otel-collector.yaml:/etc/otel-collector.yaml:ro
+    depends_on:
+      tempo:
+        condition: service_healthy
+      loki:
+        condition: service_healthy
+    restart: unless-stopped
+
+  prometheus:
+    container_name: keyframe-prometheus
+    image: prom/prometheus:v3.5.4
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yaml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+    ports:
+      - "127.0.0.1:9700:9090"
+    volumes:
+      - ./prometheus.yaml:/etc/prometheus/prometheus.yaml:ro
+      - prometheus:/prometheus
+    healthcheck:
+      # The prometheus image ships wget, not curl.
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:9090/-/healthy"]
+      interval: 5s
+      timeout: 3s
+      retries: 2
+      start_period: 20s
+    restart: unless-stopped
+
+  tempo:
+    container_name: keyframe-tempo
+    # Pinned: later tags reject the standard ingester and compactor configuration sections.
+    image: grafana/tempo:2.6.1
+    command: ["-config.file=/etc/tempo.yaml"]
+    ports:
+      - "127.0.0.1:3710:3200"
+    volumes:
+      - ./tempo.yaml:/etc/tempo.yaml:ro
+      - tempo:/var/tempo
+    healthcheck:
+      # The tempo image ships wget, not curl. /ready returns 503 until ready, then 200.
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3200/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 2
+      start_period: 40s
+    restart: unless-stopped
+
+  loki:
+    container_name: keyframe-loki
+    image: grafana/loki:3.5.5
+    command: ["-config.file=/etc/loki/loki.yaml"]
+    # Not published on the host; Grafana and the collector reach it on the compose network.
+    volumes:
+      - ./loki.yaml:/etc/loki/loki.yaml:ro
+      - loki:/loki
+    healthcheck:
+      # The loki image ships busybox wget, not curl.
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3100/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 2
+      start_period: 40s
+    restart: unless-stopped
+
+  grafana:
+    container_name: keyframe-grafana
+    image: grafana/grafana-oss:13.0.2
+    ports:
+      - "127.0.0.1:3700:3000"
+    environment:
+      # Local development defaults. Override GRAFANA_ADMIN_PASSWORD (for example in an untracked .env file)
+      # for any shared or hosted deployment; never commit a real password here.
+      GF_SECURITY_ADMIN_USER: "${GRAFANA_ADMIN_USER:-admin}"
+      GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_ADMIN_PASSWORD:-admin}"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/keyframe/keyframe-overview.json
+    volumes:
+      - grafana:/var/lib/grafana
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards/keyframe:ro
+    depends_on:
+      prometheus:
+        condition: service_healthy
+      tempo:
+        condition: service_healthy
+      loki:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3000/api/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 2
+      start_period: 30s
+    restart: unless-stopped
+
+volumes:
+  data:
+  temp:
+  logs:
+  ollama:
+  prometheus:
+  tempo:
+  loki:
+  grafana:

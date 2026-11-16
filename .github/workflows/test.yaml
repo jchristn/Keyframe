@@ -1,0 +1,274 @@
+name: Tests
+
+# Every push to every branch and every pull request runs every test project:
+# Test.Automated, Test.Xunit3, and Test.Nunit on Linux, Windows, and macOS (server database providers on Linux
+# through service containers), the dashboard build and tests, and each SDK harness against a live server.
+
+on:
+  push:
+  pull_request:
+
+env:
+  DOTNET_NOLOGO: "1"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+
+jobs:
+  linux:
+    # GitHub Actions service containers only run on Linux, so this job covers SQLite plus MySQL, PostgreSQL,
+    # and SQL Server. The database suites read the KEYFRAME_TEST_* variables below (src/Test.Shared/DatabaseTargets.cs).
+    name: Full suite (ubuntu-latest)
+    runs-on: ubuntu-latest
+    env:
+      KEYFRAME_TEST_DATABASES: Mysql,Postgresql,SqlServer
+      KEYFRAME_TEST_DB_HOST: 127.0.0.1
+      KEYFRAME_TEST_DB_PASSWORD: Keyframe_Test_1
+      KEYFRAME_TEST_MYSQL_PORT: "3306"
+      KEYFRAME_TEST_POSTGRESQL_PORT: "5432"
+      KEYFRAME_TEST_SQLSERVER_PORT: "1433"
+    services:
+      mysql:
+        image: mysql:8.4.6
+        env:
+          MYSQL_ROOT_PASSWORD: Keyframe_Test_1
+        ports:
+          - 127.0.0.1:3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -uroot -pKeyframe_Test_1"
+          --health-interval 10s --health-timeout 5s --health-retries 12
+      postgresql:
+        image: postgres:17.6
+        env:
+          POSTGRES_PASSWORD: Keyframe_Test_1
+        ports:
+          - 127.0.0.1:5432:5432
+        options: >-
+          --health-cmd "pg_isready -h 127.0.0.1 -U postgres"
+          --health-interval 10s --health-timeout 5s --health-retries 12
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-CU21-ubuntu-22.04
+        env:
+          ACCEPT_EULA: "Y"
+          MSSQL_SA_PASSWORD: Keyframe_Test_1
+        ports:
+          - 127.0.0.1:1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -C -S 127.0.0.1 -U sa -P Keyframe_Test_1 -Q 'SELECT 1' -b"
+          --health-interval 10s --health-timeout 5s --health-retries 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install ffmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg
+          ffmpeg -hide_banner -version | head -n 1
+
+      - name: Restore
+        run: dotnet restore src/Keyframe.sln
+
+      - name: Build
+        run: dotnet build src/Keyframe.sln -c Release --no-restore
+
+      - name: Run console tests
+        run: dotnet run --project src/Test.Automated -c Release --no-build -- --results results-automated.json
+
+      - name: Run xUnit v3 tests
+        run: dotnet test src/Test.Xunit3 -c Release --no-build
+
+      - name: Run NUnit tests
+        run: dotnet test src/Test.Nunit -c Release --no-build
+
+      - name: Check Grafana dashboard mirror
+        # assets/grafana is the source of truth; docker/grafana/dashboards must match it exactly.
+        run: diff -r assets/grafana docker/grafana/dashboards
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-ubuntu-latest
+          path: results-*.json
+
+  desktop:
+    # Full suite on SQLite. Media cases need ffmpeg; without it they are reported as skipped with a reason.
+    name: Full suite (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install ffmpeg (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          choco install ffmpeg -y --no-progress
+          ffmpeg -hide_banner -version
+
+      - name: Install ffmpeg (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install ffmpeg
+          ffmpeg -hide_banner -version | head -n 1
+
+      - name: Restore
+        run: dotnet restore src/Keyframe.sln
+
+      - name: Build
+        run: dotnet build src/Keyframe.sln -c Release --no-restore
+
+      - name: Run console tests
+        run: dotnet run --project src/Test.Automated -c Release --no-build -- --results results-automated.json
+
+      - name: Run xUnit v3 tests
+        run: dotnet test src/Test.Xunit3 -c Release --no-build
+
+      - name: Run NUnit tests
+        run: dotnet test src/Test.Nunit -c Release --no-build
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.os }}
+          path: results-*.json
+
+  dashboard:
+    name: Dashboard
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dashboard
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: dashboard/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        # CI=true is set by GitHub Actions, so watch-mode test runners execute once and exit.
+        run: npm test
+
+  sdk:
+    # Each SDK harness runs against a live server started with the mock provider
+    # (src/Keyframe.Server/keyframe.json: endpoints "mock" and "mock-stt", access key "default", admin key
+    # "keyframeadmin"). Each harness provides sdk/<language>/run-tests.sh and reads KEYFRAME_URL,
+    # KEYFRAME_ADMIN_KEY, and KEYFRAME_ACCESS_KEY.
+    name: SDK harness (${{ matrix.sdk }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        sdk: [csharp, js, python]
+    env:
+      KEYFRAME_URL: http://127.0.0.1:8700
+      KEYFRAME_ADMIN_KEY: keyframeadmin
+      KEYFRAME_ACCESS_KEY: default
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Setup Node
+        if: matrix.sdk == 'js'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup Python
+        if: matrix.sdk == 'python'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install ffmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg
+
+      - name: Build server
+        run: dotnet build src/Keyframe.Server -c Release
+
+      - name: Start server (mock provider)
+        run: |
+          mkdir -p "$RUNNER_TEMP/keyframe"
+          cp src/Keyframe.Server/keyframe.json "$RUNNER_TEMP/keyframe/keyframe.json"
+          cd "$RUNNER_TEMP/keyframe"
+          nohup dotnet "$GITHUB_WORKSPACE/src/Keyframe.Server/bin/Release/net10.0/Keyframe.Server.dll" \
+            --settings "$RUNNER_TEMP/keyframe/keyframe.json" > "$RUNNER_TEMP/keyframe/server.log" 2>&1 &
+          for _ in $(seq 1 60); do
+            if curl -fsS "$KEYFRAME_URL/v1.0/health" > /dev/null; then
+              echo "server is healthy"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "server did not become healthy"
+          cat "$RUNNER_TEMP/keyframe/server.log"
+          exit 1
+
+      - name: Run ${{ matrix.sdk }} harness
+        shell: bash
+        run: ./sdk/${{ matrix.sdk }}/run-tests.sh
+
+      - name: Server log
+        if: always()
+        run: cat "$RUNNER_TEMP/keyframe/server.log" || true
+
+  docker:
+    # Builds the server image, starts it, and waits for the container healthcheck. Nothing is pushed.
+    name: Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate compose file
+        run: docker compose -f docker/compose.yaml config -q
+
+      - name: Build server image
+        run: docker build -f src/Keyframe.Server/Dockerfile -t keyframe-server:ci .
+
+      - name: Run and wait for healthy
+        run: |
+          docker run -d --name keyframe-ci --hostname keyframe-server -p 127.0.0.1:8700:8700 keyframe-server:ci
+          for _ in $(seq 1 60); do
+            status="$(docker inspect -f '{{.State.Health.Status}}' keyframe-ci)"
+            if [ "$status" = "healthy" ]; then
+              curl -fsS http://127.0.0.1:8700/v1.0/health
+              docker exec keyframe-ci curl -fsS -o /dev/null http://keyframe-server:9464/metrics
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs keyframe-ci
+          exit 1
+
+      - name: Container log
+        if: always()
+        run: docker logs keyframe-ci || true

@@ -1,0 +1,39 @@
+# Rendered by the nginx image's envsubst step at container start.
+# Only ${KEYFRAME_SERVER_URL} and ${NGINX_RESOLVER} are substituted.
+server {
+    listen 8701;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript image/svg+xml;
+    gzip_min_length 1024;
+
+    location = /healthz {
+        access_log off;
+        default_type text/plain;
+        return 200 "OK";
+    }
+
+    # Same-origin fallback for the API Explorer when the browser cannot read the server's
+    # /openapi.json directly. Resolved per request so a missing upstream never blocks startup.
+    location = /openapi.json {
+        resolver ${NGINX_RESOLVER} valid=30s ipv6=off;
+        set $keyframe_upstream ${KEYFRAME_SERVER_URL};
+        proxy_pass $keyframe_upstream/openapi.json;
+        proxy_set_header Host $proxy_host;
+        proxy_hide_header Access-Control-Allow-Origin;
+    }
+
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        try_files $uri =404;
+    }
+
+    location / {
+        add_header Cache-Control "no-cache";
+        try_files $uri $uri/ /index.html;
+    }
+}

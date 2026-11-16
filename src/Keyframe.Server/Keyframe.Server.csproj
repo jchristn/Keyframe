@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Keyframe.Server</RootNamespace>
+    <AssemblyName>Keyframe.Server</AssemblyName>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Description>Keyframe REST server.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Keyframe.Core\Keyframe.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Radiant" Version="0.1.3" />
+    <PackageReference Include="SyslogLogging" Version="2.4.1" />
+    <PackageReference Include="Watson" Version="7.3.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="keyframe.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\assets\glyph.ico" Link="assets\glyph.ico" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

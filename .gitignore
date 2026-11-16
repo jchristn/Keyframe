@@ -1,0 +1,56 @@
+# .NET
+bin/
+obj/
+.vs/
+*.user
+*.suo
+*.DotSettings.user
+TestResults/
+*.nupkg
+*.snupkg
+
+# Node
+node_modules/
+dist/
+.vite/
+coverage/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+.pytest_cache/
+
+# Secrets
+.env
+.env.local
+.env.*.local
+
+# Runtime output
+logs/
+temp/
+data/
+docker/logs/
+docker/data/
+docker/temp/
+
+# Databases
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+
+# Test reports
+results.json
+report.html
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+
+# Claude Code machine-local settings
+.claude/settings.local.json

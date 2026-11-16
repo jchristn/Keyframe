@@ -1,0 +1,1208 @@
+{
+  "info": {
+    "name": "Keyframe",
+    "_postman_id": "5b8c3f0e-6a4d-4f1e-9a37-0c2d9e5b7a10",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Keyframe v0.1.0 (ALPHA) REST API: summaries and typed metadata from images and video.\n\nSet the collection variables before sending: protocol, host, and port build baseUrl; accessKey is sent as x-api-key on every request; adminKey is used by admin-only requests (settings, restart, endpoint tests, request history deletion). sampleImageUrl and sampleVideoUrl must be publicly reachable, because the server refuses private-network URLs by default.\n\nRun order that exercises everything: System, Image, Video / Analyze video (job), Jobs / Get job until Succeeded, Jobs / Get job result, then Endpoints, Settings, and Request History. Full reference: REST_API.md in the repository."
+  },
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {
+        "key": "key",
+        "value": "x-api-key",
+        "type": "string"
+      },
+      {
+        "key": "value",
+        "value": "{{accessKey}}",
+        "type": "string"
+      },
+      {
+        "key": "in",
+        "value": "header",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "protocol",
+      "value": "http",
+      "description": "http or https"
+    },
+    {
+      "key": "host",
+      "value": "127.0.0.1",
+      "description": "Server host"
+    },
+    {
+      "key": "port",
+      "value": "8700",
+      "description": "Server port"
+    },
+    {
+      "key": "baseUrl",
+      "value": "{{protocol}}://{{host}}:{{port}}",
+      "description": "Built from protocol, host, and port"
+    },
+    {
+      "key": "accessKey",
+      "value": "default",
+      "description": "Data-plane access key (Auth.AccessKeys)"
+    },
+    {
+      "key": "adminKey",
+      "value": "keyframeadmin",
+      "description": "Admin key (Auth.AdminApiKey). Change it on any shared server."
+    },
+    {
+      "key": "endpointName",
+      "value": "mock",
+      "description": "Endpoint name from Inference.Endpoints"
+    },
+    {
+      "key": "sampleImageUrl",
+      "value": "https://upload.wikimedia.org/wikipedia/commons/3/3a/Cat03.jpg",
+      "description": "Publicly reachable image URL"
+    },
+    {
+      "key": "sampleVideoUrl",
+      "value": "https://download.samplelib.com/mp4/sample-5s.mp4",
+      "description": "Publicly reachable video URL"
+    },
+    {
+      "key": "sampleImageBase64",
+      "value": "",
+      "description": "Base64 image bytes for the inline example"
+    },
+    {
+      "key": "jobId",
+      "value": "",
+      "description": "Set by the Video folder test scripts"
+    },
+    {
+      "key": "requestHistoryId",
+      "value": "",
+      "description": "Set by List request history"
+    },
+    {
+      "key": "settingsBody",
+      "value": "",
+      "description": "Set by Get settings; sent by Update settings"
+    }
+  ],
+  "item": [
+    {
+      "name": "System",
+      "description": "Liveness, health, and identity. Health and the root page are anonymous so orchestrators and load balancers can probe them without a key.",
+      "item": [
+        {
+          "name": "Head root",
+          "request": {
+            "method": "HEAD",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": []
+            },
+            "description": "Liveness check. Returns 200 with no body. Anonymous.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Root page",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": []
+            },
+            "description": "Small HTML page with the version and links to the API documentation. Anonymous.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "health"
+              ]
+            },
+            "description": "Version, uptime, ffmpeg availability, database provider, job counts, and endpoint health. Status is Degraded when ffmpeg is missing. Anonymous.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Who am I",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/whoami",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "whoami"
+              ]
+            },
+            "description": "Resolves the presented key: principal name, whether it is the admin key, and whether the server requires authentication. Returns 401 without a valid key."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "OpenAPI document",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/openapi.json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "openapi.json"
+              ]
+            },
+            "description": "The OpenAPI 3 document generated from the server's route metadata. Anonymous.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Image",
+      "description": "Synchronous image analysis. Supply the image by Url or base64 Data. Every Context item is included in every prompt the request produces. The response carries Results (keyed the way you asked), per-field detail in Fields, media Properties, and Telemetry with stage timings, every model call, and token counts.",
+      "item": [
+        {
+          "name": "Analyze image (URL)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/image",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "image"
+              ]
+            },
+            "description": "Summary plus four typed fields from an image URL, with a Context list. Private-network URLs are refused unless Media.AllowPrivateNetworkUrls is true.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Image\": {\n    \"Url\": \"{{sampleImageUrl}}\"\n  },\n  \"Context\": [\n    {\n      \"Label\": \"Source\",\n      \"Text\": \"Photos submitted by pet adoption volunteers.\"\n    },\n    \"Animals wearing orange collars are already adopted.\"\n  ],\n  \"Functions\": {\n    \"Summarize\": {\n      \"Enable\": true,\n      \"Key\": \"Summary\",\n      \"MaxWords\": 60,\n      \"Style\": \"Paragraph\"\n    },\n    \"Extract\": {\n      \"Enable\": true,\n      \"Mode\": \"Combined\",\n      \"Fields\": [\n        {\n          \"Key\": \"hasCats\",\n          \"Type\": \"Boolean\",\n          \"Prompt\": \"Does this image have cats?\"\n        },\n        {\n          \"Key\": \"dogCount\",\n          \"Type\": \"Integer\",\n          \"Prompt\": \"How many dogs do you see in this image?\",\n          \"Minimum\": 0\n        },\n        {\n          \"Key\": \"setting\",\n          \"Type\": \"Enum\",\n          \"Prompt\": \"Where was this taken?\",\n          \"Options\": [\n            \"Indoors\",\n            \"Outdoors\",\n            \"Unknown\"\n          ]\n        },\n        {\n          \"Key\": \"colors\",\n          \"Type\": \"StringList\",\n          \"Prompt\": \"List the dominant colors.\",\n          \"MaxItems\": 5\n        }\n      ]\n    }\n  },\n  \"IncludeProperties\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Analyze image (base64, per-field)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/image",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "image"
+              ]
+            },
+            "description": "Same request with inline base64 data and PerField mode, which makes one model call per field. Replace {{sampleImageBase64}} with base64 image bytes (for example: base64 -i photo.jpg).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Image\": {\n    \"Data\": \"{{sampleImageBase64}}\",\n    \"MediaType\": \"image/jpeg\"\n  },\n  \"Context\": \"Single string context is accepted too.\",\n  \"Functions\": {\n    \"Summarize\": {\n      \"Enable\": false\n    },\n    \"Extract\": {\n      \"Enable\": true,\n      \"Mode\": \"PerField\",\n      \"Fields\": [\n        {\n          \"Key\": \"hasCats\",\n          \"Type\": \"Boolean\",\n          \"Prompt\": \"Does this image have cats?\"\n        },\n        {\n          \"Key\": \"dogCount\",\n          \"Type\": \"Integer\",\n          \"Prompt\": \"How many dogs do you see in this image?\",\n          \"Minimum\": 0\n        }\n      ]\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Analyze image (choose endpoint)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/image",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "image"
+              ]
+            },
+            "description": "Selects a configured endpoint by name and overrides its model. An unknown endpoint name returns 400.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Image\": {\n    \"Url\": \"{{sampleImageUrl}}\"\n  },\n  \"Model\": {\n    \"Endpoint\": \"{{endpointName}}\",\n    \"Name\": null\n  },\n  \"Functions\": {\n    \"Summarize\": {\n      \"Enable\": true,\n      \"Style\": \"Caption\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Probe media",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/probe",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "probe"
+              ]
+            },
+            "description": "Deterministic media properties from ffprobe: dimensions, duration, codecs, tags. No model calls.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Media\": {\n    \"Url\": \"{{sampleVideoUrl}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Video",
+      "description": "Video analysis runs as a background job. The response is 202 with the job unless Wait is true and the job finishes within WaitTimeoutMs, in which case it is 200 with the full result. The test scripts store the job id in the jobId collection variable for the Jobs folder.",
+      "item": [
+        {
+          "name": "Analyze video (job)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/video",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "video"
+              ]
+            },
+            "description": "Queues a job with scenes, per-scene captions and fields, a transcript, and whole-video summary and fields. Poll Jobs / Get job, then Jobs / Get job result.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Video\": {\n    \"Url\": \"{{sampleVideoUrl}}\"\n  },\n  \"Context\": [\n    \"Recorded keynote at a developer conference.\"\n  ],\n  \"Functions\": {\n    \"Summarize\": {\n      \"Enable\": true,\n      \"MaxWords\": 150\n    },\n    \"Extract\": {\n      \"Enable\": true,\n      \"Fields\": [\n        {\n          \"Key\": \"speakerCount\",\n          \"Type\": \"Integer\",\n          \"Prompt\": \"How many distinct speakers appear?\"\n        }\n      ]\n    },\n    \"Scenes\": {\n      \"Enable\": true,\n      \"FramesPerScene\": 3,\n      \"Detection\": {\n        \"Threshold\": 0.3,\n        \"MinSceneMs\": 2000,\n        \"MaxSceneMs\": 60000,\n        \"MaxScenes\": 200\n      },\n      \"Summarize\": {\n        \"Enable\": true,\n        \"Style\": \"Caption\"\n      },\n      \"Extract\": {\n        \"Enable\": true,\n        \"Fields\": [\n          {\n            \"Key\": \"showsSlide\",\n            \"Type\": \"Boolean\",\n            \"Prompt\": \"Is a presentation slide visible?\"\n          }\n        ]\n      }\n    },\n    \"Transcribe\": {\n      \"Enable\": true,\n      \"Language\": \"en\"\n    }\n  },\n  \"IncludeKeyframeData\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('job accepted or finished', function () { pm.expect([200, 202]).to.include(pm.response.code); });",
+                  "const body = pm.response.json();",
+                  "if (body.Id && body.Id.startsWith('kfj_')) { pm.collectionVariables.set('jobId', body.Id); }",
+                  "const header = pm.response.headers.get('x-keyframe-job-id');",
+                  "if (header) { pm.collectionVariables.set('jobId', header); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Analyze video (wait)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/video",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "video"
+              ]
+            },
+            "description": "Waits up to WaitTimeoutMs (capped by Jobs.MaxWaitTimeoutMs) and returns the result inline when the job succeeds in time. A job that finishes without succeeding returns 200 with the job so you can read Status and Error.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Video\": {\n    \"Url\": \"{{sampleVideoUrl}}\"\n  },\n  \"Wait\": true,\n  \"WaitTimeoutMs\": 120000,\n  \"Functions\": {\n    \"Scenes\": {\n      \"Enable\": true,\n      \"Summarize\": {\n        \"Enable\": true,\n        \"Style\": \"Caption\"\n      }\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('job accepted or finished', function () { pm.expect([200, 202]).to.include(pm.response.code); });",
+                  "const body = pm.response.json();",
+                  "if (body.Id && body.Id.startsWith('kfj_')) { pm.collectionVariables.set('jobId', body.Id); }",
+                  "const header = pm.response.headers.get('x-keyframe-job-id');",
+                  "if (header) { pm.collectionVariables.set('jobId', header); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Analyze video (text-only reduction)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/video",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "video"
+              ]
+            },
+            "description": "With TextModel set, the whole-video summary and fields are produced by a text-only model from the scene results and transcript instead of from frames.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Video\": {\n    \"Url\": \"{{sampleVideoUrl}}\"\n  },\n  \"TextModel\": {\n    \"Endpoint\": \"{{endpointName}}\"\n  },\n  \"Functions\": {\n    \"Summarize\": {\n      \"Enable\": true\n    },\n    \"Scenes\": {\n      \"Enable\": true,\n      \"Summarize\": {\n        \"Enable\": true\n      }\n    },\n    \"Transcribe\": {\n      \"Enable\": true\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('job accepted or finished', function () { pm.expect([200, 202]).to.include(pm.response.code); });",
+                  "const body = pm.response.json();",
+                  "if (body.Id && body.Id.startsWith('kfj_')) { pm.collectionVariables.set('jobId', body.Id); }",
+                  "const header = pm.response.headers.get('x-keyframe-job-id');",
+                  "if (header) { pm.collectionVariables.set('jobId', header); }"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Jobs",
+      "description": "Durable background jobs. Status is Queued, Running, Succeeded, Failed, Canceled, or Interrupted (the server stopped mid-job). Finished jobs are pruned after Jobs.RetentionDays.",
+      "item": [
+        {
+          "name": "List jobs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/jobs?pageNumber=1&pageSize=25",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "jobs"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "Succeeded",
+                  "description": "Queued, Running, Succeeded, Failed, Canceled, Interrupted",
+                  "disabled": true
+                },
+                {
+                  "key": "mediaKind",
+                  "value": "Video",
+                  "description": "Image or Video",
+                  "disabled": true
+                },
+                {
+                  "key": "principalName",
+                  "value": "default",
+                  "description": "Submitting key name",
+                  "disabled": true
+                },
+                {
+                  "key": "fromUtc",
+                  "value": "2026-01-01T00:00:00Z",
+                  "description": "Inclusive lower bound",
+                  "disabled": true
+                },
+                {
+                  "key": "toUtc",
+                  "value": "2030-01-01T00:00:00Z",
+                  "description": "Exclusive upper bound",
+                  "disabled": true
+                },
+                {
+                  "key": "pageNumber",
+                  "value": "1",
+                  "description": "From 1",
+                  "disabled": false
+                },
+                {
+                  "key": "pageSize",
+                  "value": "25",
+                  "description": "1 to 1000",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Newest first. Uncomment filters as needed."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get job",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/jobs/{{jobId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "jobs",
+                "{{jobId}}"
+              ]
+            },
+            "description": "Status and progress (Stage, Completed, Total, Percent). Progress is persisted at most once a second and on each stage change."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get job result",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/jobs/{{jobId}}/result",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "jobs",
+                "{{jobId}}",
+                "result"
+              ]
+            },
+            "description": "The VideoAnalysisResponse of a succeeded job. Returns 409 until the job has succeeded."
+          }
+        },
+        {
+          "name": "Cancel job",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/jobs/{{jobId}}/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "jobs",
+                "{{jobId}}",
+                "cancel"
+              ]
+            },
+            "description": "Cancels a queued or running job. Returns 409 when the job already finished."
+          }
+        },
+        {
+          "name": "Delete job",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/jobs/{{jobId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "jobs",
+                "{{jobId}}"
+              ]
+            },
+            "description": "Deletes a finished job and its result. Returns 409 for a queued or running job."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Endpoints",
+      "description": "Configured model endpoints with API keys masked, provider availability, and health. Edit endpoints through Settings.",
+      "item": [
+        {
+          "name": "List endpoints",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/endpoints",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "endpoints"
+              ]
+            },
+            "description": "Every configured completion and transcription endpoint."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Test endpoint",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/endpoints/{{endpointName}}/test",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "endpoints",
+                "{{endpointName}}",
+                "test"
+              ]
+            },
+            "description": "Admin. Sends a one-token prompt and records the result as the endpoint's health.",
+            "auth": {
+              "type": "apikey",
+              "apikey": [
+                {
+                  "key": "key",
+                  "value": "x-api-key",
+                  "type": "string"
+                },
+                {
+                  "key": "value",
+                  "value": "{{adminKey}}",
+                  "type": "string"
+                },
+                {
+                  "key": "in",
+                  "value": "header",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Settings",
+      "description": "Admin only. Secrets come back masked as **** plus their last four characters; send them back unchanged to keep them. Fields metadata marks each setting Live or Restart.",
+      "item": [
+        {
+          "name": "Get settings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/settings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "settings"
+              ]
+            },
+            "description": "Masked settings, per-field metadata, RestartRequired, and the settings file path.",
+            "auth": {
+              "type": "apikey",
+              "apikey": [
+                {
+                  "key": "key",
+                  "value": "x-api-key",
+                  "type": "string"
+                },
+                {
+                  "key": "value",
+                  "value": "{{adminKey}}",
+                  "type": "string"
+                },
+                {
+                  "key": "in",
+                  "value": "header",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.collectionVariables.set('settingsBody', JSON.stringify(pm.response.json().Settings, null, 2));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update settings",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/settings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "settings"
+              ]
+            },
+            "description": "Sends back the settings captured by Get settings (stored in the settingsBody variable). Edit the body to change values. Invalid settings return 400.",
+            "body": {
+              "mode": "raw",
+              "raw": "{{settingsBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "apikey",
+              "apikey": [
+                {
+                  "key": "key",
+                  "value": "x-api-key",
+                  "type": "string"
+                },
+                {
+                  "key": "value",
+                  "value": "{{adminKey}}",
+                  "type": "string"
+                },
+                {
+                  "key": "in",
+                  "value": "header",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Restart server",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/restart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "restart"
+              ]
+            },
+            "description": "Responds 202, then exits so the container runtime relaunches the server and reloads settings. Outside a supervisor the server simply stops.",
+            "auth": {
+              "type": "apikey",
+              "apikey": [
+                {
+                  "key": "key",
+                  "value": "x-api-key",
+                  "type": "string"
+                },
+                {
+                  "key": "value",
+                  "value": "{{adminKey}}",
+                  "type": "string"
+                },
+                {
+                  "key": "in",
+                  "value": "header",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Request History",
+      "description": "Every request is captured with secret headers redacted and bodies truncated. Reads need a key; deletes need the admin key.",
+      "item": [
+        {
+          "name": "List request history",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/api/request-history?pageNumber=1&pageSize=25",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "api",
+                "request-history"
+              ],
+              "query": [
+                {
+                  "key": "method",
+                  "value": "POST",
+                  "description": "HTTP method",
+                  "disabled": true
+                },
+                {
+                  "key": "statusCode",
+                  "value": "200",
+                  "description": "Exact status",
+                  "disabled": true
+                },
+                {
+                  "key": "pathContains",
+                  "value": "/v1.0/image",
+                  "description": "Path substring",
+                  "disabled": true
+                },
+                {
+                  "key": "principalName",
+                  "value": "default",
+                  "description": "Key name",
+                  "disabled": true
+                },
+                {
+                  "key": "fromUtc",
+                  "value": "2026-01-01T00:00:00Z",
+                  "description": "Lower bound",
+                  "disabled": true
+                },
+                {
+                  "key": "toUtc",
+                  "value": "2030-01-01T00:00:00Z",
+                  "description": "Upper bound",
+                  "disabled": true
+                },
+                {
+                  "key": "pageNumber",
+                  "value": "1",
+                  "description": "From 1",
+                  "disabled": false
+                },
+                {
+                  "key": "pageSize",
+                  "value": "25",
+                  "description": "1 to 1000",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Newest first; headers and bodies omitted. The test script stores the first id in requestHistoryId."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                  "const items = pm.response.json().Items;",
+                  "if (items && items.length > 0) { pm.collectionVariables.set('requestHistoryId', items[0].Id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Summarize request history",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/api/request-history/summary?bucketMinutes=15",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "api",
+                "request-history",
+                "summary"
+              ],
+              "query": [
+                {
+                  "key": "bucketMinutes",
+                  "value": "15",
+                  "description": "1 to 10080",
+                  "disabled": false
+                },
+                {
+                  "key": "fromUtc",
+                  "value": "2026-01-01T00:00:00Z",
+                  "description": "Lower bound",
+                  "disabled": true
+                },
+                {
+                  "key": "toUtc",
+                  "value": "2030-01-01T00:00:00Z",
+                  "description": "Upper bound",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Bucketed success and failure counts with average duration, gap filled. Defaults to the last 24 hours."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get request history entry",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/api/request-history/{{requestHistoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "api",
+                "request-history",
+                "{{requestHistoryId}}"
+              ]
+            },
+            "description": "One entry with redacted headers and bodies."
+          }
+        },
+        {
+          "name": "Delete request history entry",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/api/request-history/{{requestHistoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "api",
+                "request-history",
+                "{{requestHistoryId}}"
+              ]
+            },
+            "description": "Admin. Deletes one entry.",
+            "auth": {
+              "type": "apikey",
+              "apikey": [
+                {
+                  "key": "key",
+                  "value": "x-api-key",
+                  "type": "string"
+                },
+                {
+                  "key": "value",
+                  "value": "{{adminKey}}",
+                  "type": "string"
+                },
+                {
+                  "key": "in",
+                  "value": "header",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete request history (filtered)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/api/request-history?pathContains=/v1.0/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "api",
+                "request-history"
+              ],
+              "query": [
+                {
+                  "key": "pathContains",
+                  "value": "/v1.0/health",
+                  "description": "Path substring",
+                  "disabled": false
+                },
+                {
+                  "key": "method",
+                  "value": "GET",
+                  "description": "HTTP method",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Admin. Deletes every entry matching the filters. With no filters it deletes everything, so the pathContains filter is enabled by default here.",
+            "auth": {
+              "type": "apikey",
+              "apikey": [
+                {
+                  "key": "key",
+                  "value": "x-api-key",
+                  "type": "string"
+                },
+                {
+                  "key": "value",
+                  "value": "{{adminKey}}",
+                  "type": "string"
+                },
+                {
+                  "key": "in",
+                  "value": "header",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
