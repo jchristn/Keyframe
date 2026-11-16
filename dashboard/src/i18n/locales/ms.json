@@ -806,7 +806,6 @@
     "queryParams": "Parameter pertanyaan",
     "required": "Wajib",
     "headers": "Pengepala",
-    "authInherited": "Kebenaran ditambah daripada sesi anda secara automatik.",
     "headerName": "Nama pengepala",
     "headerValue": "Nilai",
     "addHeader": "Tambah pengepala",
@@ -843,7 +842,14 @@
     "binaryTitle": "Respons binari",
     "binaryMessage": "{{type}}, {{size}}. Muat turun untuk membukanya.",
     "binaryFilename": "response.bin",
-    "downloadBody": "Muat turun"
+    "downloadBody": "Muat turun",
+    "auth": {
+      "title": "Kebenaran",
+      "useSession": "Guna token bearer saya",
+      "useSessionHelp": "Menghantar kunci log masuk anda sebagai Authorization: Bearer, supaya permintaan berjalan dengan hak anda.",
+      "token": "Kunci API atau token bearer",
+      "tokenHelp": "Dihantar sebagai Authorization: Bearer <token>. Biarkan kosong untuk menghantar permintaan tanpa kelayakan. Tidak pernah disimpan."
+    }
   },
   "settings": {
     "title": "Tetapan",

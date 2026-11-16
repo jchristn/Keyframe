@@ -10,7 +10,7 @@ let openCount = 0;
 /**
  * Accessible modal: portals to body, locks body scroll, closes on Escape and backdrop click
  * (unless `blocking`), traps focus, and restores focus to the opener on close.
- * Sizes: sm (confirm), md (forms), lg (detail), xl (inspectors). variant="drawer" slides the
+ * Sizes: sm (confirm), md (forms), lg (detail), xl (inspectors), full (95% of the viewport). variant="drawer" slides the
  * same panel in from the inline end edge for record details that stay tied to a list.
  */
 function Modal({ open, onClose, title, subtitle = null, headerExtra = null, size = 'md', footer = null, blocking = false, children, className = '', variant = 'dialog' }) {

@@ -917,6 +917,19 @@ legend.panel-title + * {
   max-width: 1120px;
 }
 
+/* Full: 95% of the viewport in both directions, for dense inspectors such as analysis detail. */
+.modal-full {
+  width: 95vw;
+  max-width: 95vw;
+  height: 95vh;
+  max-height: 95vh;
+}
+
+.modal-full .modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 /* Drawer variant: a full-height panel docked to the inline end edge. */
 .drawer-backdrop {
   justify-content: flex-end;
@@ -2449,9 +2462,20 @@ legend.panel-title + * {
 
 .op-picker-value {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: baseline;
+  gap: var(--space-3);
   min-width: 0;
   flex: 1;
+}
+
+.op-picker-value .op-picker-path {
+  flex: 0 0 auto;
+}
+
+.op-picker-value .op-picker-summary {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .op-picker-path {
@@ -2506,7 +2530,8 @@ legend.panel-title + * {
 
 .op-picker-option {
   display: grid;
-  grid-template-columns: auto minmax(0, max-content) minmax(0, 1fr) auto;
+  /* Method, path, and summary side by side; the path column is fixed so summaries line up. */
+  grid-template-columns: 4.5rem minmax(8rem, 18rem) minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--space-2) var(--space-3);
   padding: 6px 8px;
@@ -2836,12 +2861,6 @@ legend.panel-title + * {
   font-variant-numeric: tabular-nums;
 }
 
-.chart-pair {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-4);
-}
-
 .chart-line {
   fill: none;
   stroke-width: 2;
@@ -3091,9 +3110,6 @@ legend.panel-title + * {
     padding: 6px 10px;
   }
   .two-col,
-  .chart-pair {
-    grid-template-columns: minmax(0, 1fr);
-  }
   .cta-row {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -3184,11 +3200,10 @@ legend.panel-title + * {
     display: none;
   }
   .op-picker-option {
-    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-columns: auto minmax(0, auto) minmax(0, 1fr);
   }
-  .op-picker-option .op-picker-summary {
-    grid-column: 1 / -1;
-    white-space: normal;
+  .op-picker-check {
+    display: none;
   }
   .op-picker-count {
     display: none;

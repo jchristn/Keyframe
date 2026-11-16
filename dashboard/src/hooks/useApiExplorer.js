@@ -38,6 +38,9 @@ export function useApiExplorer(apiClient) {
   const [pathParams, setPathParams] = useState({});
   const [queryParams, setQueryParams] = useState({});
   const [headers, setHeaders] = useState([]);
+  // Authorization: pass the signed-in key through (default), or send a token typed here. The token is never stored.
+  const [useSessionAuth, setUseSessionAuth] = useState(true);
+  const [authToken, setAuthToken] = useState('');
   const [body, setBody] = useState('');
   const [response, setResponse] = useState(null);
   const [running, setRunning] = useState(false);
@@ -139,6 +142,8 @@ export function useApiExplorer(apiClient) {
     setResponse(null);
     const extra = {};
     for (const h of headers) if (h.name && h.name.trim()) extra[h.name.trim()] = h.value;
+    const customAuth = Object.keys(extra).some((k) => k.toLowerCase() === 'authorization');
+    if (!useSessionAuth && !customAuth && authToken.trim()) extra.Authorization = 'Bearer ' + authToken.trim();
     const hasBody = operation.requestBody && body.trim();
     if (hasBody && !Object.keys(extra).some((k) => k.toLowerCase() === 'content-type')) extra['Content-Type'] = 'application/json';
     const start = performance.now();
@@ -162,7 +167,7 @@ export function useApiExplorer(apiClient) {
       });
     };
     try {
-      const raw = await apiClient.executeRaw({ method: operation.method, path: resolvedPath, query, headers: extra, body: hasBody ? body : null, signal: controller.signal });
+      const raw = await apiClient.executeRaw({ method: operation.method, path: resolvedPath, query, headers: extra, body: hasBody ? body : null, signal: controller.signal, auth: useSessionAuth });
       const headerObj = headersToObject(raw.headers);
       const contentType = headerObj['content-type'] || '';
       let text = '';
@@ -217,7 +222,7 @@ export function useApiExplorer(apiClient) {
       setRunning(false);
       abortRef.current = null;
     }
-  }, [apiClient, operation, resolvedPath, query, headers, body, pathParams, queryParams]);
+  }, [apiClient, operation, resolvedPath, query, headers, body, pathParams, queryParams, useSessionAuth, authToken]);
 
   const stop = useCallback(() => abortRef.current && abortRef.current.abort(), []);
 
@@ -257,6 +262,10 @@ export function useApiExplorer(apiClient) {
     setQueryParams,
     headers,
     setHeaders,
+    useSessionAuth,
+    setUseSessionAuth,
+    authToken,
+    setAuthToken,
     body,
     setBody,
     bodyError,

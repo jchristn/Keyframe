@@ -138,7 +138,7 @@ function Meter({ value, max }) {
   );
 }
 
-/** Detail drawer for one analysis: metadata, per-call waterfall, call table, JSON, delete. */
+/** Detail modal for one analysis (95% of the viewport): metadata, per-call waterfall, call table, JSON, delete. */
 function AnalysisDrawer({ id, onClose, onDeleted }) {
   const { t, locale } = useLocale();
   const { apiClient } = useAuth();
@@ -205,8 +205,7 @@ function AnalysisDrawer({ id, onClose, onDeleted }) {
     <Modal
       open={!!id}
       onClose={onClose}
-      variant="drawer"
-      size="lg"
+      size="full"
       title={t('analytics.detail.title')}
       subtitle={r ? t('analytics.detail.subtitle', { kind: t('enums.mediaKind.' + r.MediaKind, { defaultValue: r.MediaKind }), time: formatRelativeTime(r.StartedUtc, locale) }) : null}
       headerExtra={
@@ -649,7 +648,7 @@ function AnalyticsView() {
                   buckets={buckets}
                   series={volumeSeries}
                   bucket={bucket}
-                  height={220}
+                  height={440}
                   formatValue={(v) => formatCompact(v, locale)}
                   ariaLabel={t('analytics.charts.volumeAria', { count: totals.Count })}
                   onBucketClick={onVolumeClick}
@@ -677,29 +676,28 @@ function AnalyticsView() {
                   buckets={buckets}
                   series={latencySeries}
                   bucket={bucket}
-                  height={260}
+                  height={520}
                   formatValue={(v) => fmt(metricDef.type, v, true)}
                   ariaLabel={t('analytics.charts.latencyAria', { metric: t('analytics.metrics.' + metric) })}
                   emptyText={t('analytics.charts.noSamples')}
                 />
               </section>
 
-              <div className="chart-pair">
-                <section className="panel chart-panel">
-                  <div className="panel-header">
-                    <h2 className="panel-title">{t('analytics.charts.tokens')}</h2>
-                  </div>
-                  <ChartLegend series={tokenSeries} />
-                  <TimeSeriesChart type="bar" integer buckets={buckets} series={tokenSeries} bucket={bucket} height={200} ariaLabel={t('analytics.charts.tokens')} />
-                </section>
-                <section className="panel chart-panel">
-                  <div className="panel-header">
-                    <h2 className="panel-title">{t('analytics.charts.successRate')}</h2>
-                  </div>
-                  <ChartLegend series={successSeries} />
-                  <TimeSeriesChart buckets={buckets} series={successSeries} bucket={bucket} height={200} formatValue={(v) => formatPercent(v, locale, 0)} ariaLabel={t('analytics.charts.successRate')} />
-                </section>
-              </div>
+              <section className="panel chart-panel">
+                <div className="panel-header">
+                  <h2 className="panel-title">{t('analytics.charts.tokens')}</h2>
+                </div>
+                <ChartLegend series={tokenSeries} />
+                <TimeSeriesChart type="bar" integer buckets={buckets} series={tokenSeries} bucket={bucket} height={400} ariaLabel={t('analytics.charts.tokens')} />
+              </section>
+
+              <section className="panel chart-panel">
+                <div className="panel-header">
+                  <h2 className="panel-title">{t('analytics.charts.successRate')}</h2>
+                </div>
+                <ChartLegend series={successSeries} />
+                <TimeSeriesChart buckets={buckets} series={successSeries} bucket={bucket} height={400} formatValue={(v) => formatPercent(v, locale, 0)} ariaLabel={t('analytics.charts.successRate')} />
+              </section>
 
               <section className="panel">
                 <div className="panel-header">

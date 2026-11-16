@@ -876,7 +876,6 @@
     "queryParams": "معاملات الاستعلام",
     "required": "مطلوب",
     "headers": "الترويسات",
-    "authInherited": "تُضاف ترويسة التفويض من جلستك تلقائيًا.",
     "headerName": "اسم الترويسة",
     "headerValue": "القيمة",
     "addHeader": "إضافة ترويسة",
@@ -918,7 +917,14 @@
     "binaryTitle": "استجابة ثنائية",
     "binaryMessage": "{{type}}، {{size}}. نزّلها لفتحها.",
     "binaryFilename": "response.bin",
-    "downloadBody": "تنزيل"
+    "downloadBody": "تنزيل",
+    "auth": {
+      "title": "التفويض",
+      "useSession": "استخدام رمز Bearer الخاص بي",
+      "useSessionHelp": "يرسل المفتاح الذي سجّلت الدخول به بصيغة Authorization: Bearer، فيُنفَّذ الطلب بصلاحياتك.",
+      "token": "مفتاح API أو رمز Bearer",
+      "tokenHelp": "يُرسل بصيغة Authorization: Bearer <token>. اتركه فارغًا لإرسال الطلب دون بيانات اعتماد. لا يُحفظ أبدًا."
+    }
   },
   "settings": {
     "title": "الإعدادات",

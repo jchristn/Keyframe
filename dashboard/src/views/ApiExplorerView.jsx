@@ -66,12 +66,36 @@ function ParamInputs({ params, values, onChange, kind }) {
   );
 }
 
+function AuthSection({ useSession, onUseSession, token, onToken }) {
+  const { t } = useLocale();
+  const id = useId();
+  return (
+    <section className="panel explorer-section" aria-label={t('explorer.auth.title')}>
+      <h3 className="panel-title">{t('explorer.auth.title')}</h3>
+      <label className="checkbox-row">
+        <input type="checkbox" checked={useSession} onChange={(e) => onUseSession(e.target.checked)} />
+        <span>{t('explorer.auth.useSession')}</span>
+      </label>
+      {useSession ? (
+        <p className="help-text">{t('explorer.auth.useSessionHelp')}</p>
+      ) : (
+        <div className="form-field">
+          <label htmlFor={id + 'token'} className="field-label">
+            {t('explorer.auth.token')}
+          </label>
+          <input id={id + 'token'} type="password" className="mono" value={token} onChange={(e) => onToken(e.target.value)} autoComplete="off" spellCheck={false} />
+          <p className="help-text">{t('explorer.auth.tokenHelp')}</p>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function HeaderEditor({ headers, onChange }) {
   const { t } = useLocale();
   return (
     <section className="panel explorer-section" aria-label={t('explorer.headers')}>
       <h3 className="panel-title">{t('explorer.headers')}</h3>
-      <p className="help-text">{t('explorer.authInherited')}</p>
       {headers.map((h, i) => (
         <div key={i} className="header-row">
           <input className="mono" value={h.name} onChange={(e) => onChange(headers.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))} placeholder={t('explorer.headerName')} aria-label={t('explorer.headerName')} />
@@ -193,6 +217,7 @@ function ApiExplorerView() {
             <>
               <ParamInputs kind="path" params={pathParams} values={ex.pathParams} onChange={ex.setPathParams} />
               <ParamInputs kind="query" params={queryParams} values={ex.queryParams} onChange={ex.setQueryParams} />
+              <AuthSection useSession={ex.useSessionAuth} onUseSession={ex.setUseSessionAuth} token={ex.authToken} onToken={ex.setAuthToken} />
               <HeaderEditor headers={ex.headers} onChange={ex.setHeaders} />
               {op.requestBody ? (
                 <section className="panel explorer-section" aria-label={t('explorer.body')}>

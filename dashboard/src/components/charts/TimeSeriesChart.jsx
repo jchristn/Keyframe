@@ -38,7 +38,7 @@ function TimeSeriesChart({ buckets, series, type = 'line', height = 220, bucket 
       for (const s of visible) if (typeof s.values[i] === 'number') max = Math.max(max, s.values[i]);
     }
   }
-  const tickCount = height >= 260 ? 4 : 3;
+  const tickCount = height >= 400 ? 6 : height >= 260 ? 4 : 3;
   // Counts get whole-number ticks.
   const yMax = integer ? Math.max(tickCount, Math.ceil(niceMax(max) / tickCount) * tickCount) : niceMax(max);
   const ticks = Array.from({ length: tickCount + 1 }, (_, i) => (yMax * i) / tickCount);

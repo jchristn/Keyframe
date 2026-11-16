@@ -820,7 +820,6 @@
     "queryParams": "क्वेरी पैरामीटर",
     "required": "आवश्यक",
     "headers": "हेडर",
-    "authInherited": "Authorization आपके सत्र से अपने आप जोड़ा जाता है।",
     "headerName": "हेडर का नाम",
     "headerValue": "मान",
     "addHeader": "हेडर जोड़ें",
@@ -858,7 +857,14 @@
     "binaryTitle": "बाइनरी प्रतिक्रिया",
     "binaryMessage": "{{type}}, {{size}}। खोलने के लिए इसे डाउनलोड करें।",
     "binaryFilename": "response.bin",
-    "downloadBody": "डाउनलोड करें"
+    "downloadBody": "डाउनलोड करें",
+    "auth": {
+      "title": "प्राधिकरण",
+      "useSession": "मेरा बेयरर टोकन उपयोग करें",
+      "useSessionHelp": "आपने जिस कुंजी से साइन इन किया है उसे Authorization: Bearer के रूप में भेजता है, ताकि अनुरोध आपके अधिकारों के साथ चले।",
+      "token": "API कुंजी या बेयरर टोकन",
+      "tokenHelp": "Authorization: Bearer <token> के रूप में भेजा जाता है। बिना क्रेडेंशियल के अनुरोध भेजने के लिए इसे खाली छोड़ें। यह कभी सहेजा नहीं जाता।"
+    }
   },
   "settings": {
     "title": "सेटिंग्स",

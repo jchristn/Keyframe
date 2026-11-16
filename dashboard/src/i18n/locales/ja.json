@@ -806,7 +806,6 @@
     "queryParams": "クエリパラメーター",
     "required": "必須",
     "headers": "ヘッダー",
-    "authInherited": "Authorization はセッションから自動的に追加されます。",
     "headerName": "ヘッダー名",
     "headerValue": "値",
     "addHeader": "ヘッダーを追加",
@@ -843,7 +842,14 @@
     "binaryTitle": "バイナリレスポンス",
     "binaryMessage": "{{type}}、{{size}}。開くにはダウンロードしてください。",
     "binaryFilename": "response.bin",
-    "downloadBody": "ダウンロード"
+    "downloadBody": "ダウンロード",
+    "auth": {
+      "title": "認可",
+      "useSession": "自分のベアラートークンを使用",
+      "useSessionHelp": "サインインに使ったキーを Authorization: Bearer として送信し、リクエストをあなたの権限で実行します。",
+      "token": "API キーまたはベアラートークン",
+      "tokenHelp": "Authorization: Bearer <token> として送信されます。空のままにすると資格情報なしで送信します。保存されることはありません。"
+    }
   },
   "settings": {
     "title": "設定",

@@ -820,7 +820,6 @@
     "queryParams": "Paramètres de requête",
     "required": "Obligatoire",
     "headers": "En-têtes",
-    "authInherited": "L'en-tête Authorization est ajouté automatiquement à partir de votre session.",
     "headerName": "Nom de l'en-tête",
     "headerValue": "Valeur",
     "addHeader": "Ajouter un en-tête",
@@ -858,7 +857,14 @@
     "binaryTitle": "Réponse binaire",
     "binaryMessage": "{{type}}, {{size}}. Téléchargez-la pour l'ouvrir.",
     "binaryFilename": "response.bin",
-    "downloadBody": "Télécharger"
+    "downloadBody": "Télécharger",
+    "auth": {
+      "title": "Autorisation",
+      "useSession": "Utiliser mon jeton bearer",
+      "useSessionHelp": "Envoie la clé de votre connexion en tant que Authorization: Bearer, pour que la requête s'exécute avec vos droits.",
+      "token": "Clé d'API ou jeton bearer",
+      "tokenHelp": "Envoyé en tant que Authorization: Bearer <token>. Laissez vide pour envoyer la requête sans identifiants. Il n'est jamais enregistré."
+    }
   },
   "settings": {
     "title": "Paramètres",

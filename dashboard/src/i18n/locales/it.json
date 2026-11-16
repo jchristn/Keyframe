@@ -820,7 +820,6 @@
     "queryParams": "Parametri di query",
     "required": "Obbligatorio",
     "headers": "Intestazioni",
-    "authInherited": "L'autorizzazione viene aggiunta automaticamente dalla tua sessione.",
     "headerName": "Nome dell'intestazione",
     "headerValue": "Valore",
     "addHeader": "Aggiungi intestazione",
@@ -858,7 +857,14 @@
     "binaryTitle": "Risposta binaria",
     "binaryMessage": "{{type}}, {{size}}. Scaricala per aprirla.",
     "binaryFilename": "response.bin",
-    "downloadBody": "Scarica"
+    "downloadBody": "Scarica",
+    "auth": {
+      "title": "Autorizzazione",
+      "useSession": "Usa il mio token bearer",
+      "useSessionHelp": "Invia la chiave con cui hai effettuato l'accesso come Authorization: Bearer, così la richiesta viene eseguita con i tuoi permessi.",
+      "token": "Chiave API o token bearer",
+      "tokenHelp": "Inviato come Authorization: Bearer <token>. Lascialo vuoto per inviare la richiesta senza credenziali. Non viene mai salvato."
+    }
   },
   "settings": {
     "title": "Impostazioni",

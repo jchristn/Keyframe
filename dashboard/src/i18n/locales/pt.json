@@ -820,7 +820,6 @@
     "queryParams": "Parâmetros de consulta",
     "required": "Obrigatório",
     "headers": "Cabeçalhos",
-    "authInherited": "A autorização é adicionada automaticamente a partir da sua sessão.",
     "headerName": "Nome do cabeçalho",
     "headerValue": "Valor",
     "addHeader": "Adicionar cabeçalho",
@@ -858,7 +857,14 @@
     "binaryTitle": "Resposta binária",
     "binaryMessage": "{{type}}, {{size}}. Baixe para abrir.",
     "binaryFilename": "response.bin",
-    "downloadBody": "Baixar"
+    "downloadBody": "Baixar",
+    "auth": {
+      "title": "Autorização",
+      "useSession": "Usar meu token bearer",
+      "useSessionHelp": "Envia a chave usada no login como Authorization: Bearer, para que a requisição rode com as suas permissões.",
+      "token": "Chave de API ou token bearer",
+      "tokenHelp": "Enviado como Authorization: Bearer <token>. Deixe vazio para enviar a requisição sem credenciais. Nunca é salvo."
+    }
   },
   "settings": {
     "title": "Configurações",

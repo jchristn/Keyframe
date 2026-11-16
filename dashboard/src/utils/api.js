@@ -311,8 +311,11 @@ class ApiClient {
    * Raw execution for the API Explorer. Returns the fetch Response so the caller can read
    * status, headers, and streaming bodies. Network failures still throw ApiError.
    */
-  async executeRaw({ method, path, query = null, headers = {}, body = null, signal = undefined }) {
-    const init = { method, headers: { ...this.headers({}, false), ...headers }, signal };
+  async executeRaw({ method, path, query = null, headers = {}, body = null, signal = undefined, auth = true }) {
+    const base = this.headers({}, false);
+    // auth false: the caller supplies its own Authorization header (or none), not the signed-in key.
+    if (!auth) delete base.Authorization;
+    const init = { method, headers: { ...base, ...headers }, signal };
     if (body !== null && body !== undefined && body !== '') init.body = body;
     try {
       return await this.fetchImpl(this.url(path, query), init);

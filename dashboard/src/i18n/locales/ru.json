@@ -848,7 +848,6 @@
     "queryParams": "Параметры запроса",
     "required": "Обязательный",
     "headers": "Заголовки",
-    "authInherited": "Заголовок авторизации добавляется из вашего сеанса автоматически.",
     "headerName": "Имя заголовка",
     "headerValue": "Значение",
     "addHeader": "Добавить заголовок",
@@ -888,7 +887,14 @@
     "binaryTitle": "Двоичный ответ",
     "binaryMessage": "{{type}}, {{size}}. Скачайте, чтобы открыть.",
     "binaryFilename": "response.bin",
-    "downloadBody": "Скачать"
+    "downloadBody": "Скачать",
+    "auth": {
+      "title": "Авторизация",
+      "useSession": "Использовать мой bearer-токен",
+      "useSessionHelp": "Отправляет ключ, с которым вы вошли, как Authorization: Bearer, поэтому запрос выполняется с вашими правами.",
+      "token": "Ключ API или bearer-токен",
+      "tokenHelp": "Отправляется как Authorization: Bearer <token>. Оставьте пустым, чтобы отправить запрос без учётных данных. Никогда не сохраняется."
+    }
   },
   "settings": {
     "title": "Настройки",

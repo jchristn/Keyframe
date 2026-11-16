@@ -820,7 +820,6 @@
     "queryParams": "Query parameters",
     "required": "Required",
     "headers": "Headers",
-    "authInherited": "Authorization is added from your session automatically.",
     "headerName": "Header name",
     "headerValue": "Value",
     "addHeader": "Add header",
@@ -858,7 +857,14 @@
     "binaryTitle": "Binary response",
     "binaryMessage": "{{type}}, {{size}}. Download it to open.",
     "binaryFilename": "response.bin",
-    "downloadBody": "Download"
+    "downloadBody": "Download",
+    "auth": {
+      "title": "Authorization",
+      "useSession": "Use my bearer token",
+      "useSessionHelp": "Sends the key you signed in with as Authorization: Bearer, so the request runs with your rights.",
+      "token": "API key or bearer token",
+      "tokenHelp": "Sent as Authorization: Bearer <token>. Leave it empty to send the request without credentials. It is never saved."
+    }
   },
   "settings": {
     "title": "Settings",

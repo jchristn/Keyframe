@@ -74,7 +74,20 @@ describe('AnalyticsView', () => {
     expect(api.listAnalyses).toHaveBeenCalledWith(expect.objectContaining({ mediaKind: 'Audio', pageNumber: 1, pageSize: 25 }));
   });
 
-  it('opens the detail drawer with per-call timing and deletes after confirmation', async () => {
+  it('draws the four time charts at double height, each full width in its own panel', async () => {
+    const api = client();
+    const { container } = renderWithProviders(<AnalyticsView />, { auth: makeAuth({ apiClient: api }) });
+    await screen.findByText('Analyses over time');
+    const height = (name) => screen.getByRole('img', { name }).getAttribute('height');
+    expect(height(/Analyses over time/)).toBe('440');
+    expect(height(/Analysis time percentiles/)).toBe('520');
+    expect(height('Tokens over time')).toBe('400');
+    expect(height('Success rate over time')).toBe('400');
+    expect(container.querySelector('.chart-pair')).toBeNull();
+    for (const svg of container.querySelectorAll('.chart-panel svg')) expect(svg.closest('.chart-panel').parentElement.classList.contains('chart-panel')).toBe(false);
+  });
+
+  it('opens analysis detail as a 95% modal with per-call timing and deletes after confirmation', async () => {
     const user = userEvent.setup();
     const api = client();
     renderWithProviders(<AnalyticsView />, { auth: makeAuth({ apiClient: api }) });
@@ -83,6 +96,8 @@ describe('AnalyticsView', () => {
     await user.click(rows[2]);
     const drawer = await screen.findByRole('dialog');
     expect(within(drawer).getByText('Analysis detail')).toBeInTheDocument();
+    expect(drawer.classList.contains('modal-full')).toBe(true);
+    expect(drawer.classList.contains('drawer')).toBe(false);
     await waitFor(() => expect(api.getAnalysis).toHaveBeenCalledWith('kfa_1001'));
     expect(await within(drawer).findByRole('img', { name: /Telemetry waterfall with 4 stages and 5 model calls/ })).toBeInTheDocument();
     expect(within(drawer).getAllByText('Scene summary').length).toBeGreaterThan(0);
@@ -256,6 +271,31 @@ describe('ApiExplorerView', () => {
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
     expect(screen.getByText('Path parameters')).toBeInTheDocument();
     expect(screen.getAllByText(/\/v1\.0\/jobs\//).length).toBeGreaterThan(0);
+  });
+
+  it('passes the signed-in key through by default, or sends a typed bearer token instead', async () => {
+    const user = userEvent.setup();
+    const executeRaw = vi.fn().mockResolvedValue(new Response('{"Status":"Healthy"}', { status: 200, headers: { 'content-type': 'application/json' } }));
+    const api = { getOpenApiSpec: vi.fn().mockResolvedValue(OPENAPI), url: (p) => 'http://127.0.0.1:8700' + p, executeRaw };
+    renderWithProviders(<ApiExplorerView />, { auth: makeAuth({ apiClient: api }) });
+    await user.click(await screen.findByRole('button', { name: 'Choose an API operation' }));
+    await user.type(screen.getByRole('combobox'), 'health');
+    await user.keyboard('{ArrowDown}{Enter}');
+
+    const useSession = screen.getByRole('checkbox', { name: 'Use my bearer token' });
+    expect(useSession).toBeChecked();
+    expect(screen.queryByLabelText('API key or bearer token')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Execute' }));
+    await waitFor(() => expect(executeRaw).toHaveBeenCalledTimes(1));
+    expect(executeRaw.mock.calls[0][0].auth).toBe(true);
+    expect(executeRaw.mock.calls[0][0].headers.Authorization).toBeUndefined();
+
+    await user.click(useSession);
+    await user.type(screen.getByLabelText('API key or bearer token'), 'other-key');
+    await user.click(screen.getByRole('button', { name: 'Execute' }));
+    await waitFor(() => expect(executeRaw).toHaveBeenCalledTimes(2));
+    expect(executeRaw.mock.calls[1][0].auth).toBe(false);
+    expect(executeRaw.mock.calls[1][0].headers.Authorization).toBe('Bearer other-key');
   });
 });
 

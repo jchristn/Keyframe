@@ -806,7 +806,6 @@
     "queryParams": "查询参数",
     "required": "必填",
     "headers": "标头",
-    "authInherited": "授权信息会自动从您的会话中添加。",
     "headerName": "标头名称",
     "headerValue": "值",
     "addHeader": "添加标头",
@@ -843,7 +842,14 @@
     "binaryTitle": "二进制响应",
     "binaryMessage": "{{type}}，{{size}}。请下载后打开。",
     "binaryFilename": "response.bin",
-    "downloadBody": "下载"
+    "downloadBody": "下载",
+    "auth": {
+      "title": "授权",
+      "useSession": "使用我的 Bearer 令牌",
+      "useSessionHelp": "将您登录时使用的密钥作为 Authorization: Bearer 发送，请求将以您的权限运行。",
+      "token": "API 密钥或 Bearer 令牌",
+      "tokenHelp": "以 Authorization: Bearer <token> 发送。留空则不带凭据发送请求。不会被保存。"
+    }
   },
   "settings": {
     "title": "设置",
