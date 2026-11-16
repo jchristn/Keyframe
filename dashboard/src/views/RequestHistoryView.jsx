@@ -21,8 +21,7 @@ import { STORAGE_KEYS } from '../utils/storage';
 import { getRange, isoToLocalInput, localInputToIso, normalizeBuckets, rangeToParams } from '../utils/ranges';
 import { describeError } from '../utils/errors';
 
-// The request history chart is twice the default height so dense ranges stay readable.
-export const REQUEST_HISTORY_CHART_HEIGHT = DEFAULT_CHART_HEIGHT * 2;
+export const REQUEST_HISTORY_CHART_HEIGHT = DEFAULT_CHART_HEIGHT;
 
 const METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD'];
 const FILTER_KEYS = ['method', 'statusCode', 'pathContains', 'principalName', 'fromUtc', 'toUtc'];

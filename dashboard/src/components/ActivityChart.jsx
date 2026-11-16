@@ -6,7 +6,8 @@ import useElementWidth from '../hooks/useElementWidth';
 import Icon from './Icon';
 import { RANGES } from '../utils/ranges';
 
-export const DEFAULT_CHART_HEIGHT = 200;
+// Request activity charts (Home and Request History) are 400px tall so dense ranges stay readable.
+export const DEFAULT_CHART_HEIGHT = 400;
 const PAD = { top: 12, right: 12, bottom: 30, left: 44 };
 
 function niceMax(value) {

@@ -8,6 +8,7 @@ import AnalyzeVideoView from './AnalyzeVideoView';
 import ApiExplorerView from './ApiExplorerView';
 import RequestHistoryView, { REQUEST_HISTORY_CHART_HEIGHT } from './RequestHistoryView';
 import JobDetailView from './JobDetailView';
+import HomeView from './HomeView';
 import LoginView from './LoginView';
 import SettingsView from './SettingsView';
 import AppearanceMenu from '../components/AppearancePicker';
@@ -300,15 +301,29 @@ describe('ApiExplorerView', () => {
 });
 
 describe('RequestHistoryView', () => {
-  it('draws the activity chart at twice the default height', async () => {
+  it('draws the activity chart at 400px, twice the original 200px', async () => {
     const api = {
       getRequestHistory: vi.fn().mockResolvedValue(page([])),
       getRequestHistorySummary: vi.fn().mockResolvedValue({ TotalCount: 0, TotalSuccess: 0, TotalFailure: 0, AverageDurationMs: 0, Buckets: [] })
     };
     const { container } = renderWithProviders(<RequestHistoryView />, { auth: makeAuth({ apiClient: api }) });
     await screen.findByText('Request activity');
-    expect(REQUEST_HISTORY_CHART_HEIGHT).toBe(DEFAULT_CHART_HEIGHT * 2);
-    expect(container.querySelector('.chart-wrap svg').getAttribute('height')).toBe(String(DEFAULT_CHART_HEIGHT * 2));
+    expect(REQUEST_HISTORY_CHART_HEIGHT).toBe(400);
+    expect(container.querySelector('.chart-wrap svg').getAttribute('height')).toBe('400');
+  });
+});
+
+describe('HomeView', () => {
+  it('draws the request activity chart at the same 400px height as Request History', async () => {
+    const api = {
+      listEndpoints: vi.fn().mockResolvedValue(ENDPOINTS),
+      listJobs: vi.fn().mockResolvedValue(page([])),
+      getRequestHistorySummary: vi.fn().mockResolvedValue({ TotalCount: 0, TotalSuccess: 0, TotalFailure: 0, AverageDurationMs: 0, Buckets: [] })
+    };
+    const { container } = renderWithProviders(<HomeView />, { auth: makeAuth({ apiClient: api }) });
+    await waitFor(() => expect(container.querySelector('.chart-wrap svg')).not.toBeNull());
+    expect(DEFAULT_CHART_HEIGHT).toBe(400);
+    expect(container.querySelector('.chart-wrap svg').getAttribute('height')).toBe('400');
   });
 });
 
