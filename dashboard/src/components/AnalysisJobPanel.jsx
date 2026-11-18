@@ -11,7 +11,8 @@ import Tabs from './Tabs';
 import JsonViewer from './JsonViewer';
 import Icon from './Icon';
 import { ErrorBanner, LoadingState, Notice } from './States';
-import { FieldsTable, Problems, PropertiesGrid, ResultsList } from './AnalysisParts';
+import { FieldsTable, ListeningCard, MeasurementsGrid, Problems, PropertiesGrid, ResultsList } from './AnalysisParts';
+import SectionTimeline from './SectionTimeline';
 import SceneTimeline, { TranscriptViewer } from './SceneTimeline';
 import { SegmentSourceProvider } from './SegmentDownloads';
 import TelemetryWaterfall, { ModelCallTable, TelemetryTotals } from './TelemetryWaterfall';
@@ -109,9 +110,12 @@ function AnalysisJobPanel({ job, result, resultError, onCancel, onRetryResult, c
   const scenes = result && result.Scenes ? result.Scenes : [];
   const segments = result && result.Transcript ? (result.Transcript.Segments || []).length : 0;
   const invalid = result ? (result.Fields || []).filter((f) => !f.Valid).length : 0;
+  const sections = result && Array.isArray(result.Sections) ? result.Sections : null;
   const tabs = [
     isVideo ? { id: 'scenes', label: t('jobDetail.tabs.scenes'), badge: result ? formatNumber(scenes.length, locale) : null } : null,
     { id: 'transcript', label: t('jobDetail.tabs.transcript'), badge: result && result.Transcript ? formatNumber(segments, locale) : null },
+    !isVideo ? { id: 'sections', label: t('jobDetail.tabs.sections'), badge: sections ? formatNumber(sections.length, locale) : null } : null,
+    !isVideo ? { id: 'measurements', label: t('jobDetail.tabs.measurements') } : null,
     { id: 'results', label: t('results.tabs.results') },
     { id: 'fields', label: t('results.tabs.fields'), badge: invalid || null },
     { id: 'telemetry', label: t('results.tabs.telemetry') },
@@ -161,11 +165,14 @@ function AnalysisJobPanel({ job, result, resultError, onCancel, onRetryResult, c
       {result ? (
         <>
           <Problems warnings={result.Warnings} errors={result.Errors} />
+          <ListeningCard listening={result.Listening} />
           <Tabs label={t('results.title')} active={tab} onChange={setTab} tabs={tabs}>
             <SegmentSourceProvider job={job} knownFile={file}>
               {tab === 'scenes' ? <SceneTimeline scenes={scenes} durationMs={result.Properties && result.Properties.DurationMs} /> : null}
               {tab === 'transcript' ? <TranscriptViewer transcript={result.Transcript} /> : null}
+              {tab === 'sections' ? <SectionTimeline sections={sections} durationMs={result.Properties && result.Properties.DurationMs} measurements={result.Measurements} listening={result.Listening} /> : null}
             </SegmentSourceProvider>
+            {tab === 'measurements' ? <MeasurementsGrid measurements={result.Measurements} failed={!!(result.Errors && result.Errors.length)} /> : null}
             {tab === 'results' ? <ResultsList results={result.Results} /> : null}
             {tab === 'fields' ? <FieldsTable fields={result.Fields} /> : null}
             {tab === 'telemetry' ? (

@@ -41,7 +41,7 @@ namespace Test.Shared
                     EndpointSettings gptoss = s.Inference.FindActive("ollama-gpt-oss-20b")!;
                     Check.Equal(4096, gptoss.MaxOutputTokens, "ollama max output tokens");
                     Check.Equal(300000, gptoss.TimeoutMs, "ollama timeout");
-                    Check.Equal(true, s.Analytics.Enabled, "Analytics.Enabled");
+                    Check.Equal(true, s.Analytics.Enable, "Analytics.Enable");
                     Check.Equal(90, s.Analytics.RetentionDays, "Analytics.RetentionDays");
                     Check.Equal(600000L, s.Media.MaxSegmentMs, "Media.MaxSegmentMs");
                     Check.Equal(3650, new AnalyticsSettings { RetentionDays = 99999 }.RetentionDays, "retention maximum");

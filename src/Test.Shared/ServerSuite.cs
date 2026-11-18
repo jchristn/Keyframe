@@ -259,7 +259,7 @@ namespace Test.Shared
                         DeleteResult rest = await f.JsonAsync<DeleteResult>(HttpMethod.Delete, "/v1.0/analytics/analyses", Admin, null, HttpStatusCode.OK, ct).ConfigureAwait(false);
                         Check.Equal(2, rest.DeletedCount, "deleted the rest");
 
-                        f.Settings.Settings.Analytics.Enabled = false;
+                        f.Settings.Settings.Analytics.Enable = false;
                         await f.JsonAsync<ImageAnalysisResponse>(HttpMethod.Post, "/v1.0/image", Key, "{\"Image\":{\"Data\":\"" + png + "\"},\"Functions\":{\"Summarize\":{\"Enable\":true}}}", HttpStatusCode.OK, ct).ConfigureAwait(false);
                         await f.Server.Context.Analytics.FlushAsync(5000, ct).ConfigureAwait(false);
                         EnumerationResult<AnalysisRecord> disabled = await f.JsonAsync<EnumerationResult<AnalysisRecord>>(HttpMethod.Get, "/v1.0/analytics/analyses", Admin, null, HttpStatusCode.OK, ct).ConfigureAwait(false);

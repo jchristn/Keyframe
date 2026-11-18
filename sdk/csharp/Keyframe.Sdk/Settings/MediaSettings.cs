@@ -1,6 +1,7 @@
 namespace Keyframe.Sdk.Settings
 {
     using System;
+    using Keyframe.Sdk.Enums;
 
     /// <summary>
     /// Media handling settings. Paths require a restart; limits apply live.
@@ -229,6 +230,147 @@ namespace Keyframe.Sdk.Settings
             }
         }
 
+        /// <summary>
+        /// Default format of the audio sent to listening models, used when a request leaves Listen.Rendition.Format null.
+        /// Default Mp3. OpenAI-compatible endpoints accept only Mp3 and Wav.
+        /// </summary>
+        public ListenFormatEnum ListenFormat { get; set; } = ListenFormatEnum.Mp3;
+
+        /// <summary>
+        /// Default sample rate in Hz of listening audio. Default 16000. Minimum 8000, maximum 48000.
+        /// </summary>
+        public int ListenSampleRate
+        {
+            get
+            {
+                return _ListenSampleRate;
+            }
+            set
+            {
+                _ListenSampleRate = Math.Clamp(value, 8000, 48000);
+            }
+        }
+
+        /// <summary>
+        /// Default channel count of listening audio. Default 1 (mono). Minimum 1, maximum 2.
+        /// </summary>
+        public int ListenChannels
+        {
+            get
+            {
+                return _ListenChannels;
+            }
+            set
+            {
+                _ListenChannels = Math.Clamp(value, 1, 2);
+            }
+        }
+
+        /// <summary>
+        /// Default bitrate in kbps of Mp3 listening audio. Ignored for Wav and Flac. Default 64. Minimum 16, maximum 320.
+        /// </summary>
+        public int ListenBitrateKbps
+        {
+            get
+            {
+                return _ListenBitrateKbps;
+            }
+            set
+            {
+                _ListenBitrateKbps = Math.Clamp(value, 16, 320);
+            }
+        }
+
+        /// <summary>
+        /// Default listen budget in seconds: the longest audio sent as one clip and the most audio sent in one call, unless the endpoint sets its own MaxListenSeconds. Default 1200. Minimum 10, maximum 7200.
+        /// </summary>
+        public int MaxListenSeconds
+        {
+            get
+            {
+                return _MaxListenSeconds;
+            }
+            set
+            {
+                _MaxListenSeconds = Math.Clamp(value, 10, 7200);
+            }
+        }
+
+        /// <summary>
+        /// Level in dBFS below which audio counts as silence in Measurements. Default -50. Minimum -90, maximum -10.
+        /// </summary>
+        public double MeasureSilenceDb
+        {
+            get
+            {
+                return _MeasureSilenceDb;
+            }
+            set
+            {
+                _MeasureSilenceDb = Math.Clamp(value, -90.0, -10.0);
+            }
+        }
+
+        /// <summary>
+        /// Shortest silence in milliseconds counted in Measurements. Default 500. Minimum 100, maximum 30000.
+        /// </summary>
+        public int MeasureMinSilenceMs
+        {
+            get
+            {
+                return _MeasureMinSilenceMs;
+            }
+            set
+            {
+                _MeasureMinSilenceMs = Math.Clamp(value, 100, 30000);
+            }
+        }
+
+        /// <summary>
+        /// True peak in dBTP at or above which ClippingLikely can be true. Default -0.1. Minimum -6, maximum 3.
+        /// </summary>
+        public double ClippingTruePeakDbtp
+        {
+            get
+            {
+                return _ClippingTruePeakDbtp;
+            }
+            set
+            {
+                _ClippingTruePeakDbtp = Math.Clamp(value, -6.0, 3.0);
+            }
+        }
+
+        /// <summary>
+        /// Peak-level sample count per minute of audio at or above which ClippingLikely can be true. Default 10. Minimum 0, maximum 100000.
+        /// </summary>
+        public double ClippingMinPeaksPerMinute
+        {
+            get
+            {
+                return _ClippingMinPeaksPerMinute;
+            }
+            set
+            {
+                _ClippingMinPeaksPerMinute = Math.Clamp(value, 0.0, 100000.0);
+            }
+        }
+
+        /// <summary>
+        /// StereoWidthDb at or below which a stereo source is reported as EffectivelyMono. Default -40. Minimum -120, maximum 0.
+        /// </summary>
+        public double MonoMaxSideDb
+        {
+            get
+            {
+                return _MonoMaxSideDb;
+            }
+            set
+            {
+                _MonoMaxSideDb = Math.Clamp(value, -120.0, 0.0);
+            }
+        }
+
         #endregion
 
         #region Private-Members
@@ -247,6 +389,15 @@ namespace Keyframe.Sdk.Settings
         private long _MaxAudioDurationMs = 14400000L;
         private long _MaxSegmentMs = 600000L;
         private int _TranscriptionChunkSeconds = 600;
+        private int _ListenSampleRate = 16000;
+        private int _ListenChannels = 1;
+        private int _ListenBitrateKbps = 64;
+        private int _MaxListenSeconds = 1200;
+        private double _MeasureSilenceDb = -50.0;
+        private int _MeasureMinSilenceMs = 500;
+        private double _ClippingTruePeakDbtp = -0.1;
+        private double _ClippingMinPeaksPerMinute = 10.0;
+        private double _MonoMaxSideDb = -40.0;
 
         #endregion
     }

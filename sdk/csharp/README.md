@@ -125,7 +125,72 @@ AudioAnalysisResponse heard = await client.Audio.AnalyzeAndWaitAsync(audio);
 string transcript = heard.Transcript?.Text ?? String.Empty;
 ```
 
-Audio files (mp3, wav, flac, m4a or aac, ogg or opus, webm audio) and video files (only the audio track is used) are accepted. `AudioFunctionsSpec` defaults to transcription and a summary on, extraction off; the summary and fields run on the transcript with the text model. Audio jobs share the job queue with video, so `Jobs.WaitAsync`, `CancelAsync`, and `DeleteAsync` work the same; read the result with `Jobs.GetAudioResultAsync`. `Telemetry.QueueWaitMs` is the time the job spent queued, and each `ModelCallTelemetry` has `QueueMs` (endpoint concurrency gate), `TimeToFirstTokenMs`, `GenerationMs`, and `TokensPerSecond`.
+Audio files (mp3, wav, flac, m4a or aac, ogg or opus, webm audio) and video files (only the audio track is used) are accepted. `AudioFunctionsSpec` defaults to transcription, a summary, and measurements on, and extraction and sections off. Summarize and Extract hear the audio through the listening model when one is usable (`Listen.Enable` is true by default), and use the transcript as well when transcription is on. Audio jobs share the job queue with video, so `Jobs.WaitAsync`, `CancelAsync`, and `DeleteAsync` work the same; read the result with `Jobs.GetAudioResultAsync`. `Telemetry.QueueWaitMs` is the time the job spent queued, and each `ModelCallTelemetry` has `QueueMs` (endpoint concurrency gate), `TimeToFirstTokenMs`, `GenerationMs`, and `TokensPerSecond`.
+
+### Listening
+
+`Listening` is always present on an audio result and says whether the model heard the audio. `Listen.Model` names the listening endpoint; null uses `Inference.DefaultListening`. `Listen.Rendition` sets the audio quality sent to it, and null members use the `Media.Listen*` settings.
+
+```csharp
+AudioAnalysisRequest request = new AudioAnalysisRequest
+{
+    Audio = await MediaSources.FromFileAsync("track07.flac"),
+    Listen = new ListenSpec
+    {
+        Model = new ModelSelection { Endpoint = "llama-listen" },
+        Rendition = new AudioRenditionSpec { Format = ListenFormatEnum.Mp3, Channels = 2 },
+        SampleClips = 4,
+        ClipSeconds = 30
+    }
+};
+
+AudioAnalysisResponse result = await client.Audio.AnalyzeAndWaitAsync(request);
+ListeningInfo listening = result.Listening;
+if (listening.Listened)
+    Console.WriteLine(listening.Mode + " via " + listening.Endpoint + ", heard " + listening.HeardMs + " of " + listening.DurationMs + " ms in " + listening.Clips.Count + " clips");
+else
+    Console.WriteLine("transcript only: " + listening.Reason);
+```
+
+`Mode` is `Full`, `Sections`, `Excerpts`, or `None` on audio (`Scenes` appears only on video). `Reason` is null when the audio was heard, and otherwise one of `ListenSkipReasonEnum`: `NotRequested` (`Listen.Enable` is false), `NoModelFunctions`, `NoEndpointConfigured`, `EndpointLacksAudioInput`, `EndpointUnhealthy`, or `NoAudioTrack`. `EndpointResponse.SupportsAudioInput` shows which endpoints can listen. On video, `Scenes.Audio` (`SceneAudioSpec`, on by default) attaches each scene's audio to its scene calls, and `VideoAnalysisResponse.Listening` reports the outcome.
+
+### Measurements
+
+`Functions.Measure` is on by default and makes no model calls. With every other function off, the request is a measure-only job.
+
+```csharp
+AudioAnalysisRequest request = new AudioAnalysisRequest { Audio = await MediaSources.FromFileAsync("master.wav") };
+request.Functions.Transcribe.Enable = false;
+request.Functions.Summarize.Enable = false;
+
+AudioAnalysisResponse result = await client.Audio.AnalyzeAndWaitAsync(request);
+AudioMeasurements? m = result.Measurements;
+if (m != null)
+    Console.WriteLine(m.IntegratedLufs + " LUFS, true peak " + m.TruePeakDbtp + " dBTP, clipping likely " + m.ClippingLikely
+        + ", silence " + m.SilenceRatio + ", mono " + m.EffectivelyMono);
+```
+
+Level members are null when ffmpeg could not measure them, and `StereoWidthDb` is null for sources that are not stereo. The thresholds behind `ClippingLikely`, `EffectivelyMono`, and the silence figures are the `Media.Clipping*`, `Media.MonoMaxSideDb`, and `Media.MeasureSilence*` settings.
+
+### Sections
+
+`Functions.Sections` splits the recording at silences and runs its own `Summarize` and `Extract` on each section.
+
+```csharp
+AudioAnalysisRequest request = new AudioAnalysisRequest { Audio = await MediaSources.FromFileAsync("concert.mp3") };
+request.Functions.Sections = new SectionsSpec
+{
+    Enable = true,
+    Detection = new SectionDetectionSpec { SilenceDb = -40, MinSilenceMs = 1500, MinSectionMs = 20000 },
+    Summarize = new SummarizeSpec { Enable = true, MaxWords = 40 }
+};
+
+AudioAnalysisResponse result = await client.Audio.AnalyzeAndWaitAsync(request);
+foreach (SectionResult section in result.Sections ?? new List<SectionResult>())
+    Console.WriteLine(section.Index + " " + section.StartMs + "-" + section.EndMs + ": " + section.GetResult<string>("Summary"));
+```
+
+Each section's `StartMs` and `EndMs` can be passed to `Segments.GetSegmentAsync` to cut it back out. Per-section model calls have the purposes `SectionSummarize` and `SectionExtract`.
 
 ## Segments
 

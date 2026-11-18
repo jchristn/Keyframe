@@ -159,6 +159,71 @@ namespace Test.Shared
         }
 
         /// <summary>
+        /// Path to a generated 6 second 48 kHz mono WAV: a 1 kHz sine with a peak of -20 dBFS (RMS about -23 dBFS).
+        /// </summary>
+        /// <param name="token">Cancellation token.</param>
+        /// <returns>Path.</returns>
+        public static Task<string> KnownLevelToneAsync(CancellationToken token)
+        {
+            return FixtureAsync("known-level.wav", new[] { "-f", "lavfi", "-i", "aevalsrc=0.1*sin(2*PI*1000*t):s=48000:d=6", "-c:a", "pcm_s16le" }, token);
+        }
+
+        /// <summary>
+        /// Path to a generated 6 second stereo WAV whose left and right channels are identical.
+        /// </summary>
+        /// <param name="token">Cancellation token.</param>
+        /// <returns>Path.</returns>
+        public static Task<string> MonoAsStereoAsync(CancellationToken token)
+        {
+            return FixtureAsync("mono-as-stereo.wav", new[] { "-f", "lavfi", "-i", "sine=frequency=500:duration=6", "-ac", "2", "-c:a", "pcm_s16le" }, token);
+        }
+
+        /// <summary>
+        /// Path to a generated 6 second mono WAV: 1 second of silence, a 3 second tone, then 2 seconds of silence.
+        /// </summary>
+        /// <param name="token">Cancellation token.</param>
+        /// <returns>Path.</returns>
+        public static Task<string> SilencePaddedAsync(CancellationToken token)
+        {
+            return FixtureAsync("silence-padded.wav", new[] { "-f", "lavfi", "-i", "aevalsrc=if(between(t\\,1\\,4)\\,0.3*sin(2*PI*800*t)\\,0):s=44100:d=6", "-c:a", "pcm_s16le" }, token);
+        }
+
+        /// <summary>
+        /// Path to a generated 96 second stereo FLAC: three 30 second tones at different frequencies separated by two
+        /// 3 second silences (tones at 0-30 s, 33-63 s, and 66-96 s).
+        /// </summary>
+        /// <param name="token">Cancellation token.</param>
+        /// <returns>Path.</returns>
+        public static Task<string> TonesWithSilencesAsync(CancellationToken token)
+        {
+            return FixtureAsync("tones-with-silences.flac", new[] { "-f", "lavfi", "-i", "aevalsrc=if(lt(mod(t\\,33)\\,30)\\,0.3*sin(2*PI*(300+200*floor(t/33))*t)\\,0):s=22050:d=96", "-ac", "2", "-c:a", "flac" }, token);
+        }
+
+        /// <summary>
+        /// Text of a file embedded from Test.Shared/TestData, for example "Ffmpeg/measure-ffmpeg6.txt".
+        /// </summary>
+        /// <param name="relativePath">Path under TestData, with forward slashes.</param>
+        /// <returns>File text.</returns>
+        /// <exception cref="FileNotFoundException">Thrown when the resource is not embedded.</exception>
+        public static string ReadData(string relativePath)
+        {
+            string name = "Test.Shared.Data." + relativePath.Replace('/', Path.DirectorySeparatorChar);
+            System.Reflection.Assembly assembly = typeof(TestEnvironment).Assembly;
+            string? match = null;
+            foreach (string candidate in assembly.GetManifestResourceNames())
+            {
+                if (String.Equals(candidate.Replace('\\', '/'), name.Replace('\\', '/'), StringComparison.Ordinal)) match = candidate;
+            }
+
+            if (match == null) throw new FileNotFoundException("Embedded test data not found: " + relativePath);
+            using (Stream stream = assembly.GetManifestResourceStream(match)!)
+            using (StreamReader reader = new StreamReader(stream))
+            {
+                return reader.ReadToEnd();
+            }
+        }
+
+        /// <summary>
         /// Path to a generated 8 second MP3 (a 660 Hz sine wave).
         /// </summary>
         /// <param name="token">Cancellation token.</param>

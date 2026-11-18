@@ -16,5 +16,10 @@ namespace Keyframe.Sdk.Responses
         /// Scenes, when scene breakdown ran. Never null.
         /// </summary>
         public List<SceneResult> Scenes { get; set; } = new List<SceneResult>();
+
+        /// <summary>
+        /// Whether scene calls heard the scene audio, present whenever scenes are enabled.
+        /// </summary>
+        public ListeningInfo? Listening { get; set; } = null;
     }
 }

@@ -697,7 +697,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum by (le,media_kind, stage) (rate(keyframe_stage_duration_seconds_bucket{stage=~\"resolve|probe|normalize|scenedetection|frameextraction|audioextraction\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.95, sum by (le,media_kind, stage) (rate(keyframe_stage_duration_seconds_bucket{stage=~\"resolve|probe|normalize|scenedetection|frameextraction|audioextraction|measure|sectiondetection|listenextraction\"}[$__rate_interval])))",
           "legendFormat": "{{media_kind}} {{stage}}",
           "range": true
         }
@@ -755,7 +755,7 @@
       "id": 14,
       "type": "timeseries",
       "title": "Audio ffmpeg p95 by operation",
-      "description": "",
+      "description": "ffmpeg work for audio: transcription chunks, segment cuts, measurements (audio_measure), section detection (section_detect), and listening clips (listen_extract).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -773,7 +773,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum by (le,operation) (rate(keyframe_ffmpeg_duration_seconds_bucket{operation=~\"audio_extract|segment_audio\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.95, sum by (le,operation) (rate(keyframe_ffmpeg_duration_seconds_bucket{operation=~\"audio_extract|segment_audio|audio_measure|section_detect|listen_extract\"}[$__rate_interval])))",
           "legendFormat": "{{operation}}",
           "range": true
         }

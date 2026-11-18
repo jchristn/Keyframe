@@ -102,7 +102,7 @@ namespace Keyframe.Core.Responses
         public long InputImageBytes { get; set; } = 0;
 
         /// <summary>
-        /// Bytes of audio sent with the call (transcription).
+        /// Bytes of audio sent with the call: the audio file for transcription, or the clips attached to a completion call.
         /// </summary>
         public long InputAudioBytes { get; set; } = 0;
 

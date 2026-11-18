@@ -26,6 +26,16 @@ namespace Keyframe.Core.Enums
         SceneExtract,
 
         /// <summary>
+        /// Summary of one audio section.
+        /// </summary>
+        SectionSummarize,
+
+        /// <summary>
+        /// Field extraction for one audio section.
+        /// </summary>
+        SectionExtract,
+
+        /// <summary>
         /// Speech-to-text transcription.
         /// </summary>
         Transcribe

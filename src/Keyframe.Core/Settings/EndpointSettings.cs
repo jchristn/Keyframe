@@ -113,6 +113,38 @@ namespace Keyframe.Core.Settings
         }
 
         /// <summary>
+        /// Largest inline media one call may carry, counted as encoded on the wire (base64 plus any data URL prefix).
+        /// Keyframe shortens listening clips to fit. Default 20971520 (20 MB). Minimum 1048576, maximum 1073741824.
+        /// </summary>
+        public long MaxInlineMediaBytes
+        {
+            get
+            {
+                return _MaxInlineMediaBytes;
+            }
+            set
+            {
+                _MaxInlineMediaBytes = Math.Clamp(value, 1048576L, 1073741824L);
+            }
+        }
+
+        /// <summary>
+        /// Listen budget in seconds for this endpoint: the longest audio sent as one clip, and the most audio sent in one
+        /// call. Null uses Media.MaxListenSeconds. Default null. Minimum 10, maximum 7200.
+        /// </summary>
+        public int? MaxListenSeconds
+        {
+            get
+            {
+                return _MaxListenSeconds;
+            }
+            set
+            {
+                _MaxListenSeconds = value.HasValue ? Math.Clamp(value.Value, 10, 7200) : null;
+            }
+        }
+
+        /// <summary>
         /// Whether the endpoint can be used. Default true.
         /// </summary>
         public bool Active { get; set; } = true;
@@ -126,6 +158,8 @@ namespace Keyframe.Core.Settings
         private int _TimeoutMs = 120000;
         private double? _Temperature = null;
         private int _MaxOutputTokens = 2048;
+        private long _MaxInlineMediaBytes = 20971520L;
+        private int? _MaxListenSeconds = null;
 
         #endregion
     }

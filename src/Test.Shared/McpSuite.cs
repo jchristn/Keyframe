@@ -140,6 +140,28 @@ namespace Test.Shared
                     }
                 }, new[] { "mcp", "ffmpeg" }, skip),
 
+                new TestCaseDescriptor(Id, "AudioListen", "keyframe_audio_analyze passes Listen, Measure, and Sections and returns Listening, Measurements, and Sections", async ct =>
+                {
+                    using (McpHarness h = await McpHarness.StartAsync(ServerFixture.AccessKey, ct).ConfigureAwait(false))
+                    {
+                        await h.InitializeAsync(ct).ConfigureAwait(false);
+                        string audio = await TestEnvironment.Base64Async(await TestEnvironment.WavAsync(ct).ConfigureAwait(false), ct).ConfigureAwait(false);
+                        JsonElement result = await h.ToolAsync("keyframe_audio_analyze",
+                            "{\"Audio\":{\"Data\":\"" + audio + "\"},\"Listen\":{\"Enable\":true,\"SampleClips\":2},\"Measure\":{\"Enable\":true},"
+                            + "\"Sections\":{\"Enable\":true,\"Detection\":{\"MinSectionMs\":0},\"Summarize\":{\"Enable\":true}},\"Wait\":true,\"WaitTimeoutMs\":60000}", false, ct).ConfigureAwait(false);
+                        JsonElement listening = result.GetProperty("Listening");
+                        Check.True(!listening.GetProperty("Listened").GetBoolean(), "no listening endpoint on the test server");
+                        Check.Equal("NoEndpointConfigured", listening.GetProperty("Reason").GetString(), "reason passed through");
+                        Check.True(result.GetProperty("Measurements").GetProperty("Channels").GetInt32() == 2, "measurements");
+                        Check.True(result.GetProperty("Sections").GetArrayLength() >= 1, "sections");
+
+                        JsonElement off = await h.ToolAsync("keyframe_audio_analyze",
+                            "{\"Audio\":{\"Data\":\"" + audio + "\"},\"Listen\":{\"Enable\":false},\"Measure\":{\"Enable\":false},\"Wait\":true,\"WaitTimeoutMs\":60000}", false, ct).ConfigureAwait(false);
+                        Check.Equal("NotRequested", off.GetProperty("Listening").GetProperty("Reason").GetString(), "listen off");
+                        Check.True(!off.TryGetProperty("Measurements", out JsonElement m) || m.ValueKind == JsonValueKind.Null, "measure off");
+                    }
+                }, new[] { "mcp", "ffmpeg" }, skip),
+
                 new TestCaseDescriptor(Id, "Analytics", "The caller's key passes through: admin key gets analytics, access key gets 403, unknown key gets 401", async ct =>
                 {
                     using (McpHarness h = await McpHarness.StartAsync(ServerFixture.AdminKey, ct).ConfigureAwait(false))

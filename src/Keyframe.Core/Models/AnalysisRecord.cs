@@ -168,7 +168,7 @@ namespace Keyframe.Core.Models
         public long InputImageBytes { get; set; } = 0;
 
         /// <summary>
-        /// Bytes of audio sent to transcription.
+        /// Bytes of audio sent to models: transcription audio plus audio clips attached to completion calls.
         /// </summary>
         public long InputAudioBytes { get; set; } = 0;
 

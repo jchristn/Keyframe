@@ -11,7 +11,7 @@ import Icon from '../components/Icon';
 import LanguageSelector from '../components/LanguageSelector';
 import { AppearancePanel } from '../components/AppearancePicker';
 import { EmptyState, ErrorBanner, LoadingState, Notice } from '../components/States';
-import { getPath, isMasked, normalizeForSave, presentSections, setPath, validateSettings } from '../utils/settingsSchema';
+import { AUDIO_INPUT_PROVIDERS, getPath, isMasked, normalizeForSave, presentSections, setPath, validateSettings } from '../utils/settingsSchema';
 import { describeError } from '../utils/errors';
 
 const RESTART_POLL_MS = 1500;
@@ -20,6 +20,17 @@ const RESTART_GIVE_UP_MS = 90000;
 function metaKey(path) {
   // Settings metadata uses "[]" for array items: Inference.Endpoints[].ApiKey
   return path.replace(/\.(\d+)\./g, '[].');
+}
+
+/** Split a section's fields into consecutive groups by their optional `group` id. */
+function fieldGroups(fields) {
+  const groups = [];
+  for (const f of fields) {
+    const id = f.group || null;
+    if (!groups.length || groups[groups.length - 1].id !== id) groups.push({ id, fields: [] });
+    groups[groups.length - 1].fields.push(f);
+  }
+  return groups;
 }
 
 function FieldBadges({ meta }) {
@@ -111,14 +122,15 @@ function FieldControl({ field, path, value, original, onChange, disabled, error,
       control = (
         <select id={id} value={value ?? ''} onChange={(e) => onChange(e.target.value)} disabled={locked}>
           <option value="">{t('settings.noEndpoint')}</option>
-          {endpointNames(field.kind).map((n) => (
+          {endpointNames(field.kind, field.audioInput).map((n) => (
             <option key={n} value={n}>
               {n}
             </option>
           ))}
-          {value && !endpointNames(field.kind).includes(value) ? <option value={value}>{value}</option> : null}
+          {value && !endpointNames(field.kind, field.audioInput).includes(value) ? <option value={value}>{value}</option> : null}
         </select>
       );
+      if (field.audioInput) control = <>{control}<p className="help-text">{t('settings.audioInputOnly')}</p></>;
       break;
     case 'secret':
       control = <SecretInput id={id} value={value} original={original} onChange={onChange} disabled={locked} nullable={field.nullable} />;
@@ -242,7 +254,10 @@ function SettingsView() {
   const dirty = useMemo(() => loaded && draft && JSON.stringify(loaded.Settings) !== JSON.stringify(draft), [loaded, draft]);
   const busy = saving || !!restartState;
 
-  const endpointNames = (kind) => ((draft && draft.Inference && draft.Inference.Endpoints) || []).filter((e) => e.Name && (!kind || e.Kind === kind)).map((e) => e.Name);
+  const endpointNames = (kind, audioInput = false) =>
+    ((draft && draft.Inference && draft.Inference.Endpoints) || [])
+      .filter((e) => e.Name && (!kind || e.Kind === kind) && (!audioInput || AUDIO_INPUT_PROVIDERS.includes(e.Provider)))
+      .map((e) => e.Name);
 
   const update = (path, value) => setDraft((d) => setPath(d, path, value));
 
@@ -425,24 +440,32 @@ function SettingsView() {
               <fieldset key={section.id} id={'settings-' + section.id} className="panel settings-section" disabled={busy}>
                 <legend className="panel-title">{t('settings.groups.' + section.id + '.title')}</legend>
                 <p className="help-text">{t('settings.groups.' + section.id + '.help')}</p>
-                <div className="settings-grid">
-                  {section.fields
-                    .filter((f) => !f.showIf || f.showIf(draft))
-                    .map((f) => (
-                      <FieldControl
-                        key={f.path}
-                        field={f}
-                        path={f.path}
-                        value={getPath(draft, f.path)}
-                        original={getPath(loaded.Settings, f.path)}
-                        onChange={(v) => update(f.path, v)}
-                        disabled={busy}
-                        error={showErrors ? errors[f.path] : null}
-                        meta={meta[f.path]}
-                        endpointNames={endpointNames}
-                      />
-                    ))}
-                </div>
+                {fieldGroups(section.fields.filter((f) => !f.showIf || f.showIf(draft))).map((g) => (
+                  <div key={g.id || 'main'} className="settings-subgroup" id={g.id ? 'settings-' + section.id + '-' + g.id : undefined}>
+                    {g.id ? (
+                      <>
+                        <div className="section-label">{t('settings.subgroups.' + g.id + '.title')}</div>
+                        <p className="help-text">{t('settings.subgroups.' + g.id + '.help')}</p>
+                      </>
+                    ) : null}
+                    <div className="settings-grid">
+                      {g.fields.map((f) => (
+                        <FieldControl
+                          key={f.path}
+                          field={f}
+                          path={f.path}
+                          value={getPath(draft, f.path)}
+                          original={getPath(loaded.Settings, f.path)}
+                          onChange={(v) => update(f.path, v)}
+                          disabled={busy}
+                          error={showErrors ? errors[f.path] : null}
+                          meta={meta[f.path]}
+                          endpointNames={endpointNames}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
                 {(section.arrays || []).map((arr) => {
                   const items = getPath(draft, arr.path) || [];
                   const originals = getPath(loaded.Settings, arr.path) || [];

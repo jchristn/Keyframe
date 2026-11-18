@@ -105,7 +105,7 @@ With `wait=True`, `video.analyze` may return `result` directly (the job id comes
 
 ## Audio
 
-`AudioAnalysisRequest` takes an audio file (mp3, wav, flac, m4a or aac, ogg or opus, webm audio) or a video file (only its audio track is used). `AudioFunctionsSpec` defaults to Transcribe and Summarize on and Extract off. Summarize and Extract run on the transcript with `text_model` (else `Inference.DefaultText`); `transcription_model` picks the transcription endpoint.
+`AudioAnalysisRequest` takes an audio file (mp3, wav, flac, m4a or aac, ogg or opus, webm audio) or a video file (only its audio track is used). `AudioFunctionsSpec` defaults to Transcribe, Summarize, and Measure on, and Extract and Sections off. Summarize and Extract hear the audio through the listening model when one is usable (`listen.enable` is True by default), and use the transcript as well when transcription is on. Without a usable listening endpoint they run on the transcript with `text_model` (else `Inference.DefaultText`); `transcription_model` picks the transcription endpoint.
 
 ```python
 from keyframe_sdk import (
@@ -132,6 +132,71 @@ for call in result.telemetry.model_calls:
 ```
 
 `audio.analyze` behaves like `video.analyze`: `202` with `job`, or with `wait=True` either `result` (job id from `x-keyframe-job-id`) or a finished non-succeeded `job`.
+
+### Listening
+
+`listening` is always present on an audio result and says whether the model heard the audio. `listen.model` names the listening endpoint; None uses `Inference.DefaultListening`. `listen.rendition` sets the audio quality sent to it, and None members use the `Media.Listen*` settings.
+
+```python
+from keyframe_sdk import AudioAnalysisRequest, AudioRenditionSpec, ListenFormat, ListenSpec, ModelSelection, media_from_file
+
+request = AudioAnalysisRequest(
+    audio=media_from_file("track07.flac"),
+    listen=ListenSpec(
+        model=ModelSelection(endpoint="llama-listen"),
+        rendition=AudioRenditionSpec(format=ListenFormat.MP3, channels=2),
+        sample_clips=4,
+        clip_seconds=30,
+    ),
+)
+result = client.audio.analyze_and_wait(request)
+listening = result.listening
+if listening.listened:
+    print(listening.mode, listening.endpoint, listening.heard_ms, listening.duration_ms, len(listening.clips))
+else:
+    print("transcript only:", listening.reason)
+```
+
+`mode` is a `ListeningMode`: `FULL`, `SECTIONS`, `EXCERPTS`, or `NONE` on audio (`SCENES` appears only on video). `reason` is None when the audio was heard, and otherwise a `ListenSkipReason`: `NOT_REQUESTED` (`listen.enable` is False), `NO_MODEL_FUNCTIONS`, `NO_ENDPOINT_CONFIGURED`, `ENDPOINT_LACKS_AUDIO_INPUT`, `ENDPOINT_UNHEALTHY`, or `NO_AUDIO_TRACK`. `supports_audio_input` on each `endpoints.list()` entry shows which endpoints can listen. On video, `ScenesSpec.audio` (`SceneAudioSpec`, on by default) attaches each scene's audio to its scene calls, and `VideoAnalysisResponse.listening` reports the outcome.
+
+### Measurements
+
+`functions.measure` is on by default and makes no model calls. With every other function off, the request is a measure-only job.
+
+```python
+from keyframe_sdk import AudioAnalysisRequest, AudioFunctionsSpec, SummarizeSpec, TranscribeSpec, media_from_file
+
+request = AudioAnalysisRequest(
+    audio=media_from_file("master.wav"),
+    functions=AudioFunctionsSpec(transcribe=TranscribeSpec(enable=False), summarize=SummarizeSpec(enable=False)),
+)
+m = client.audio.analyze_and_wait(request).measurements
+print(m.integrated_lufs, m.true_peak_dbtp, m.clipping_likely, m.silence_ratio, m.effectively_mono)
+```
+
+Level members are None when ffmpeg could not measure them, and `stereo_width_db` is None for sources that are not stereo. The thresholds behind `clipping_likely`, `effectively_mono`, and the silence figures are the `Media.Clipping*`, `Media.MonoMaxSideDb`, and `Media.MeasureSilence*` settings.
+
+### Sections
+
+`functions.sections` splits the recording at silences and runs its own `summarize` and `extract` on each section.
+
+```python
+from keyframe_sdk import AudioAnalysisRequest, AudioFunctionsSpec, SectionDetectionSpec, SectionsSpec, SummarizeSpec, media_from_file
+
+request = AudioAnalysisRequest(
+    audio=media_from_file("concert.mp3"),
+    functions=AudioFunctionsSpec(sections=SectionsSpec(
+        enable=True,
+        detection=SectionDetectionSpec(silence_db=-40, min_silence_ms=1500, min_section_ms=20000),
+        summarize=SummarizeSpec(enable=True, max_words=40),
+    )),
+)
+result = client.audio.analyze_and_wait(request)
+for section in result.sections or []:
+    print(section.index, section.start_ms, section.end_ms, section.results.get("Summary"))
+```
+
+Each section's `start_ms` and `end_ms` can be passed to `segments.get` to cut it back out. Per-section model calls have the purposes `ModelCallPurpose.SECTION_SUMMARIZE` and `SECTION_EXTRACT`.
 
 ## Segments
 
@@ -195,7 +260,7 @@ All derive from `KeyframeError`.
 
 `settings.get()` returns secrets masked as `****` plus the last four characters. Send the object back through `settings.update()` with masked values unchanged and the server keeps the stored secrets. `update` sends nulls explicitly and replaces the whole object, so start from a fresh `get()`.
 
-Settings include `analytics` (`enabled`, `retention_days`) and `media.max_segment_ms` and `media.max_audio_duration_ms`.
+Settings include `analytics` (`enable`, `retention_days`) and `media.max_segment_ms` and `media.max_audio_duration_ms`.
 
 ## Test harness
 

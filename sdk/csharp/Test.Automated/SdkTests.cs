@@ -100,6 +100,10 @@ namespace Test.Automated
             await runner.RunAsync("audio Wait returns the result with timing telemetry", AudioWaitAsync).ConfigureAwait(false);
             await runner.RunAsync("audio AnalyzeAndWaitAsync with typed fields", AudioAnalyzeAndWaitAsync).ConfigureAwait(false);
             await runner.RunAsync("audio without a source is 400", AudioValidationAsync).ConfigureAwait(false);
+            await runner.RunAsync("audio default analysis listens through the mock (Mode Full)", AudioListeningAsync).ConfigureAwait(false);
+            await runner.RunAsync("audio Listen.Enable false reports NotRequested", AudioListenDisabledAsync).ConfigureAwait(false);
+            await runner.RunAsync("audio measure-only has Measurements and no model calls", AudioMeasureOnlyAsync).ConfigureAwait(false);
+            await runner.RunAsync("audio sections with per-section summaries", AudioSectionsAsync).ConfigureAwait(false);
 
             Console.WriteLine("Segments");
             await runner.RunAsync("audio segment as binary with header metadata", SegmentAudioBinaryAsync).ConfigureAwait(false);
@@ -697,6 +701,74 @@ namespace Test.Automated
             Check.True(e.Error.HasValue, "Error code missing");
         }
 
+        private async Task AudioListeningAsync()
+        {
+            AudioAnalysisResponse result = await _User.Audio.AnalyzeAndWaitAsync(await AudioRequestAsync(false, false).ConfigureAwait(false), 200, 120000, _Token).ConfigureAwait(false);
+            CheckAudioResult(result);
+            ListeningInfo listening = result.Listening;
+            Check.True(listening.Listened, "Listening.Listened false, reason " + listening.Reason);
+            Check.Equal(ListeningModeEnum.Full, listening.Mode, "Listening.Mode");
+            Check.True(listening.Reason == null, "Listening.Reason should be null when listened");
+            Check.Equal("mock-listen", listening.Endpoint, "Listening.Endpoint");
+            Check.True(listening.Rendition.Format.HasValue && listening.Rendition.SampleRate.HasValue && listening.Rendition.Channels.HasValue, "effective rendition not filled");
+            Check.True(listening.DurationMs > 0 && listening.HeardMs > 0, "DurationMs or HeardMs is zero");
+            Check.True(listening.Clips.Any(c => c.Scope == ListenClipScopeEnum.Recording && c.Index == null && c.EndMs > c.StartMs && c.SizeBytes > 0), "no Recording clip");
+            Check.True(result.Measurements != null, "Measurements missing (Measure is on by default)");
+            Check.True(result.Sections == null, "Sections present without Sections.Enable");
+            Check.True(result.Telemetry.Stages.Any(s => s.Name == "ListenExtraction"), "no ListenExtraction stage");
+        }
+
+        private async Task AudioListenDisabledAsync()
+        {
+            AudioAnalysisRequest request = await AudioRequestAsync(false, false).ConfigureAwait(false);
+            request.Listen = new ListenSpec { Enable = false };
+            AudioAnalysisResponse result = await _User.Audio.AnalyzeAndWaitAsync(request, 200, 120000, _Token).ConfigureAwait(false);
+            CheckAudioResult(result);
+            Check.True(!result.Listening.Listened, "Listening.Listened should be false");
+            Check.Equal(ListeningModeEnum.None, result.Listening.Mode, "Listening.Mode");
+            Check.Equal(ListenSkipReasonEnum.NotRequested, result.Listening.Reason, "Listening.Reason");
+            Check.True(!result.Listening.Clips.Any(), "Clips should be empty");
+        }
+
+        private async Task AudioMeasureOnlyAsync()
+        {
+            AudioAnalysisRequest request = await AudioRequestAsync(false, false).ConfigureAwait(false);
+            request.Functions.Transcribe.Enable = false;
+            request.Functions.Summarize.Enable = false;
+            AudioAnalysisResponse result = await _User.Audio.AnalyzeAndWaitAsync(request, 200, 120000, _Token).ConfigureAwait(false);
+            Check.True(result.Success, "Success false: " + String.Join("; ", result.Errors));
+            Check.True(result.Transcript == null, "Transcript present with Transcribe off");
+            AudioMeasurements? m = result.Measurements;
+            Check.True(m != null, "Measurements missing");
+            Check.Equal(1, m!.Channels, "Measurements.Channels");
+            Check.True(m.IntegratedLufs.HasValue && m.TruePeakDbtp.HasValue && m.RmsDbfs.HasValue, "loudness or level missing");
+            Check.True(m.StereoWidthDb == null && m.EffectivelyMono, "mono source should have null StereoWidthDb and EffectivelyMono true");
+            Check.True(m.SilenceRatio >= 0 && m.SilenceRatio <= 1, "SilenceRatio out of range");
+            Check.True(!result.Telemetry.ModelCalls.Any(), "measure-only made model calls");
+            Check.Equal(0, result.Telemetry.Totals.ModelCalls, "Totals.ModelCalls");
+            Check.Equal(ListenSkipReasonEnum.NoModelFunctions, result.Listening.Reason, "Listening.Reason");
+            Check.True(result.Telemetry.Stages.Any(s => s.Name == "Measure"), "no Measure stage");
+        }
+
+        private async Task AudioSectionsAsync()
+        {
+            AudioAnalysisRequest request = await AudioRequestAsync(false, false).ConfigureAwait(false);
+            request.Functions.Sections = new SectionsSpec
+            {
+                Enable = true,
+                Summarize = new SummarizeSpec { Enable = true }
+            };
+            AudioAnalysisResponse result = await _User.Audio.AnalyzeAndWaitAsync(request, 200, 120000, _Token).ConfigureAwait(false);
+            CheckAudioResult(result);
+            Check.True(result.Sections != null && result.Sections.Any(), "Sections missing or empty");
+            SectionResult first = result.Sections![0];
+            Check.Equal(0, first.Index, "Sections[0].Index");
+            Check.True(first.EndMs > first.StartMs && first.DurationMs > 0, "section bounds");
+            Check.True(!String.IsNullOrEmpty(first.GetResult<string>("Summary")), "section Summary missing");
+            Check.True(result.Telemetry.ModelCalls.Any(c => c.Purpose == ModelCallPurposeEnum.SectionSummarize), "no SectionSummarize model call");
+            Check.True(result.Listening.Clips.Any(c => c.Scope == ListenClipScopeEnum.Section && c.Index == 0), "no Section clip");
+        }
+
         #endregion
 
         #region Segments
@@ -933,6 +1005,8 @@ namespace Test.Automated
             Check.True(endpoints.Any(e => e.Kind == EndpointKindEnum.Transcription), "no transcription endpoint");
             Check.True(mock.SupportsImages && mock.SupportsStructuredOutput, "mock capability flags");
             Check.True(endpoints.Any(e => e.Kind == EndpointKindEnum.Transcription && e.SupportsTranscription), "transcription endpoint without SupportsTranscription");
+            Check.True(mock.SupportsAudioInput, "mock should report SupportsAudioInput");
+            Check.True(endpoints.Any(e => e.Name == "mock-listen" && e.SupportsAudioInput), "mock-listen endpoint missing or without SupportsAudioInput");
         }
 
         private async Task EndpointTestAsync()
@@ -964,8 +1038,12 @@ namespace Test.Automated
             Check.True(s.Analytics.RetentionDays >= 1 && s.Analytics.RetentionDays <= 3650, "Analytics.RetentionDays out of range");
             Check.True(s.Media.MaxSegmentMs >= 1000 && s.Media.MaxSegmentMs <= 14400000, "Media.MaxSegmentMs out of range");
             Check.True(s.Media.MaxAudioDurationMs >= 1000, "Media.MaxAudioDurationMs missing");
-            Check.True(response.Fields.Any(f => f.Path == "Analytics.Enabled"), "Analytics.Enabled metadata missing");
+            Check.True(response.Fields.Any(f => f.Path == "Analytics.Enable"), "Analytics.Enable metadata missing");
             Check.True(response.Fields.Any(f => f.Path == "Media.MaxSegmentMs"), "Media.MaxSegmentMs metadata missing");
+            Check.Equal("mock-listen", s.Inference.DefaultListening, "Inference.DefaultListening");
+            Check.Equal(ListenFormatEnum.Mp3, s.Media.ListenFormat, "Media.ListenFormat");
+            Check.True(s.Media.ListenSampleRate >= 8000 && s.Media.ListenSampleRate <= 48000, "Media.ListenSampleRate out of range");
+            Check.True(s.Inference.Endpoints.All(e => e.MaxInlineMediaBytes >= 1048576), "Endpoints[].MaxInlineMediaBytes out of range");
         }
 
         private async Task SettingsWriteAsync()

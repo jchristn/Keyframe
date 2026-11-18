@@ -68,7 +68,46 @@ class ModelCallPurpose(str, Enum):
     EXTRACT = "Extract"
     SCENE_SUMMARIZE = "SceneSummarize"
     SCENE_EXTRACT = "SceneExtract"
+    SECTION_SUMMARIZE = "SectionSummarize"
+    SECTION_EXTRACT = "SectionExtract"
     TRANSCRIBE = "Transcribe"
+
+
+class ListeningMode(str, Enum):
+    """What the whole-recording model calls heard. SCENES appears only on video. NONE whenever nothing listened."""
+
+    FULL = "Full"
+    SECTIONS = "Sections"
+    EXCERPTS = "Excerpts"
+    SCENES = "Scenes"
+    NONE = "None"
+
+
+class ListenSkipReason(str, Enum):
+    """Stable reason code for a request that did not listen to its audio."""
+
+    NOT_REQUESTED = "NotRequested"
+    NO_MODEL_FUNCTIONS = "NoModelFunctions"
+    NO_ENDPOINT_CONFIGURED = "NoEndpointConfigured"
+    ENDPOINT_LACKS_AUDIO_INPUT = "EndpointLacksAudioInput"
+    ENDPOINT_UNHEALTHY = "EndpointUnhealthy"
+    NO_AUDIO_TRACK = "NoAudioTrack"
+
+
+class ListenFormat(str, Enum):
+    """Container and codec of listening audio. OpenAI-compatible endpoints accept only MP3 and WAV."""
+
+    MP3 = "Mp3"
+    WAV = "Wav"
+    FLAC = "Flac"
+
+
+class ListenClipScope(str, Enum):
+    """Which model calls a rendered listening clip was sent to."""
+
+    RECORDING = "Recording"
+    SECTION = "Section"
+    SCENE = "Scene"
 
 
 class EndpointKind(str, Enum):
@@ -234,10 +273,88 @@ class SceneDetectionSpec(Model):
 
 
 @dataclass
+class AudioRenditionSpec(Model):
+    """Quality of the audio sent to a listening model. Each None member uses its Media.Listen* server default; in a
+    response (ListeningInfo.rendition) every member is filled with the effective value.
+
+    ``format`` defaults to Media.ListenFormat (MP3). ``sample_rate`` in Hz, 8000 to 48000 (default 16000).
+    ``channels`` 1 to 2 (default 1). ``bitrate_kbps`` 16 to 320, MP3 only (default 64).
+    """
+
+    format: Optional[ListenFormat] = None
+    sample_rate: Optional[int] = None
+    channels: Optional[int] = None
+    bitrate_kbps: Optional[int] = None
+    extra: Dict[str, Any] = _extra()
+
+
+@dataclass
+class SceneAudioSpec(Model):
+    """Attach each scene's audio to that scene's model calls when the vision endpoint can take audio. Default on.
+    When it cannot, scenes run on frames and transcript and VideoAnalysisResponse.listening says why; never a 400."""
+
+    enable: bool = True
+    rendition: AudioRenditionSpec = field(default_factory=AudioRenditionSpec)
+    extra: Dict[str, Any] = _extra()
+
+
+@dataclass
 class ScenesSpec(Model):
     enable: bool = False
     detection: SceneDetectionSpec = field(default_factory=SceneDetectionSpec)
     frames_per_scene: int = 3
+    summarize: SummarizeSpec = field(default_factory=SummarizeSpec)
+    extract: ExtractSpec = field(default_factory=ExtractSpec)
+    audio: SceneAudioSpec = field(default_factory=SceneAudioSpec)
+    extra: Dict[str, Any] = _extra()
+
+
+@dataclass
+class ListenSpec(Model):
+    """Listening options for audio analysis.
+
+    ``enable`` (default True) sends the audio itself to the listening model for Summarize, Extract, and per-section
+    functions, falling back to the transcript when no audio-capable endpoint is usable. ``model`` None uses
+    Inference.DefaultListening; naming an endpoint without audio input is a 400. ``sample_clips`` 1 to 32 (default 4)
+    and ``clip_seconds`` 5 to 300 (default 30) shape the excerpts sent when the recording is too long to send whole.
+    """
+
+    enable: bool = True
+    model: Optional[ModelSelection] = None
+    rendition: AudioRenditionSpec = field(default_factory=AudioRenditionSpec)
+    sample_clips: int = 4
+    clip_seconds: int = 30
+    extra: Dict[str, Any] = _extra()
+
+
+@dataclass
+class MeasureSpec(Model):
+    """Deterministic loudness, level, silence, and stereo measurements. No model calls. Default on."""
+
+    enable: bool = True
+    extra: Dict[str, Any] = _extra()
+
+
+@dataclass
+class SectionDetectionSpec(Model):
+    """Where silences split a recording. ``silence_db`` -90 to -10 (default -40). ``min_silence_ms`` 100 to 30000
+    (default 1500). ``min_section_ms`` 0 to 600000 (default 20000). ``max_section_ms`` 10000 to 3600000 (default 600000).
+    ``max_sections`` 1 to 1000 (default 100)."""
+
+    silence_db: float = -40.0
+    min_silence_ms: int = 1500
+    min_section_ms: int = 20000
+    max_section_ms: int = 600000
+    max_sections: int = 100
+    extra: Dict[str, Any] = _extra()
+
+
+@dataclass
+class SectionsSpec(Model):
+    """Split the recording at silences and run Summarize and Extract on each section. Default off."""
+
+    enable: bool = False
+    detection: SectionDetectionSpec = field(default_factory=SectionDetectionSpec)
     summarize: SummarizeSpec = field(default_factory=SummarizeSpec)
     extract: ExtractSpec = field(default_factory=ExtractSpec)
     extra: Dict[str, Any] = _extra()
@@ -292,10 +409,13 @@ class VideoAnalysisRequest(Model):
 
 @dataclass
 class AudioFunctionsSpec(FunctionsSpec):
-    """Audio functions. Transcribe and Summarize default on, Extract off."""
+    """Audio functions. Transcribe, Summarize, and Measure default on; Extract and Sections off. Summarize, Extract,
+    and section functions need Transcribe or Listen enabled."""
 
     summarize: SummarizeSpec = field(default_factory=lambda: SummarizeSpec(enable=True))
     transcribe: TranscribeSpec = field(default_factory=lambda: TranscribeSpec(enable=True))
+    measure: MeasureSpec = field(default_factory=MeasureSpec)
+    sections: SectionsSpec = field(default_factory=SectionsSpec)
 
 
 @dataclass
@@ -305,6 +425,7 @@ class AudioAnalysisRequest(Model):
     wait: bool = False
     wait_timeout_ms: int = 120000
     transcription_model: Optional[ModelSelection] = None
+    listen: ListenSpec = field(default_factory=ListenSpec)
     text_model: Optional[ModelSelection] = None
     include_properties: bool = True
     functions: AudioFunctionsSpec = field(default_factory=AudioFunctionsSpec)
@@ -534,14 +655,88 @@ class TranscriptResult(Model):
 
 
 @dataclass
+class ListenClip(Model):
+    """One audio clip rendered and sent to a listening model. ``index`` is the section or scene index, None for
+    Recording clips. ``size_bytes`` is before base64 encoding."""
+
+    scope: ListenClipScope = ListenClipScope.RECORDING
+    index: Optional[int] = None
+    start_ms: int = 0
+    end_ms: int = 0
+    size_bytes: int = 0
+    extra: Dict[str, Any] = _extra()
+
+
+@dataclass
+class ListeningInfo(Model):
+    """Whether, how, and by which model the audio was heard. ``listened`` is True when at least one model call carried
+    audio, including a call that then failed. ``reason`` is None when listening happened. ``heard_ms`` counts
+    overlapping clips once."""
+
+    listened: bool = False
+    mode: ListeningMode = ListeningMode.NONE
+    reason: Optional[ListenSkipReason] = None
+    endpoint: Optional[str] = None
+    model: Optional[str] = None
+    rendition: AudioRenditionSpec = field(default_factory=AudioRenditionSpec)
+    duration_ms: int = 0
+    heard_ms: int = 0
+    clips: List[ListenClip] = field(default_factory=list)
+    extra: Dict[str, Any] = _extra()
+
+
+@dataclass
+class AudioMeasurements(Model):
+    """Deterministic measurements. Levels are dB relative to full scale; a member is None when ffmpeg could not
+    measure it. ``stereo_width_db`` is None for sources that are not stereo. ``clipping_likely`` and
+    ``effectively_mono`` use the Media.Clipping* and Media.MonoMaxSideDb thresholds."""
+
+    integrated_lufs: Optional[float] = None
+    loudness_range_lu: Optional[float] = None
+    true_peak_dbtp: Optional[float] = None
+    peak_dbfs: Optional[float] = None
+    rms_dbfs: Optional[float] = None
+    crest_factor_db: Optional[float] = None
+    peak_count: Optional[int] = None
+    clipping_likely: bool = False
+    silence_ratio: float = 0.0
+    silence_count: int = 0
+    leading_silence_ms: int = 0
+    trailing_silence_ms: int = 0
+    channels: int = 0
+    stereo_width_db: Optional[float] = None
+    effectively_mono: bool = False
+    extra: Dict[str, Any] = _extra()
+
+
+@dataclass
+class SectionResult(Model):
+    """Result for one audio section. Each section can be cut back out with ``segments.get``."""
+
+    index: int = 0
+    start_ms: int = 0
+    end_ms: int = 0
+    duration_ms: int = 0
+    transcript_text: Optional[str] = None
+    results: Dict[str, Any] = field(default_factory=dict)
+    fields: List[FieldResult] = field(default_factory=list)
+    errors: List[str] = field(default_factory=list)
+    extra: Dict[str, Any] = _extra()
+
+
+@dataclass
 class VideoAnalysisResponse(AnalysisResponse):
     transcript: Optional[TranscriptResult] = None
     scenes: List[SceneResult] = field(default_factory=list)
+    listening: Optional[ListeningInfo] = None
 
 
 @dataclass
 class AudioAnalysisResponse(AnalysisResponse):
     transcript: Optional[TranscriptResult] = None
+    listening: ListeningInfo = field(default_factory=ListeningInfo)
+    measurements: Optional[AudioMeasurements] = None
+    sections: Optional[List[SectionResult]] = None
 
 
 @dataclass
@@ -675,6 +870,7 @@ class EndpointResponse(Model):
     supports_images: bool = False
     supports_structured_output: bool = False
     supports_transcription: bool = False
+    supports_audio_input: bool = False
     healthy: bool = False
     health_message: Optional[str] = None
     last_checked_utc: Optional[str] = None
@@ -1003,6 +1199,8 @@ class EndpointSettings(Model):
     timeout_ms: int = 120000
     temperature: Optional[float] = None
     max_output_tokens: int = 2048
+    max_inline_media_bytes: int = 20971520
+    max_listen_seconds: Optional[int] = None
     active: bool = True
     extra: Dict[str, Any] = _extra()
 
@@ -1012,6 +1210,9 @@ class InferenceSettings(Model):
     default_vision: Optional[str] = "ollama-gemma3-4b"
     default_text: Optional[str] = "ollama-gpt-oss-20b"
     default_transcription: Optional[str] = "whisper"
+    default_listening: Optional[str] = None
+    health_probe_interval_ms: int = 300000
+    unhealthy_probe_interval_ms: int = 15000
     max_retries: int = 2
     max_repair_attempts: int = 1
     retry_backoff_ms: int = 500
@@ -1038,6 +1239,16 @@ class MediaSettings(Model):
     max_segment_ms: int = 600000
     max_audio_duration_ms: int = 14400000
     transcription_chunk_seconds: int = 600
+    listen_format: Union[ListenFormat, str] = ListenFormat.MP3
+    listen_sample_rate: int = 16000
+    listen_channels: int = 1
+    listen_bitrate_kbps: int = 64
+    max_listen_seconds: int = 1200
+    measure_silence_db: float = -50.0
+    measure_min_silence_ms: int = 500
+    clipping_true_peak_dbtp: float = -0.1
+    clipping_min_peaks_per_minute: float = 10.0
+    mono_max_side_db: float = -40.0
     extra: Dict[str, Any] = _extra()
 
 
@@ -1052,7 +1263,7 @@ class JobSettings(Model):
 
 @dataclass
 class RequestHistorySettings(Model):
-    enabled: bool = True
+    enable: bool = True
     max_request_body_bytes: int = 65536
     max_response_body_bytes: int = 65536
     retention_days: int = 30
@@ -1061,7 +1272,7 @@ class RequestHistorySettings(Model):
 
 @dataclass
 class AnalyticsSettings(Model):
-    enabled: bool = True
+    enable: bool = True
     retention_days: int = 90
     extra: Dict[str, Any] = _extra()
 

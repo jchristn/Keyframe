@@ -119,5 +119,15 @@ namespace Keyframe.Core.Observability
         /// Analytics rows written, by outcome.
         /// </summary>
         public const string AnalyticsWrites = "keyframe.analytics.writes";
+
+        /// <summary>
+        /// Bytes of audio attached to completion calls, by provider and purpose.
+        /// </summary>
+        public const string ModelInputAudioBytes = "keyframe.model.input.audio.bytes";
+
+        /// <summary>
+        /// Analyses that resolved a listening mode, by media kind, mode, and skip reason.
+        /// </summary>
+        public const string AnalysisListenTotal = "keyframe.analysis.listen.total";
     }
 }

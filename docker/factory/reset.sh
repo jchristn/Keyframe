@@ -2,9 +2,11 @@
 # Factory reset for the Keyframe Docker stack. DESTRUCTIVE.
 #
 # Stops the stack, deletes its state volumes (database, media temp, logs, Prometheus, Tempo, Loki, Grafana),
-# removes any local data directories, restores keyframe.json from the factory copy (Ollama and Whisper endpoints,
-# default keys), and brings the stack back up. Downloaded models are kept: the Whisper model volume
-# (keyframe_whisper-models) and the Ollama models in docker/ollama-models. Delete those by hand to reclaim space.
+# removes any local data directories, restores keyframe.json from the factory copy (Ollama, Whisper, and listening
+# endpoints, default keys), and brings the stack back up. Downloaded models are kept: the Whisper model volume
+# (keyframe_whisper-models), the Ollama models in docker/ollama-models, the llama-server models in
+# docker/llama-models, and the vLLM models in docker/vllm-models. Delete those by hand to reclaim space.
+# Optional model containers come back up when COMPOSE_PROFILES names them (for example listen or ollama,listen).
 #
 # Usage: ./reset.sh [-y]    (-y skips the confirmation prompt)
 
@@ -34,7 +36,7 @@ fi
 
 echo ""
 echo "Stopping containers..."
-if ! docker compose -f "${compose_file}" --profile ollama down --remove-orphans; then
+if ! docker compose -f "${compose_file}" --profile ollama --profile listen --profile listen-gpu down --remove-orphans; then
     echo "Warning: docker compose down failed; continuing with the local reset."
 fi
 

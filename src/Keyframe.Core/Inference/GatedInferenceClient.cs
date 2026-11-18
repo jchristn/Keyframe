@@ -53,6 +53,18 @@ namespace Keyframe.Core.Inference
             }
         }
 
+        /// <summary>
+        /// True when every concurrency slot is in use, so a new call would wait. Used by health probes, which skip a busy
+        /// endpoint instead of queueing behind real work.
+        /// </summary>
+        public bool IsBusy
+        {
+            get
+            {
+                return _Gate.CurrentCount == 0;
+            }
+        }
+
         #endregion
 
         #region Private-Members

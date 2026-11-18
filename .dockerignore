@@ -24,3 +24,8 @@ docker/
 !docker/keyframe.json
 *.md
 !README.md
+
+# Model stores for the optional model containers (already excluded by docker/ above; listed for clarity)
+docker/ollama-models/
+docker/llama-models/
+docker/vllm-models/

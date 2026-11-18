@@ -109,7 +109,7 @@ namespace Keyframe.Server.Routes
         private async Task ListAsync(HttpContextBase context)
         {
             RequestHistoryFilter filter = Filter(context);
-            if (!_Context.Settings.RequestHistory.Enabled)
+            if (!_Context.Settings.RequestHistory.Enable)
             {
                 await RouteHelpers.JsonAsync(context, 200, new EnumerationResult<RequestHistoryEntry> { PageNumber = filter.PageNumber, PageSize = filter.PageSize }).ConfigureAwait(false);
                 return;
@@ -122,7 +122,7 @@ namespace Keyframe.Server.Routes
         {
             RequestHistoryFilter filter = Filter(context);
             RequestHistorySummary summary = await _Context.Database.RequestHistory.SummarizeAsync(filter, context.Token).ConfigureAwait(false);
-            if (!_Context.Settings.RequestHistory.Enabled)
+            if (!_Context.Settings.RequestHistory.Enable)
             {
                 foreach (RequestHistorySummaryBucket bucket in summary.Buckets)
                 {

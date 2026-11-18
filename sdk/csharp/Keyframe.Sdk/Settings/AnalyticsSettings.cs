@@ -12,7 +12,7 @@ namespace Keyframe.Sdk.Settings
         /// <summary>
         /// Whether analytics rows are written after each analysis. Default true. Existing rows stay readable when disabled.
         /// </summary>
-        public bool Enabled { get; set; } = true;
+        public bool Enable { get; set; } = true;
 
         /// <summary>
         /// Days to keep analytics rows before maintenance prunes them. Default 90. Minimum 1, maximum 3650.

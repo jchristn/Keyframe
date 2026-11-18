@@ -15,7 +15,8 @@ import Icon from '../components/Icon';
 import SceneTimeline, { TranscriptViewer } from '../components/SceneTimeline';
 import { SegmentSourceProvider } from '../components/SegmentDownloads';
 import TelemetryWaterfall, { ModelCallTable, TelemetryTotals } from '../components/TelemetryWaterfall';
-import { FieldsTable, PropertiesGrid, Problems, ResultsList } from '../components/AnalysisParts';
+import { FieldsTable, ListeningCard, MeasurementsGrid, PropertiesGrid, Problems, ResultsList } from '../components/AnalysisParts';
+import SectionTimeline from '../components/SectionTimeline';
 import { ErrorBanner, LoadingState, Notice } from '../components/States';
 import useInterval from '../hooks/useInterval';
 import { downloadJson } from '../utils/media';
@@ -112,13 +113,17 @@ function JobDetailView() {
   const active = isActiveJob(job);
   const scenes = (result && result.Scenes) || [];
   const transcriptCount = result && result.Transcript ? (result.Transcript.Segments || []).length : 0;
+  const isAudio = job.MediaKind === 'Audio';
+  const sections = result && Array.isArray(result.Sections) ? result.Sections : null;
   const tabs = [
     { id: 'overview', label: t('jobDetail.tabs.overview') },
-    { id: 'scenes', label: t('jobDetail.tabs.scenes'), badge: result ? formatNumber(scenes.length, locale) : null },
+    isAudio ? null : { id: 'scenes', label: t('jobDetail.tabs.scenes'), badge: result ? formatNumber(scenes.length, locale) : null },
+    isAudio ? { id: 'sections', label: t('jobDetail.tabs.sections'), badge: sections ? formatNumber(sections.length, locale) : null } : null,
+    isAudio ? { id: 'measurements', label: t('jobDetail.tabs.measurements') } : null,
     { id: 'transcript', label: t('jobDetail.tabs.transcript'), badge: result && result.Transcript ? formatNumber(transcriptCount, locale) : null },
     { id: 'telemetry', label: t('jobDetail.tabs.telemetry') },
     { id: 'raw', label: t('jobDetail.tabs.raw') }
-  ].filter((tb) => !(job.MediaKind === 'Audio' && tb.id === 'scenes'));
+  ].filter(Boolean);
 
   const meta = [
     ['jobDetail.meta.kind', t('enums.mediaKind.' + job.MediaKind, { defaultValue: job.MediaKind })],
@@ -216,10 +221,11 @@ function JobDetailView() {
           {result ? (
             <>
               <Problems warnings={result.Warnings} errors={result.Errors} />
+              <ListeningCard listening={result.Listening} />
               <Tabs tabs={tabs} active={tab} onChange={setTab} label={t('jobDetail.resultTabs')}>
                 {tab === 'overview' ? (
                   <div className="stack">
-                    <div className="section-label">{t('jobDetail.wholeResults')}</div>
+                    <div className="section-label">{isAudio ? t('jobDetail.wholeRecordingResults') : t('jobDetail.wholeResults')}</div>
                     <ResultsList results={result.Results} />
                     {result.Fields && result.Fields.length ? (
                       <>
@@ -234,7 +240,9 @@ function JobDetailView() {
                 <SegmentSourceProvider job={job}>
                   {tab === 'scenes' ? <SceneTimeline scenes={scenes} durationMs={result.Properties && result.Properties.DurationMs} /> : null}
                   {tab === 'transcript' ? <TranscriptViewer transcript={result.Transcript} /> : null}
+                  {tab === 'sections' ? <SectionTimeline sections={sections} durationMs={result.Properties && result.Properties.DurationMs} measurements={result.Measurements} listening={result.Listening} /> : null}
                 </SegmentSourceProvider>
+                {tab === 'measurements' ? <MeasurementsGrid measurements={result.Measurements} failed={!!(result.Errors && result.Errors.length)} /> : null}
                 {tab === 'telemetry' ? (
                   <>
                     <TelemetryTotals telemetry={result.Telemetry} />

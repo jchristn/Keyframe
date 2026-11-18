@@ -1296,13 +1296,139 @@
       }
     },
     {
+      "id": 24,
+      "type": "timeseries",
+      "title": "Listening analyses by mode",
+      "description": "Audio analyses and video analyses with scenes, by listening mode (full, excerpts, sections, scenes, none). None includes requests that did not ask to listen.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 51,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (media_kind, mode) (rate(keyframe_analysis_listen_total{media_kind=~\"$media_kind\"}[$__rate_interval]))",
+          "legendFormat": "{{media_kind}} {{mode}}",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 25,
+      "type": "timeseries",
+      "title": "Listening fallbacks by reason",
+      "description": "Analyses that asked to listen but were answered without the audio, by reason. NoEndpointConfigured, EndpointLacksAudioInput, and EndpointUnhealthy mean a listening request was answered from the transcript.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 51,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (media_kind, reason) (rate(keyframe_analysis_listen_total{media_kind=~\"$media_kind\",mode=\"none\",reason!~\"none|NotRequested|NoModelFunctions\"}[$__rate_interval]))",
+          "legendFormat": "{{media_kind}} {{reason}}",
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
       "id": 13,
       "type": "row",
       "title": "Traces",
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 51,
+        "y": 59,
         "w": 24,
         "h": 1
       },
@@ -1319,7 +1445,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 52,
+        "y": 60,
         "w": 24,
         "h": 9
       },

@@ -59,7 +59,7 @@ namespace Keyframe.Sdk.Responses
         public bool Active { get; set; } = true;
 
         /// <summary>
-        /// Whether this is a default for vision, text, or transcription.
+        /// Whether this is a default for vision, text, transcription, or listening.
         /// </summary>
         public bool IsDefault { get; set; } = false;
 
@@ -82,6 +82,12 @@ namespace Keyframe.Sdk.Responses
         /// Whether the provider can serve transcription endpoints.
         /// </summary>
         public bool SupportsTranscription { get; set; } = false;
+
+        /// <summary>
+        /// Whether the provider accepts audio input on chat, so the endpoint can be a listening endpoint
+        /// (Gemini, OpenAiCompatible, Mock).
+        /// </summary>
+        public bool SupportsAudioInput { get; set; } = false;
 
         /// <summary>
         /// Last observed health.

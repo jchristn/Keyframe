@@ -59,11 +59,13 @@ namespace Test.Shared
 
                     AudioAnalysisRequest noTranscript = new AudioAnalysisRequest { Audio = new MediaSource { Url = "https://example.com/a.mp3" } };
                     noTranscript.Functions.Transcribe.Enable = false;
-                    Check.True(RequestValidator.Validate(noTranscript).Any(e => e.Contains("enable Functions.Transcribe")), "summary needs a transcript");
+                    noTranscript.Listen.Enable = false;
+                    Check.True(RequestValidator.Validate(noTranscript).Any(e => e.Contains("enable Functions.Transcribe or Listen")), "summary needs a transcript or listening");
 
                     AudioAnalysisRequest nothing = new AudioAnalysisRequest { Audio = new MediaSource { Url = "https://example.com/a.mp3" } };
                     nothing.Functions.Transcribe.Enable = false;
                     nothing.Functions.Summarize.Enable = false;
+                    nothing.Functions.Measure.Enable = false;
                     Check.True(RequestValidator.Validate(nothing).Any(e => e.StartsWith("Enable at least one function")), "a function is required");
 
                     AudioAnalysisRequest bad = new AudioAnalysisRequest { Audio = new MediaSource { Url = "ftp://example.com/a.mp3" } };

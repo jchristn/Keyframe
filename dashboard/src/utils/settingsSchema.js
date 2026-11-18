@@ -8,6 +8,10 @@ export const PROVIDERS = ['Ollama', 'OllamaCloud', 'OpenAi', 'OpenAiCompatible',
 export const ENDPOINT_KINDS = ['Completion', 'Transcription'];
 export const DATABASE_TYPES = ['Sqlite', 'Mysql', 'Postgresql', 'SqlServer'];
 export const OTLP_PROTOCOLS = ['grpc', 'httpprotobuf'];
+export const LISTEN_FORMATS = ['Mp3', 'Wav', 'Flac'];
+// Providers whose chat API accepts audio input (PolyPromptClientBuilder.SupportsAudioInput), so an
+// endpoint can be Inference.DefaultListening.
+export const AUDIO_INPUT_PROVIDERS = ['Gemini', 'OpenAiCompatible', 'Mock'];
 
 export const SETTINGS_SECTIONS = [
   {
@@ -62,11 +66,14 @@ export const SETTINGS_SECTIONS = [
       { path: 'Inference.DefaultVision', type: 'endpointRef', kind: 'Completion' },
       { path: 'Inference.DefaultText', type: 'endpointRef', kind: 'Completion' },
       { path: 'Inference.DefaultTranscription', type: 'endpointRef', kind: 'Transcription' },
+      { path: 'Inference.DefaultListening', type: 'endpointRef', kind: 'Completion', audioInput: true },
       { path: 'Inference.MaxRetries', type: 'number', min: 0, max: 10 },
       { path: 'Inference.MaxRepairAttempts', type: 'number', min: 0, max: 5 },
       { path: 'Inference.RetryBackoffMs', type: 'number', min: 0, max: 60000, unit: 'ms' },
       { path: 'Inference.RequestTimeoutMs', type: 'number', min: 1000, max: 3600000, unit: 'ms' },
-      { path: 'Inference.MaxTranscriptCharacters', type: 'number', min: 1000, max: 2000000 }
+      { path: 'Inference.MaxTranscriptCharacters', type: 'number', min: 1000, max: 2000000 },
+      { path: 'Inference.HealthProbeIntervalMs', type: 'number', min: 10000, max: 3600000, unit: 'ms' },
+      { path: 'Inference.UnhealthyProbeIntervalMs', type: 'number', min: 1000, max: 600000, unit: 'ms' }
     ],
     arrays: [
       {
@@ -83,6 +90,8 @@ export const SETTINGS_SECTIONS = [
           { name: 'TimeoutMs', type: 'number', min: 1000, max: 3600000, unit: 'ms' },
           { name: 'Temperature', type: 'nullableNumber', min: 0, max: 2, step: 0.1 },
           { name: 'MaxOutputTokens', type: 'number', min: 16, max: 1000000 },
+          { name: 'MaxInlineMediaBytes', type: 'number', min: 1048576, max: 1073741824, unit: 'bytes' },
+          { name: 'MaxListenSeconds', type: 'nullableNumber', min: 10, max: 7200 },
           { name: 'Active', type: 'bool' }
         ],
         newItem: () => ({
@@ -96,6 +105,8 @@ export const SETTINGS_SECTIONS = [
           TimeoutMs: 120000,
           Temperature: null,
           MaxOutputTokens: 2048,
+          MaxInlineMediaBytes: 20971520,
+          MaxListenSeconds: null,
           Active: true
         })
       }
@@ -117,8 +128,19 @@ export const SETTINGS_SECTIONS = [
       { path: 'Media.MaxParallelFfmpeg', type: 'number', min: 1, max: 64 },
       { path: 'Media.FfmpegTimeoutMs', type: 'number', min: 1000, max: 14400000, unit: 'ms' },
       { path: 'Media.MaxVideoDurationMs', type: 'number', min: 1000, max: 86400000, unit: 'ms' },
+      { path: 'Media.MaxAudioDurationMs', type: 'number', min: 1000, max: 86400000, unit: 'ms' },
       { path: 'Media.TranscriptionChunkSeconds', type: 'number', min: 10, max: 7200 },
-      { path: 'Media.MaxSegmentMs', type: 'number', min: 1000, max: 14400000, unit: 'ms', showIf: (s) => getPath(s, 'Media.MaxSegmentMs') !== undefined }
+      { path: 'Media.MaxSegmentMs', type: 'number', min: 1000, max: 14400000, unit: 'ms', showIf: (s) => getPath(s, 'Media.MaxSegmentMs') !== undefined },
+      { path: 'Media.ListenFormat', type: 'select', options: LISTEN_FORMATS, group: 'listen' },
+      { path: 'Media.ListenSampleRate', type: 'number', min: 8000, max: 48000, group: 'listen' },
+      { path: 'Media.ListenChannels', type: 'number', min: 1, max: 2, group: 'listen' },
+      { path: 'Media.ListenBitrateKbps', type: 'number', min: 16, max: 320, group: 'listen' },
+      { path: 'Media.MaxListenSeconds', type: 'number', min: 10, max: 7200, group: 'listen' },
+      { path: 'Media.MeasureSilenceDb', type: 'number', min: -90, max: -10, float: true, group: 'measure' },
+      { path: 'Media.MeasureMinSilenceMs', type: 'number', min: 100, max: 30000, unit: 'ms', group: 'measure' },
+      { path: 'Media.ClippingTruePeakDbtp', type: 'number', min: -6, max: 3, step: 0.1, float: true, group: 'measure' },
+      { path: 'Media.ClippingMinPeaksPerMinute', type: 'number', min: 0, max: 100000, float: true, group: 'measure' },
+      { path: 'Media.MonoMaxSideDb', type: 'number', min: -120, max: 0, float: true, group: 'measure' }
     ]
   },
   {
@@ -135,7 +157,7 @@ export const SETTINGS_SECTIONS = [
     id: 'requestHistory',
     key: 'RequestHistory',
     fields: [
-      { path: 'RequestHistory.Enabled', type: 'bool' },
+      { path: 'RequestHistory.Enable', type: 'bool' },
       { path: 'RequestHistory.MaxRequestBodyBytes', type: 'number', min: 0, max: 1048576, unit: 'bytes' },
       { path: 'RequestHistory.MaxResponseBodyBytes', type: 'number', min: 0, max: 1048576, unit: 'bytes' },
       { path: 'RequestHistory.RetentionDays', type: 'number', min: 1, max: 3650 }
@@ -146,7 +168,7 @@ export const SETTINGS_SECTIONS = [
     key: 'Analytics',
     optional: true,
     fields: [
-      { path: 'Analytics.Enabled', type: 'bool' },
+      { path: 'Analytics.Enable', type: 'bool' },
       { path: 'Analytics.RetentionDays', type: 'number', min: 1, max: 3650 }
     ]
   },

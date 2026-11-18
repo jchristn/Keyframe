@@ -1,12 +1,23 @@
 # Keyframe stack: server, dashboard, MCP server, speech to text (speaches), and the observability stack
 # (OpenTelemetry Collector, Prometheus, Tempo, Loki, Grafana). Vision and text models come from Ollama on the
 # host (host.docker.internal:11434): ollama pull gemma3:4b qwen3-vl:8b gpt-oss:20b
+# The listening model (it hears audio, not only transcripts) comes from llama-server on the host
+# (host.docker.internal:8720): llama-server -hf ggml-org/Voxtral-Mini-3B-2507-GGUF:Q4_K_M --port 8720
 #
-#   docker compose up -d                    # everything
-#   docker compose --profile ollama up -d   # also run Ollama in a container (models persist in ./ollama-models)
+#   docker compose up -d                        # everything except the optional model containers
+#   docker compose --profile ollama up -d       # also run Ollama in a container (models persist in ./ollama-models)
+#   docker compose --profile listen up -d       # also run llama-server on CPU (models persist in ./llama-models)
+#   docker compose --profile listen-gpu up -d   # also run vLLM with Voxtral on an NVIDIA GPU (models persist in ./vllm-models)
 #
-# Host ports (plan D7): server 8700, dashboard 8701, MCP 8702 (HTTP) / 8703 (TCP) / 8704 (WebSocket), Whisper 8000,
-# Grafana 3700, Prometheus 9700, Tempo 3710, OTLP 4717 (gRPC) / 4718 (HTTP).
+# The server starts only after every model container in an active profile is healthy (depends_on with
+# required: false; Docker Compose 2.20 or later), so the first start with a model profile waits for the model
+# download. Model servers that run on the host cannot be ordered; Keyframe falls back to the transcript and reports
+# Listening.Reason EndpointUnhealthy while the listening server is down.
+#
+# Host ports: server 8700, dashboard 8701, MCP 8702 (HTTP) / 8703 (TCP) / 8704 (WebSocket), Whisper 8000,
+# llama-server 8720, vLLM 8730, Grafana 3700, Prometheus 9700, Tempo 3710, OTLP 4717 (gRPC) / 4718 (HTTP).
+# Disk and memory for listening: about 3 to 4 GB of disk and 4 to 6 GB of RAM for the CPU model; an NVIDIA GPU with
+# about 10 GB of free memory for vLLM.
 # Observability ports are bound to host loopback only: Prometheus, Tempo, Loki, and the collector have no
 # authentication of their own.
 
@@ -35,13 +46,24 @@ services:
       - data:/app/data
       - temp:/app/temp
       - logs:/app/logs
-    # The default endpoints in keyframe.json reach the host's Ollama at host.docker.internal:11434.
+    # The default endpoints in keyframe.json reach the host's Ollama at host.docker.internal:11434 and the host's
+    # llama-server at host.docker.internal:8720.
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
       # The collector image is distroless (no shell, curl, or wget), so it cannot carry a healthcheck.
       otel-collector:
         condition: service_started
+      # Model containers boot first when their profile is active; required: false skips them when it is not.
+      ollama:
+        condition: service_healthy
+        required: false
+      keyframe-llama:
+        condition: service_healthy
+        required: false
+      keyframe-vllm:
+        condition: service_healthy
+        required: false
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8700/v1.0/health"]
       interval: 5s
@@ -142,6 +164,9 @@ services:
   # stop the host Ollama (both bind port 11434) and point the ollama-* endpoints in keyframe.json at
   # http://ollama:11434.
   #
+  # Model stores: Ollama keeps models in ./ollama-models, llama-server in ./llama-models, and vLLM in ./vllm-models.
+  # Each is a bind mount, not a named volume, and factory resets keep all three.
+  #
   # Models live in ./ollama-models on the host (a bind mount, not a named volume), so they survive restarts,
   # "docker compose down", "docker compose down -v", image updates, and factory resets. Delete that folder to
   # reclaim the space. keyframe-ollama-init pulls the default models on first start; it is a quick no-op once
@@ -181,6 +206,76 @@ services:
       ollama:
         condition: service_healthy
     restart: "no"
+
+  # ------------------------------------------------------------------
+  # Optional llama-server in a container (CPU): docker compose --profile listen up -d
+  # The default llama-listen endpoint uses the host's llama-server (host.docker.internal:8720), which is much faster
+  # on Apple Silicon because Docker has no Metal access. To use this container instead, stop the host llama-server
+  # (both bind port 8720) or point llama-listen in keyframe.json at http://keyframe-llama:8080/v1.
+  #
+  # -hf downloads the model and its audio projector into ./llama-models (LLAMA_CACHE) on the first start and reuses
+  # them afterward, so restarts, image updates, and factory resets never download again. Set LLAMA_THREADS in an
+  # untracked .env file to change the CPU thread count (default 4). Bound to host loopback: llama-server has no
+  # authentication.
+  # ------------------------------------------------------------------
+  keyframe-llama:
+    container_name: keyframe-llama
+    image: 'ghcr.io/ggml-org/llama.cpp:server-b12063'
+    profiles: ["listen"]
+    ports:
+      - "127.0.0.1:8720:8080"
+    environment:
+      LLAMA_CACHE: /models
+    command: ["-hf", "ggml-org/Voxtral-Mini-3B-2507-GGUF:Q4_K_M", "--host", "0.0.0.0", "--port", "8080", "-c", "16384", "--threads", "${LLAMA_THREADS:-4}"]
+    volumes:
+      - ./llama-models:/models
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 2
+      # Covers the first model download (a few GB).
+      start_period: 1800s
+    restart: unless-stopped
+
+  # ------------------------------------------------------------------
+  # Optional vLLM with Voxtral Mini 3B on an NVIDIA GPU: docker compose --profile listen-gpu up -d
+  # Needs an NVIDIA GPU with about 10 GB of free memory and the NVIDIA container toolkit. Models persist in
+  # ./vllm-models. HF_TOKEN is read from an untracked .env file when the model requires it. The vllm-voxtral
+  # endpoint ships inactive; activate it and set Inference.DefaultListening to it on the Settings page.
+  # Bound to host loopback: vLLM has no authentication here.
+  # ------------------------------------------------------------------
+  keyframe-vllm:
+    container_name: keyframe-vllm
+    # docker/vllm/Dockerfile adds the audio extras Voxtral needs to the pinned vllm/vllm-openai:v0.33.0 image.
+    build: ./vllm
+    image: 'keyframe-vllm-audio:v0.33.0'
+    profiles: ["listen-gpu"]
+    ports:
+      - "127.0.0.1:8730:8000"
+    environment:
+      HF_TOKEN: "${HF_TOKEN:-}"
+    # VLLM_GPU_MEMORY_UTILIZATION is the share of GPU memory vLLM reserves (default 0.85). Lower it on a GPU shared
+    # with other model servers, and on unified-memory systems such as NVIDIA GB10, where it is a share of system RAM.
+    command: ["--model", "mistralai/Voxtral-Mini-3B-2507", "--tokenizer_mode", "mistral", "--config_format", "mistral", "--load_format", "mistral",
+      "--gpu-memory-utilization", "${VLLM_GPU_MEMORY_UTILIZATION:-0.85}", "--max-model-len", "${VLLM_MAX_MODEL_LEN:-32768}", "--host", "0.0.0.0", "--port", "8000"]
+    volumes:
+      - ./vllm-models:/root/.cache/huggingface
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      # Python is always present in the vLLM image; curl may not be.
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 2
+      start_period: 1800s
+    restart: unless-stopped
 
   # ------------------------------------------------------------------
   # Observability

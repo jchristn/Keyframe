@@ -75,6 +75,7 @@ namespace Keyframe.Core.Analysis
                 SystemPrompt = PromptBuilder.SystemPrompt,
                 UserPrompt = PromptBuilder.Summarize(subject, spec),
                 Images = subject.Images,
+                Audio = subject.Audio,
                 ResponseFormat = ResponseFormatEnum.Text,
                 Model = model,
                 MaxOutputTokens = Math.Min(8192, spec.MaxWords * 3 + 64)
@@ -133,6 +134,7 @@ namespace Keyframe.Core.Analysis
                     SystemPrompt = PromptBuilder.SystemPrompt,
                     UserPrompt = PromptBuilder.ExtractCombined(subject, spec.Fields),
                     Images = subject.Images,
+                    Audio = subject.Audio,
                     ResponseFormat = ResponseFormatEnum.JsonObject,
                     JsonSchema = FieldSchemaBuilder.Combined(spec.Fields),
                     Model = model
@@ -191,6 +193,7 @@ namespace Keyframe.Core.Analysis
                 SystemPrompt = PromptBuilder.SystemPrompt,
                 UserPrompt = PromptBuilder.ExtractSingle(subject, field),
                 Images = subject.Images,
+                Audio = subject.Audio,
                 ResponseFormat = ResponseFormatEnum.JsonObject,
                 JsonSchema = FieldSchemaBuilder.Single(field),
                 Model = model

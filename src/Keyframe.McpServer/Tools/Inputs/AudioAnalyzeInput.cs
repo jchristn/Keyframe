@@ -53,6 +53,21 @@ namespace Keyframe.McpServer.Tools.Inputs
         public ModelSelection? TextModel { get; set; } = null;
 
         /// <summary>
+        /// Listening options, or null for the defaults (listening on).
+        /// </summary>
+        public ListenSpec? Listen { get; set; } = null;
+
+        /// <summary>
+        /// Measurement options, or null for the default (on).
+        /// </summary>
+        public MeasureSpec? Measure { get; set; } = null;
+
+        /// <summary>
+        /// Section options, or null for the default (off).
+        /// </summary>
+        public SectionsSpec? Sections { get; set; } = null;
+
+        /// <summary>
         /// Wait for the result. Default false (returns the job).
         /// </summary>
         public bool Wait { get; set; } = false;

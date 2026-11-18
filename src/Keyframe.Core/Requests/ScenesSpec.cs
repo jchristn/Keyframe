@@ -74,6 +74,21 @@ namespace Keyframe.Core.Requests
             }
         }
 
+        /// <summary>
+        /// Scene audio options. Never null. On by default.
+        /// </summary>
+        public SceneAudioSpec Audio
+        {
+            get
+            {
+                return _Audio;
+            }
+            set
+            {
+                _Audio = value ?? new SceneAudioSpec();
+            }
+        }
+
         #endregion
 
         #region Private-Members
@@ -82,6 +97,7 @@ namespace Keyframe.Core.Requests
         private int _FramesPerScene = 3;
         private SummarizeSpec _Summarize = new SummarizeSpec();
         private ExtractSpec _Extract = new ExtractSpec();
+        private SceneAudioSpec _Audio = new SceneAudioSpec();
 
         #endregion
     }

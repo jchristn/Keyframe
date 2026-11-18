@@ -18,21 +18,24 @@ namespace Keyframe.Server.Services
 
     /// <summary>
     /// Tracks model endpoint health. Completion endpoints are probed with a one-token prompt; endpoints whose provider
-    /// is not available in this build are reported unhealthy without a call. Probes run at startup and every
-    /// five minutes, and on demand through the test route.
+    /// is not available in this build are reported unhealthy without a call. Every active endpoint is probed at startup,
+    /// then again after Inference.HealthProbeIntervalMs when healthy or Inference.UnhealthyProbeIntervalMs when unhealthy,
+    /// and on demand through the test route. Endpoints are probed concurrently, and a scheduled probe skips an endpoint
+    /// whose concurrency gate is full (it is busy, not down) and keeps its last state.
     /// Thread safety: safe for concurrent use.
     /// </summary>
-    public class EndpointHealthService : IDisposable
+    public class EndpointHealthService : IEndpointHealthLookup, IDisposable
     {
         #region Private-Members
 
         private const string Header = "[EndpointHealth] ";
-        private static readonly TimeSpan _Interval = TimeSpan.FromMinutes(5);
+        private static readonly TimeSpan _Tick = TimeSpan.FromSeconds(1);
 
         private readonly AnalysisServices _Services;
         private readonly Func<KeyframeSettings> _Settings;
         private readonly LoggingModule _Logging;
         private readonly ConcurrentDictionary<string, EndpointHealthState> _States = new ConcurrentDictionary<string, EndpointHealthState>(StringComparer.OrdinalIgnoreCase);
+        private readonly ConcurrentDictionary<string, byte> _InFlight = new ConcurrentDictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
         private readonly CancellationTokenSource _Stopping = new CancellationTokenSource();
         private Task? _Loop = null;
         private bool _Disposed = false;
@@ -95,6 +98,32 @@ namespace Keyframe.Server.Services
         }
 
         /// <summary>
+        /// Last known health of an endpoint, without probing.
+        /// </summary>
+        /// <param name="endpointName">Endpoint name.</param>
+        /// <returns>True when the last probe succeeded, false when it failed, null when the endpoint has not been checked.</returns>
+        public bool? GetHealth(string endpointName)
+        {
+            if (String.IsNullOrWhiteSpace(endpointName)) return null;
+            EndpointHealthState? state;
+            if (!_States.TryGetValue(endpointName, out state)) return null;
+            return state.Healthy;
+        }
+
+        /// <summary>
+        /// Mark an endpoint unhealthy after a real call could not reach it, so it is re-probed on the short interval and
+        /// listening requests fall back until it answers again.
+        /// </summary>
+        /// <param name="endpointName">Endpoint name.</param>
+        /// <param name="message">Error message.</param>
+        public void ReportUnreachable(string endpointName, string? message)
+        {
+            if (String.IsNullOrWhiteSpace(endpointName)) return;
+            _States[endpointName] = new EndpointHealthState { Healthy = false, Message = "Unreachable during a call: " + (message ?? "no response"), CheckedUtc = DateTime.UtcNow };
+            _Logging.Debug(Header + endpointName + " marked unhealthy after an unreachable call");
+        }
+
+        /// <summary>
         /// Describe every configured endpoint with secrets masked.
         /// </summary>
         /// <returns>Endpoints.</returns>
@@ -108,7 +137,8 @@ namespace Keyframe.Server.Services
                 _States.TryGetValue(endpoint.Name, out state);
                 bool isDefault = String.Equals(endpoint.Name, settings.Inference.DefaultVision, StringComparison.OrdinalIgnoreCase)
                     || String.Equals(endpoint.Name, settings.Inference.DefaultText, StringComparison.OrdinalIgnoreCase)
-                    || String.Equals(endpoint.Name, settings.Inference.DefaultTranscription, StringComparison.OrdinalIgnoreCase);
+                    || String.Equals(endpoint.Name, settings.Inference.DefaultTranscription, StringComparison.OrdinalIgnoreCase)
+                    || String.Equals(endpoint.Name, settings.Inference.DefaultListening, StringComparison.OrdinalIgnoreCase);
 
                 list.Add(new EndpointResponse
                 {
@@ -127,6 +157,7 @@ namespace Keyframe.Server.Services
                     SupportsImages = PolyPromptClientBuilder.SupportsImages(endpoint),
                     SupportsStructuredOutput = PolyPromptClientBuilder.SupportsStructuredOutput(endpoint),
                     SupportsTranscription = endpoint.Provider == ProviderTypeEnum.Mock || PolyPromptClientBuilder.SupportsTranscription(endpoint),
+                    SupportsAudioInput = PolyPromptClientBuilder.SupportsAudioInput(endpoint),
                     Healthy = state != null && state.Healthy,
                     HealthMessage = state?.Message ?? (endpoint.Active ? "Not checked yet." : "Inactive."),
                     LastCheckedUtc = state?.CheckedUtc
@@ -146,7 +177,7 @@ namespace Keyframe.Server.Services
         {
             EndpointSettings? endpoint = _Settings().Inference.Endpoints.FirstOrDefault(e => String.Equals(e.Name, name, StringComparison.OrdinalIgnoreCase));
             if (endpoint == null) return null;
-            return await ProbeAsync(endpoint, token).ConfigureAwait(false);
+            return await ProbeAsync(endpoint, false, token).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -186,26 +217,19 @@ namespace Keyframe.Server.Services
         {
             while (!token.IsCancellationRequested)
             {
-                foreach (EndpointSettings endpoint in _Settings().Inference.Endpoints.Where(e => e.Active).ToList())
+                InferenceSettings inference = _Settings().Inference;
+                DateTime now = DateTime.UtcNow;
+                foreach (EndpointSettings endpoint in inference.Endpoints.Where(e => e.Active).ToList())
                 {
                     if (token.IsCancellationRequested) return;
-                    try
-                    {
-                        await ProbeAsync(endpoint, token).ConfigureAwait(false);
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        return;
-                    }
-                    catch (Exception ex)
-                    {
-                        _Logging.Debug(Header + endpoint.Name + " probe error: " + ex.Message);
-                    }
+                    if (!IsDue(endpoint.Name, inference, now)) continue;
+                    if (!_InFlight.TryAdd(endpoint.Name, 0)) continue;
+                    _ = Task.Run(() => ScheduledProbeAsync(endpoint, token), token);
                 }
 
                 try
                 {
-                    await Task.Delay(_Interval, token).ConfigureAwait(false);
+                    await Task.Delay(_Tick, token).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
                 {
@@ -214,7 +238,34 @@ namespace Keyframe.Server.Services
             }
         }
 
-        private async Task<EndpointTestResponse> ProbeAsync(EndpointSettings endpoint, CancellationToken token)
+        private bool IsDue(string name, InferenceSettings inference, DateTime now)
+        {
+            EndpointHealthState? state;
+            if (!_States.TryGetValue(name, out state)) return true;
+            int intervalMs = state.Healthy ? inference.HealthProbeIntervalMs : inference.UnhealthyProbeIntervalMs;
+            return (now - state.CheckedUtc).TotalMilliseconds >= intervalMs;
+        }
+
+        private async Task ScheduledProbeAsync(EndpointSettings endpoint, CancellationToken token)
+        {
+            try
+            {
+                await ProbeAsync(endpoint, true, token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (Exception ex)
+            {
+                _Logging.Debug(Header + endpoint.Name + " probe error: " + ex.Message);
+            }
+            finally
+            {
+                _InFlight.TryRemove(endpoint.Name, out byte _);
+            }
+        }
+
+        private async Task<EndpointTestResponse> ProbeAsync(EndpointSettings endpoint, bool skipWhenBusy, CancellationToken token)
         {
             EndpointTestResponse result = new EndpointTestResponse { Name = endpoint.Name, Model = endpoint.Model };
             Stopwatch sw = Stopwatch.StartNew();
@@ -241,6 +292,14 @@ namespace Keyframe.Server.Services
                 try
                 {
                     IInferenceClient client = _Services.Clients.GetCompletionClient(endpoint);
+                    if (skipWhenBusy && client is GatedInferenceClient gated && gated.IsBusy)
+                    {
+                        // Every slot is serving real work: the endpoint is reachable, so keep its last state.
+                        result.Success = GetHealth(endpoint.Name) ?? true;
+                        result.DurationMs = Math.Round(sw.Elapsed.TotalMilliseconds, 2);
+                        return result;
+                    }
+
                     InferenceResponse response = await client.CompleteAsync(new InferenceRequest
                     {
                         Purpose = ModelCallPurposeEnum.Summarize,

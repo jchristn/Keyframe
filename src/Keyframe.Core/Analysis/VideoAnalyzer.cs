@@ -119,9 +119,10 @@ namespace Keyframe.Core.Analysis
             AnalysisContext context = new AnalysisContext(MediaKindEnum.Video) { Progress = progress, Origin = origin };
 
             IInferenceClient? vision = null;
+            EndpointSettings? visionEndpoint = null;
             if (sceneWork || (videoLevel && !textOnly))
             {
-                EndpointSettings visionEndpoint = _Services.Clients.ResolveCompletionEndpoint(request.Model?.Endpoint, settings.Inference.DefaultVision);
+                visionEndpoint = _Services.Clients.ResolveCompletionEndpoint(request.Model?.Endpoint, settings.Inference.DefaultVision);
                 vision = _Services.Clients.GetCompletionClient(visionEndpoint);
                 context.VisionEndpoint = visionEndpoint.Name;
                 context.VisionModel = request.Model?.Name ?? visionEndpoint.Model;
@@ -242,7 +243,14 @@ namespace Keyframe.Core.Analysis
 
                     if (functions.Scenes.Enable)
                     {
-                        response.Scenes = await AnalyzeScenesAsync(vision, request, boundaries, sceneStamps, frames, thumbnails, response.Transcript, context, token).ConfigureAwait(false);
+                        ListenPlan scenePlan = sceneWork && visionEndpoint != null
+                            ? ListenPlanner.ResolveScenes(functions.Scenes.Audio.Enable, functions.Scenes.Audio.Rendition, visionEndpoint, properties.HasAudio, settings, _Services.Health)
+                            : new ListenPlan { Reason = ListenSkipReasonEnum.NoModelFunctions, Rendition = RenditionResolver.Resolve(functions.Scenes.Audio.Rendition, settings.Media) };
+                        response.Listening = new ListeningInfo { Rendition = scenePlan.Rendition, DurationMs = duration, Reason = scenePlan.Reason };
+                        if (scenePlan.Reason == ListenSkipReasonEnum.EndpointUnhealthy)
+                            context.AddWarning("The vision endpoint '" + visionEndpoint!.Name + "' is unhealthy; scenes use frames and transcript without audio.");
+                        response.Scenes = await AnalyzeScenesAsync(vision, request, boundaries, sceneStamps, frames, thumbnails, response.Transcript, scenePlan, response.Listening, resolved.Path, workspace, settings, context, token).ConfigureAwait(false);
+                        KeyframeMetrics.RecordListen("video", response.Listening.Mode.ToString().ToLowerInvariant(), response.Listening.Reason.HasValue ? response.Listening.Reason.Value.ToString() : "none");
                     }
 
                     if (videoLevel)
@@ -294,6 +302,11 @@ namespace Keyframe.Core.Analysis
             Dictionary<long, NormalizedImage> frames,
             Dictionary<long, string> thumbnails,
             TranscriptResult? transcript,
+            ListenPlan plan,
+            ListeningInfo listening,
+            string path,
+            MediaWorkspace workspace,
+            KeyframeSettings settings,
             AnalysisContext context,
             CancellationToken token)
         {
@@ -307,7 +320,7 @@ namespace Keyframe.Core.Analysis
                     StartMs = boundaries[i].StartMs,
                     EndMs = boundaries[i].EndMs,
                     DurationMs = boundaries[i].DurationMs,
-                    TranscriptText = transcript == null ? null : TranscriptSlice(transcript, boundaries[i].StartMs, boundaries[i].EndMs)
+                    TranscriptText = transcript == null ? null : TranscriptSlicer.Slice(transcript, boundaries[i].StartMs, boundaries[i].EndMs)
                 };
 
                 foreach (long t in sceneStamps[i])
@@ -328,7 +341,18 @@ namespace Keyframe.Core.Analysis
 
             if (vision == null || (!spec.Summarize.Enable && !spec.Extract.Enable)) return scenes;
 
+            if (plan.Listens)
+            {
+                listening.Listened = true;
+                listening.Mode = ListeningModeEnum.Scenes;
+                listening.Endpoint = plan.Endpoint!.Name;
+                listening.Model = request.Model?.Name ?? plan.Endpoint.Model;
+            }
+
+            long budgetMs = plan.Listens ? ListenPlanner.BudgetMs(plan.Endpoint!, settings.Media) : 0;
+
             using (StageTimer stage = context.BeginStage(AnalysisStageEnum.Scenes))
+            using (SemaphoreSlim renders = new SemaphoreSlim(Math.Max(1, settings.Media.MaxParallelFfmpeg)))
             {
                 int completed = 0;
                 context.ReportProgress("Scenes", 0, scenes.Count, 40);
@@ -353,6 +377,33 @@ namespace Keyframe.Core.Analysis
                             })
                             .ToList()
                     };
+
+                    if (plan.Listens)
+                    {
+                        long imageWire = subject.Images.Sum(img => RenditionResolver.WireBytes(img.Data.Length));
+                        long available = Math.Max(1, plan.Endpoint!.MaxInlineMediaBytes - imageWire);
+                        string label = "Audio of the scene (" + TimeFormat.Clock(scene.StartMs) + " to " + TimeFormat.Clock(scene.EndMs) + ")";
+                        InferenceAudio clip;
+                        await renders.WaitAsync(token).ConfigureAwait(false);
+                        try
+                        {
+                            clip = await _Services.Listen.RenderFittedAsync(path, scene.StartMs, scene.EndMs, budgetMs, available, plan.Rendition, workspace, label, token).ConfigureAwait(false);
+                        }
+                        finally
+                        {
+                            renders.Release();
+                        }
+
+                        subject.Audio = new List<InferenceAudio> { clip };
+                        bool whole = clip.StartMs <= scene.StartMs && clip.EndMs >= scene.EndMs;
+                        subject.Description += whole
+                            ? " The scene's audio is attached."
+                            : " The middle " + TimeFormat.Span(clip.EndMs - clip.StartMs) + " of the scene's audio is attached.";
+                        lock (listening)
+                        {
+                            listening.Clips.Add(new ListenClip { Scope = ListenClipScopeEnum.Scene, Index = scene.Index, StartMs = clip.StartMs, EndMs = clip.EndMs, SizeBytes = clip.Data.Length });
+                        }
+                    }
 
                     string target = "scene:" + scene.Index;
                     Task<SummaryOutcome>? summaryTask = spec.Summarize.Enable
@@ -389,6 +440,12 @@ namespace Keyframe.Core.Analysis
 
                 await Task.WhenAll(tasks).ConfigureAwait(false);
                 if (scenes.Any(s => s.Errors.Count > 0)) stage.Fail("scene errors");
+            }
+
+            if (plan.Listens)
+            {
+                listening.Clips = listening.Clips.OrderBy(c => c.Index ?? -1).ToList();
+                listening.HeardMs = listening.Clips.Sum(c => c.EndMs - c.StartMs);
             }
 
             return scenes;
@@ -515,15 +572,6 @@ namespace Keyframe.Core.Analysis
             }
 
             return thumbnails;
-        }
-
-        private static string TranscriptSlice(TranscriptResult transcript, long startMs, long endMs)
-        {
-            IEnumerable<string> parts = transcript.Segments
-                .Where(s => s.EndMs > startMs && s.StartMs < endMs)
-                .Select(s => s.Text.Trim())
-                .Where(s => s.Length > 0);
-            return String.Join(" ", parts);
         }
 
         private static List<long> PickEvenly(List<long> sorted, int count)

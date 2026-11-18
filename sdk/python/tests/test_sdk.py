@@ -33,6 +33,11 @@ from keyframe_sdk import (
     KeyframeConnectionError,
     KeyframeJobError,
     KeyframeSettings,
+    ListenClipScope,
+    ListenFormat,
+    ListeningMode,
+    ListenSkipReason,
+    ListenSpec,
     MediaKind,
     MediaSource,
     ModelCallPurpose,
@@ -45,6 +50,7 @@ from keyframe_sdk import (
     SegmentRequest,
     SegmentResponse,
     ScenesSpec,
+    SectionsSpec,
     SummarizeSpec,
     SummaryStyle,
     TranscribeSpec,
@@ -429,6 +435,13 @@ class TestAudio:
         assert body["Functions"]["Summarize"]["Enable"] is True
         assert body["Functions"]["Extract"]["Enable"] is False
         assert body["WaitTimeoutMs"] == 120000
+        assert body["Listen"]["Enable"] is True
+        assert body["Listen"]["SampleClips"] == 4 and body["Listen"]["ClipSeconds"] == 30
+        assert body["Listen"]["Rendition"] == {}
+        assert body["Functions"]["Measure"]["Enable"] is True
+        assert body["Functions"]["Sections"]["Enable"] is False
+        assert body["Functions"]["Sections"]["Detection"]["MinSilenceMs"] == 1500
+        assert ScenesSpec().to_dict(omit_none=True)["Audio"]["Enable"] is True
 
     def test_lifecycle(self, user: KeyframeClient, media: Media) -> None:
         media.require()
@@ -476,6 +489,71 @@ class TestAudio:
             assert call.tokens_per_second is not None
         field = audio_analysis.field_result("speakerCount")
         assert field is not None and field.type == FieldType.INTEGER
+
+    def test_default_listens_through_mock(self, user: KeyframeClient, media: Media) -> None:
+        media.require()
+        result = user.audio.analyze_and_wait(AudioAnalysisRequest(audio=media_from_file(media.audio)), poll_interval_s=0.2, timeout_s=120)
+        assert result.success, "; ".join(result.errors)
+        listening = result.listening
+        assert listening.listened, f"not listened, reason {listening.reason}"
+        assert listening.mode == ListeningMode.FULL
+        assert listening.reason is None
+        assert listening.endpoint == "mock-listen"
+        assert listening.rendition.format == ListenFormat.MP3
+        assert listening.rendition.sample_rate and listening.rendition.channels
+        assert listening.duration_ms > 0 and listening.heard_ms > 0
+        assert any(c.scope == ListenClipScope.RECORDING and c.index is None and c.end_ms > c.start_ms and c.size_bytes > 0 for c in listening.clips)
+        assert not listening.extra and all(not c.extra for c in listening.clips), "unmapped listening fields"
+        assert result.measurements is not None, "Measurements missing (Measure is on by default)"
+        assert result.sections is None
+        assert "ListenExtraction" in [st.name for st in result.telemetry.stages]
+        assert not result.extra, f"unmapped audio response fields: {sorted(result.extra)}"
+
+    def test_listen_disabled_not_requested(self, user: KeyframeClient, media: Media) -> None:
+        media.require()
+        request = AudioAnalysisRequest(audio=media_from_file(media.audio), listen=ListenSpec(enable=False))
+        result = user.audio.analyze_and_wait(request, poll_interval_s=0.2, timeout_s=120)
+        assert result.success, "; ".join(result.errors)
+        assert not result.listening.listened
+        assert result.listening.mode == ListeningMode.NONE
+        assert result.listening.reason == ListenSkipReason.NOT_REQUESTED
+        assert result.listening.clips == []
+
+    def test_measure_only(self, user: KeyframeClient, media: Media) -> None:
+        media.require()
+        request = AudioAnalysisRequest(
+            audio=media_from_file(media.audio),
+            functions=AudioFunctionsSpec(transcribe=TranscribeSpec(enable=False), summarize=SummarizeSpec(enable=False)),
+        )
+        result = user.audio.analyze_and_wait(request, poll_interval_s=0.2, timeout_s=120)
+        assert result.success, "; ".join(result.errors)
+        assert result.transcript is None
+        m = result.measurements
+        assert m is not None, "Measurements missing"
+        assert not m.extra, f"unmapped measurement fields: {sorted(m.extra)}"
+        assert m.channels == 1
+        assert isinstance(m.integrated_lufs, float) and isinstance(m.true_peak_dbtp, float)
+        assert m.stereo_width_db is None and m.effectively_mono
+        assert isinstance(m.clipping_likely, bool)
+        assert 0 <= m.silence_ratio <= 1
+        assert result.telemetry.model_calls == [], "measure-only made model calls"
+        assert result.telemetry.totals.model_calls == 0
+        assert result.listening.reason == ListenSkipReason.NO_MODEL_FUNCTIONS
+        assert "Measure" in [st.name for st in result.telemetry.stages]
+
+    def test_sections(self, user: KeyframeClient, media: Media) -> None:
+        media.require()
+        functions = AudioFunctionsSpec(sections=SectionsSpec(enable=True, summarize=SummarizeSpec(enable=True)))
+        result = user.audio.analyze_and_wait(AudioAnalysisRequest(audio=media_from_file(media.audio), functions=functions), poll_interval_s=0.2, timeout_s=120)
+        assert result.success, "; ".join(result.errors)
+        assert result.sections, "Sections missing or empty"
+        first = result.sections[0]
+        assert not first.extra, f"unmapped section fields: {sorted(first.extra)}"
+        assert first.index == 0
+        assert first.end_ms > first.start_ms and first.duration_ms > 0
+        assert isinstance(first.results.get("Summary"), str)
+        assert any(c.purpose == ModelCallPurpose.SECTION_SUMMARIZE for c in result.telemetry.model_calls)
+        assert any(c.scope == ListenClipScope.SECTION and c.index == 0 for c in result.listening.clips)
 
     def test_validation_400(self, user: KeyframeClient) -> None:
         expect_api_error(400, lambda: user.audio.analyze(AudioAnalysisRequest()))
@@ -614,6 +692,8 @@ class TestEndpoints:
         assert mock.is_default
         assert any(e.kind == EndpointKind.TRANSCRIPTION for e in endpoints)
         assert all(e.supports_transcription for e in endpoints if e.kind == EndpointKind.TRANSCRIPTION)
+        assert mock.supports_audio_input
+        assert any(e.name == "mock-listen" and e.supports_audio_input for e in endpoints), "mock-listen missing or without SupportsAudioInput"
         assert not mock.extra, f"unmapped endpoint fields: {sorted(mock.extra)}"
 
     def test_test_admin(self, admin: KeyframeClient) -> None:
@@ -663,11 +743,16 @@ class TestSettings:
 
     def test_analytics_and_segment_settings(self, admin: KeyframeClient) -> None:
         s = admin.settings.get().settings
-        assert isinstance(s.analytics.enabled, bool)
+        assert isinstance(s.analytics.enable, bool)
         assert 1 <= s.analytics.retention_days <= 3650
         assert 1000 <= s.media.max_segment_ms <= 14400000
         assert s.media.max_audio_duration_ms > 0
         assert not s.analytics.extra and not s.media.extra
+        assert not s.inference.extra and all(not e.extra for e in s.inference.endpoints)
+        assert s.inference.default_listening == "mock-listen"
+        assert s.media.listen_format == ListenFormat.MP3
+        assert 8000 <= s.media.listen_sample_rate <= 48000
+        assert all(e.max_inline_media_bytes >= 1048576 for e in s.inference.endpoints)
         raw = json.loads(admin.send_raw("GET", "/v1.0/settings").body)["Settings"]
         assert "Analytics" in raw and "MaxSegmentMs" in raw["Media"]
 

@@ -80,7 +80,8 @@
     "unhealthy": "不健康",
     "unreachable": "无法访问",
     "valid": "有效",
-    "invalid": "无效"
+    "invalid": "无效",
+    "notChecked": "尚未检查"
   },
   "topbar": {
     "toggleNav": "切换导航",
@@ -335,7 +336,8 @@
     "name": "覆盖模型",
     "namePlaceholder": "端点默认模型",
     "textHelp": "文本端点处理纯文本步骤，例如整段视频摘要。默认使用 Inference.DefaultText，其次使用视觉端点。",
-    "transcriptionEndpoint": "转录端点"
+    "transcriptionEndpoint": "转录端点",
+    "listeningEndpoint": "聆听端点"
   },
   "summarize": {
     "enable": "生成摘要",
@@ -364,7 +366,9 @@
       "fields": "字段",
       "telemetry": "遥测",
       "properties": "属性",
-      "raw": "原始 JSON"
+      "raw": "原始 JSON",
+      "measurements": "测量",
+      "sections": "分段"
     },
     "columns": {
       "key": "键",
@@ -434,6 +438,20 @@
       "done": "分析完成，用时 {{duration}}。",
       "partial": "分析完成但有错误，用时 {{duration}}。请检查结果。",
       "canceled": "已取消分析。"
+    },
+    "audioQuality": {
+      "title": "音频质量",
+      "help": "模型所听音频的质量。质量越高，单次调用能容纳的时长越短，因此长录音会更早改用摘录或更短的片段。",
+      "custom": "自定义",
+      "serverDefault": "服务器默认",
+      "serverDefaultValue": "服务器默认（{{value}}）",
+      "format": "格式",
+      "sampleRate": "采样率",
+      "channels": "声道",
+      "bitrate": "比特率 (kbps)",
+      "bitrateHelp": "16 到 320 kbps。",
+      "bitrateMp3Only": "仅适用于 MP3。请将格式选为 MP3 后再设置。",
+      "flacRejected": "llama-server 等 OpenAI 兼容端点只接受 MP3 或 WAV。向此类端点发送 FLAC 请求会被拒绝。"
     }
   },
   "analyzeImage": {
@@ -482,7 +500,15 @@
     },
     "languagePlaceholder": "en",
     "emptyTitle": "尚无视频任务",
-    "emptyMessage": "在上方选择文件或 URL 并提交。进度、场景、转录和结果会显示在这里。"
+    "emptyMessage": "在上方选择文件或 URL 并提交。进度、场景、转录和结果会显示在这里。",
+    "sceneAudio": {
+      "title": "场景音频",
+      "enable": "将每个场景的音频发送给视觉模型",
+      "help": "{{name}} 可接受音频输入，因此每个场景会根据其帧、转录文本和声音进行判断。",
+      "helpUnknown": "当视觉端点可接受音频输入（Gemini 或 OpenAI 兼容）时使用。否则场景仅使用帧和转录文本。",
+      "noAudioInput": "{{name}} 无法接受音频输入。场景将仅使用帧和转录文本。",
+      "offHelp": "场景仅使用帧和转录文本。"
+    }
   },
   "samples": {
     "image": {
@@ -498,7 +524,8 @@
       "showsText": "画面中是否有醒目的文字？"
     },
     "audio": {
-      "speakerCount": "共有多少位不同的说话人？"
+      "speakerCount": "共有多少位不同的说话人？",
+      "sectionTopic": "这部分录音讲的是什么？"
     }
   },
   "home": {
@@ -648,7 +675,9 @@
       "scenes": "场景",
       "transcript": "转录文本",
       "telemetry": "遥测",
-      "raw": "原始 JSON"
+      "raw": "原始 JSON",
+      "sections": "分段",
+      "measurements": "测量"
     },
     "wholeResults": "整段视频结果",
     "noScenes": "场景检测已关闭或未发现任何场景。",
@@ -665,7 +694,8 @@
     "noTranscript": "转录已关闭或视频没有音频。",
     "noTranscriptMatches": "没有匹配的转录片段。",
     "transcriptLanguage": "语言：{{language}}",
-    "searchTranscript": "搜索转录文本"
+    "searchTranscript": "搜索转录文本",
+    "wholeRecordingResults": "整段录音结果"
   },
   "endpoints": {
     "title": "端点",
@@ -684,12 +714,14 @@
       "timeout": "超时",
       "apiKey": "API 密钥",
       "lastChecked": "上次检查",
-      "test": "测试"
+      "test": "测试",
+      "capabilities": "能力"
     },
     "filters": {
       "kind": "类型",
       "search": "搜索",
-      "searchPlaceholder": "名称、提供商或模型"
+      "searchPlaceholder": "名称、提供商或模型",
+      "capability": "能力"
     },
     "localFilterNote": "显示 {{shown}} / {{total}}。筛选在本地进行；服务器会返回所有端点。",
     "default": "默认",
@@ -713,6 +745,17 @@
       "testOk": "端点 {{name}} 在 {{duration}} 内响应。",
       "testFailed": "端点 {{name}} 测试失败，用时 {{duration}}。",
       "testError": "无法测试端点 {{name}}。"
+    },
+    "capabilities": {
+      "images": "图像",
+      "imagesHelp": "接受图像，因此可以分析图像、帧和场景。",
+      "structuredOutput": "结构化输出",
+      "structuredOutputHelp": "在字段提取时使用原生 JSON 响应格式。",
+      "audioInput": "音频输入",
+      "audioInputHelp": "在对话中接受音频，因此可作为聆听端点并听取场景音频。",
+      "transcription": "转录",
+      "transcriptionHelp": "将语音转换为文本。",
+      "noAudioInputHelp": "此提供商无法接受音频输入，因此不能作为聆听端点。"
     }
   },
   "requestHistory": {
@@ -763,7 +806,7 @@
     },
     "jsonTitle": "请求 JSON",
     "emptyTitle": "没有保留的流量",
-    "emptyMessage": "服务器处理请求时，请求会显示在此处。如果此处一直为空，请检查“设置”中是否开启了 RequestHistory.Enabled。",
+    "emptyMessage": "服务器处理请求时，请求会显示在此处。如果此处一直为空，请检查“设置”中是否开启了 RequestHistory.Enable。",
     "emptyFiltered": "没有符合这些筛选条件的请求",
     "emptyFilteredMessage": "清除或放宽筛选条件，或选择其他时间范围。",
     "inspector": {
@@ -921,7 +964,10 @@
       "grpc": "gRPC",
       "httpprotobuf": "HTTP (protobuf)",
       "Completion": "补全",
-      "Transcription": "转录"
+      "Transcription": "转录",
+      "Mp3": "MP3",
+      "Wav": "WAV",
+      "Flac": "FLAC"
     },
     "severity": {
       "0": "0 调试",
@@ -963,7 +1009,7 @@
       },
       "media": {
         "title": "媒体",
-        "help": "ffmpeg、下载限制和图像尺寸。"
+        "help": "ffmpeg、下载限制、图像尺寸、聆听音频和测量阈值。"
       },
       "jobs": {
         "title": "任务",
@@ -1036,8 +1082,13 @@
           "TimeoutMs": "超时 (ms)",
           "Temperature": "温度",
           "MaxOutputTokens": "最大输出 Token 数",
-          "Active": "启用"
-        }
+          "Active": "启用",
+          "MaxInlineMediaBytes": "每次调用的最大内联媒体",
+          "MaxListenSeconds": "聆听预算（秒）"
+        },
+        "DefaultListening": "默认聆听端点",
+        "HealthProbeIntervalMs": "健康探测间隔 (ms)",
+        "UnhealthyProbeIntervalMs": "不健康时重新探测间隔 (ms)"
       },
       "Media": {
         "TempDirectory": "临时目录",
@@ -1053,7 +1104,18 @@
         "FfmpegTimeoutMs": "ffmpeg 超时 (ms)",
         "MaxVideoDurationMs": "最大视频时长 (ms)",
         "TranscriptionChunkSeconds": "转录分块（秒）",
-        "MaxSegmentMs": "最大片段长度 (ms)"
+        "MaxSegmentMs": "最大片段长度 (ms)",
+        "MaxAudioDurationMs": "最大音频时长 (ms)",
+        "ListenFormat": "聆听格式",
+        "ListenSampleRate": "聆听采样率 (Hz)",
+        "ListenChannels": "聆听声道",
+        "ListenBitrateKbps": "聆听比特率（kbps，仅 MP3）",
+        "MaxListenSeconds": "聆听预算（秒）",
+        "MeasureSilenceDb": "静音阈值 (dBFS)",
+        "MeasureMinSilenceMs": "最短静音 (ms)",
+        "ClippingTruePeakDbtp": "削波真峰值 (dBTP)",
+        "ClippingMinPeaksPerMinute": "每分钟削波峰值数",
+        "MonoMaxSideDb": "单声道阈值 (dB)"
       },
       "Jobs": {
         "MaxConcurrentJobs": "最大并发任务数",
@@ -1062,7 +1124,7 @@
         "MaxWaitTimeoutMs": "最大等待超时 (ms)"
       },
       "RequestHistory": {
-        "Enabled": "捕获请求",
+        "Enable": "捕获请求",
         "MaxRequestBodyBytes": "捕获的最大请求正文",
         "MaxResponseBodyBytes": "捕获的最大响应正文",
         "RetentionDays": "保留期限（天）"
@@ -1096,8 +1158,19 @@
         "TraceSamplingRatio": "链路追踪采样率"
       },
       "Analytics": {
-        "Enabled": "记录统计分析数据",
+        "Enable": "记录统计分析数据",
         "RetentionDays": "保留期限（天）"
+      }
+    },
+    "audioInputOnly": "仅列出提供商接受音频输入的端点（Gemini、OpenAI 兼容）。",
+    "subgroups": {
+      "listen": {
+        "title": "聆听音频",
+        "help": "请求未设置 Listen.Rendition 时，发送给聆听模型的音频所用的默认值。"
+      },
+      "measure": {
+        "title": "测量阈值",
+        "help": "“测量”中静音、削波和单声道判断所依据的阈值。"
       }
     }
   },
@@ -1204,7 +1277,11 @@
       "Scenes": "场景",
       "Summarize": "摘要",
       "Extract": "提取",
-      "Reduce": "归纳"
+      "Reduce": "归纳",
+      "Measure": "测量",
+      "SectionDetection": "分段检测",
+      "ListenExtraction": "聆听音频",
+      "Sections": "分段"
     },
     "progressStage": {
       "Queued": "排队中",
@@ -1218,23 +1295,70 @@
       "Scenes": "正在分析场景",
       "Reduce": "正在生成视频摘要",
       "Summarize": "正在生成摘要",
-      "Extract": "正在提取字段"
+      "Extract": "正在提取字段",
+      "Complete": "完成",
+      "Measure": "正在测量音频",
+      "SectionDetection": "正在检测分段",
+      "Listen": "正在准备聆听音频",
+      "ListenExtraction": "正在准备聆听音频",
+      "Sections": "正在分析分段"
     },
     "purpose": {
       "Summarize": "摘要",
       "Extract": "提取",
       "SceneSummarize": "场景摘要",
       "SceneExtract": "场景字段",
-      "Transcribe": "转录"
+      "Transcribe": "转录",
+      "SectionSummarize": "分段摘要",
+      "SectionExtract": "分段字段"
     },
     "health": {
       "Healthy": "健康",
       "Degraded": "降级"
+    },
+    "listeningMode": {
+      "Full": "完整录音",
+      "Sections": "逐段片段",
+      "Excerpts": "仅摘录",
+      "Scenes": "场景音频",
+      "None": "未聆听"
+    },
+    "listenReason": {
+      "NotRequested": "此请求关闭了聆听",
+      "NoModelFunctions": "没有功能需要音频",
+      "NoEndpointConfigured": "未配置聆听端点",
+      "EndpointLacksAudioInput": "该端点无法接受音频输入",
+      "EndpointUnhealthy": "聆听端点不健康",
+      "NoAudioTrack": "媒体没有音轨"
+    },
+    "listenReasonHelp": {
+      "NotRequested": "请求将 Listen.Enable 设为 false，因此结果仅来自转录文本。",
+      "NoModelFunctions": "没有运行摘要、字段或分段功能，因此聆听模型无事可做。",
+      "NoEndpointConfigured": "请在“设置”中设置 Inference.DefaultListening，或选择一个聆听端点。结果仅来自转录文本。",
+      "EndpointLacksAudioInput": "请选择提供商接受音频的端点（Gemini、OpenAI 兼容）。结果仅来自帧和转录文本。",
+      "EndpointUnhealthy": "任务开始时该端点未通过最近一次健康检查，因此结果仅来自转录文本。本地 llama-server 可能仍在加载模型；请查看“端点”页面后重新运行分析。",
+      "NoAudioTrack": "没有可发送的音频。"
+    },
+    "listenScope": {
+      "Recording": "录音",
+      "Section": "分段",
+      "Scene": "场景"
+    },
+    "listenFormat": {
+      "Mp3": "MP3",
+      "Wav": "WAV",
+      "Flac": "FLAC"
     }
   },
   "units": {
     "tokensPerSecond": "{{value}} tok/s",
-    "realtimeFactor": "{{value}}x"
+    "realtimeFactor": "{{value}}x",
+    "lufs": "{{value}} LUFS",
+    "lu": "{{value}} LU",
+    "dbtp": "{{value}} dBTP",
+    "dbfs": "{{value}} dBFS",
+    "db": "{{value}} dB",
+    "kilohertz": "{{value}} kHz"
   },
   "appearance": {
     "title": "外观",
@@ -1268,10 +1392,10 @@
   },
   "analyzeAudio": {
     "title": "分析音频",
-    "summary": "转录音频文件（或视频的音轨），然后根据转录文本生成摘要并提取类型化字段。以任务形式运行；进度和转录文本显示在下方。",
-    "modelHelp": "转录端点将语音转换为文本（默认 Inference.DefaultTranscription）。文本端点根据转录文本生成摘要和字段（默认 Inference.DefaultText）。",
+    "summary": "聆听音频文件（或视频的音轨），进行转录、测量并在静音处切分，然后生成摘要并提取类型化字段。以任务形式运行；进度和结果显示在下方。",
+    "modelHelp": "转录端点将语音转换为文本（默认 Inference.DefaultTranscription）。分析不聆听时，文本端点根据转录文本生成摘要和字段，并归纳分段结果（默认 Inference.DefaultText）。",
     "languageHelp": "可选的 ISO-639 代码。留空则由模型自动检测语言。",
-    "transcribeRequired": "必须进行转录：摘要和字段都根据转录文本生成。",
+    "transcribeRequired": "请开启“转录”或“聆听”：摘要和字段需要转录文本或音频本身。",
     "summaryHelp": "由文本端点根据转录文本生成。",
     "submit": "提交音频任务",
     "emptyTitle": "尚无音频任务",
@@ -1280,7 +1404,55 @@
       "submitted": "音频任务 {{id}} 已加入队列。"
     },
     "errors": {
-      "notSupported": "此服务器不支持音频分析（未找到 POST /v1.0/audio）。"
+      "notSupported": "此服务器不支持音频分析（未找到 POST /v1.0/audio）。",
+      "sectionRange": "最长分段不得小于最短分段。",
+      "noFunction": "请至少启用“转录”、“生成摘要”、“提取”、“测量”或“分段”中的一项。"
+    },
+    "transcribeOffListening": "转录已关闭。聆听模型仅根据音频工作，没有转录文本作为提示。",
+    "summaryHelpListen": "由聆听模型根据音频生成，并以转录文本作为提示。没有可用的聆听端点时，改用文本端点和转录文本。",
+    "sections": {
+      "listen": "聆听",
+      "measure": "测量",
+      "sections": "分段"
+    },
+    "listen": {
+      "enable": "聆听音频",
+      "help": "聆听模型直接听取录音本身，因此音乐、语气、人群噪声等声音都会被考虑，而不只是文字。转录文本会作为提示一并传入。",
+      "offHelp": "聆听已关闭。摘要和字段仅根据转录文本生成。",
+      "sampleClips": "摘录",
+      "clipSeconds": "摘录时长（秒）",
+      "excerptHelp": "当录音超过端点的聆听预算且分段关闭时使用：按此数量均匀截取摘录（1 到 32），每段为此时长（5 到 300 秒）。",
+      "fallbackTitle": "此次分析将回退到转录文本",
+      "firstStartHint": "首次启动时，本地 llama-server 可能仍在下载模型。请在“端点”页面查看其健康状态。",
+      "noTranscriptHint": "转录已关闭，若没有可用的聆听端点，就没有可分析的内容，服务器会拒绝该请求。请开启转录以保留回退方案。",
+      "willFallBack": "没有可用的聆听端点；结果将来自转录文本。",
+      "status": {
+        "ok": "通过 {{name}}（{{model}}）聆听。",
+        "unchecked": "{{name}} 尚未进行健康检查。如果它有响应就会被使用，调用失败会报告为错误。",
+        "unknown": "使用服务器默认的聆听端点（Inference.DefaultListening）。如果任务开始时该端点缺失或不健康，分析将回退到转录文本。",
+        "none": "此服务器上没有可接受音频输入的活动端点。请在“设置”中添加 Gemini 或 OpenAI 兼容端点（例如 llama-server）。",
+        "noDefault": "未设置默认聆听端点（Inference.DefaultListening）。请在上方选择端点，或在“设置”中设置默认值。",
+        "unhealthy": "{{name}} 当前不健康。除非它在任务开始前恢复，否则结果仅来自转录文本。",
+        "allUnhealthy": "所有支持音频的端点当前都不健康。除非有端点在任务开始前恢复，否则结果仅来自转录文本。"
+      }
+    },
+    "measure": {
+      "enable": "测量响度、电平、静音和立体声宽度",
+      "help": "确定性的 ffmpeg 测量，不调用模型。这些数值也会作为上下文传给模型。"
+    },
+    "sectionsPanel": {
+      "enable": "在静音处切分录音并逐段分析",
+      "help": "分段来自 ffmpeg 静音检测，而非模型。每个分段均可下载，并有各自的摘要和字段。",
+      "silenceDb": "静音阈值 (dBFS)",
+      "silenceDbHelp": "低于此电平的音频视为静音（-90 到 -10）。",
+      "minSilenceMs": "最短静音 (ms)",
+      "minSectionMs": "最短分段 (ms)",
+      "maxSectionMs": "最长分段 (ms)",
+      "maxSections": "最大分段数",
+      "maxSectionsHelp": "限制成本。多出的分段会被合并。",
+      "summary": "每个分段的摘要",
+      "extract": "为每个分段提取字段",
+      "reduceHelp": "若在上方选择了文本端点，整段录音的摘要和字段将由各分段结果归纳而来。"
     }
   },
   "analysisJob": {
@@ -1320,7 +1492,7 @@
     "notAdminTitle": "统计分析需要管理员密钥",
     "notAdminMessage": "请使用管理员密钥登录，以查看所有分析的性能和遥测数据。",
     "unavailableTitle": "此服务器不提供统计分析",
-    "unavailableMessage": "未找到 GET /v1.0/analytics/summary。请将服务器升级到支持统计分析的版本，并检查“设置”中是否开启了 Analytics.Enabled。",
+    "unavailableMessage": "未找到 GET /v1.0/analytics/summary。请将服务器升级到支持统计分析的版本，并检查“设置”中是否开启了 Analytics.Enable。",
     "emptyTitle": "此范围内没有分析",
     "emptyMessage": "运行一次分析或扩大时间范围。每次完成的图像、视频和音频分析都会记录在此处。",
     "windowNote": "显示 {{from}} 至 {{to}}，按{{bucket}}分组。",
@@ -1540,5 +1712,79 @@
     "toast": {
       "deleted": "已删除分析记录 {{id}}。"
     }
+  },
+  "listening": {
+    "title": "聆听",
+    "listened": "模型已听取音频。",
+    "notListened": "模型未听取音频。",
+    "mode": "模式",
+    "reason": "原因",
+    "endpoint": "端点",
+    "model": "模型",
+    "rendition": "发送的音频",
+    "heard": "已听取",
+    "heardOf": "{{heard}} / {{total}}（{{percent}}）",
+    "clipCount": "片段",
+    "clips_other": "已发送 {{count}} 个片段",
+    "scopeIndex": "{{scope}} {{n}}",
+    "mono": "单声道",
+    "stereo": "立体声",
+    "channels_other": "{{count}} 个声道",
+    "columns": {
+      "scope": "随附于",
+      "start": "开始",
+      "end": "结束",
+      "length": "时长",
+      "size": "大小"
+    },
+    "modeHelp": {
+      "Sections": "整段录音结果由各分段片段归纳而来，没有任何一次调用听取了完整录音。",
+      "Excerpts": "录音太长，无法整段发送，因此模型只听取了均匀分布的摘录。结果仅描述这些摘录。"
+    }
+  },
+  "measurements": {
+    "help": "由 ffmpeg 在一次解码中测得，不调用模型。电平相对于满刻度。",
+    "none": "此次分析关闭了测量。",
+    "missingTitle": "无测量结果",
+    "missingMessage": "测量已关闭或测量失败。请查看上方的错误。",
+    "monoSource": "不适用（单声道源）",
+    "copy": "复制 {{name}}",
+    "fields": {
+      "IntegratedLufs": "综合响度",
+      "LoudnessRangeLu": "响度范围",
+      "TruePeakDbtp": "真峰值",
+      "PeakDbfs": "采样峰值",
+      "RmsDbfs": "RMS 电平",
+      "CrestFactorDb": "波峰因数",
+      "PeakCount": "峰值电平采样数",
+      "ClippingLikely": "可能削波",
+      "SilenceRatio": "静音",
+      "SilenceCount": "静音段数",
+      "LeadingSilenceMs": "开头静音",
+      "TrailingSilenceMs": "结尾静音",
+      "Channels": "声道",
+      "StereoWidthDb": "立体声宽度",
+      "EffectivelyMono": "实际为单声道"
+    }
+  },
+  "sections": {
+    "notRequested": "此次分析未请求分段。",
+    "none": "分段检测未发现任何分段。",
+    "barAria": "{{duration}} 录音的分段。使用方向键选择分段。",
+    "sectionAria": "分段 {{n}} / {{count}}，{{start}} 至 {{end}}，{{duration}}",
+    "hasErrors_other": "有 {{count}} 个错误。",
+    "legend": {
+      "section": "分段",
+      "silence": "开头或结尾的静音",
+      "heard": "聆听模型已听取"
+    },
+    "keyboardHint": "虚线表示在静音处切分。方向键、Home 和 End 可在分段之间移动。",
+    "heading": "分段 {{n}} / {{count}}",
+    "prev": "上一个分段",
+    "next": "下一个分段",
+    "heardClips": "模型听取的音频",
+    "results": "分段结果",
+    "fields": "分段字段",
+    "transcript": "此分段期间的转录文本"
   }
 }

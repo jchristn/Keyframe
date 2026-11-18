@@ -202,12 +202,29 @@ export function analysisDetail(id = 'kfa_1001') {
   };
 }
 
+const CHECKED = '2026-11-15T17:59:00Z';
+const OLLAMA_CAPS = { SupportsImages: true, SupportsStructuredOutput: true, SupportsTranscription: false, SupportsAudioInput: false };
+
 export const ENDPOINTS = [
-  { Name: 'ollama-gemma3-4b', Provider: 'Ollama', Kind: 'Completion', Model: 'gemma3:4b', Active: true, Healthy: true },
-  { Name: 'ollama-qwen3-vl-8b', Provider: 'Ollama', Kind: 'Completion', Model: 'qwen3-vl:8b', Active: true, Healthy: true },
-  { Name: 'ollama-gpt-oss-20b', Provider: 'Ollama', Kind: 'Completion', Model: 'gpt-oss:20b', Active: true, Healthy: true },
-  { Name: 'whisper', Provider: 'OpenAiCompatible', Kind: 'Transcription', Model: 'Systran/faster-whisper-small', Active: true, Healthy: false, HealthMessage: 'Connection refused' }
+  { Name: 'ollama-gemma3-4b', Provider: 'Ollama', Kind: 'Completion', Model: 'gemma3:4b', Active: true, Healthy: true, LastCheckedUtc: CHECKED, ...OLLAMA_CAPS },
+  { Name: 'ollama-qwen3-vl-8b', Provider: 'Ollama', Kind: 'Completion', Model: 'qwen3-vl:8b', Active: true, Healthy: true, LastCheckedUtc: CHECKED, ...OLLAMA_CAPS },
+  { Name: 'ollama-gpt-oss-20b', Provider: 'Ollama', Kind: 'Completion', Model: 'gpt-oss:20b', Active: true, Healthy: true, LastCheckedUtc: CHECKED, ...OLLAMA_CAPS },
+  { Name: 'llama-listen', Provider: 'OpenAiCompatible', Kind: 'Completion', Model: 'voxtral-mini-3b', Active: true, Healthy: true, LastCheckedUtc: CHECKED, SupportsImages: true, SupportsStructuredOutput: true, SupportsTranscription: true, SupportsAudioInput: true },
+  { Name: 'whisper', Provider: 'OpenAiCompatible', Kind: 'Transcription', Model: 'Systran/faster-whisper-small', Active: true, Healthy: false, HealthMessage: 'Connection refused', LastCheckedUtc: CHECKED, SupportsImages: true, SupportsStructuredOutput: true, SupportsTranscription: true, SupportsAudioInput: true }
 ];
+
+/** Settings response with a default listening endpoint, for views that read Inference.DefaultListening. */
+export function settingsResponse(over = {}) {
+  return {
+    SettingsFile: '/app/keyframe.json',
+    RestartRequired: false,
+    Fields: [],
+    Settings: {
+      Inference: { DefaultVision: 'ollama-gemma3-4b', DefaultText: 'ollama-gpt-oss-20b', DefaultTranscription: 'whisper', DefaultListening: 'llama-listen', Endpoints: [], ...over },
+      Media: { ListenFormat: 'Mp3', ListenSampleRate: 16000, ListenChannels: 1, ListenBitrateKbps: 64 }
+    }
+  };
+}
 
 export const OPENAPI = {
   openapi: '3.0.1',
@@ -281,5 +298,69 @@ export function audioResult() {
     },
     Errors: [],
     Warnings: []
+  };
+}
+
+/** Audio measurements shaped like AudioMeasurements. */
+export function measurements(over = {}) {
+  return {
+    IntegratedLufs: -9.4,
+    LoudnessRangeLu: 5.1,
+    TruePeakDbtp: -0.2,
+    PeakDbfs: -0.3,
+    RmsDbfs: -11.8,
+    CrestFactorDb: 11.5,
+    PeakCount: 214,
+    ClippingLikely: true,
+    SilenceRatio: 0.03,
+    SilenceCount: 2,
+    LeadingSilenceMs: 400,
+    TrailingSilenceMs: 2100,
+    Channels: 2,
+    StereoWidthDb: -14.2,
+    EffectivelyMono: false,
+    ...over
+  };
+}
+
+/** ListeningInfo for a listened analysis; pass Mode/Reason overrides for fallbacks. */
+export function listening(over = {}) {
+  return {
+    Listened: true,
+    Mode: 'Sections',
+    Reason: null,
+    Endpoint: 'llama-listen',
+    Model: 'voxtral-mini-3b',
+    Rendition: { Format: 'Mp3', SampleRate: 16000, Channels: 1, BitrateKbps: 64 },
+    DurationMs: 182000,
+    HeardMs: 150000,
+    Clips: [
+      { Scope: 'Section', Index: 0, StartMs: 0, EndMs: 60000, SizeBytes: 480000 },
+      { Scope: 'Section', Index: 1, StartMs: 60000, EndMs: 120000, SizeBytes: 480000 },
+      { Scope: 'Section', Index: 2, StartMs: 136000, EndMs: 166000, SizeBytes: 240000 }
+    ],
+    ...over
+  };
+}
+
+/** A transcript-only fallback: the listening endpoint was unhealthy. */
+export function fallbackListening(over = {}) {
+  return listening({ Listened: false, Mode: 'None', Reason: 'EndpointUnhealthy', Endpoint: null, Model: null, HeardMs: 0, Clips: [], ...over });
+}
+
+/** Audio result with listening, measurements, and three sections (the last one failed). */
+export function listeningResult(over = {}) {
+  return {
+    ...audioResult(),
+    Results: { Summary: 'A live set: crowd noise, a rock band, and a long instrumental outro.', recording: 'Live' },
+    Fields: [{ Key: 'recording', Type: 'Enum', Value: 'Live', Valid: true, RawValue: 'Live', Error: null, Warnings: [] }],
+    Listening: listening(),
+    Measurements: measurements(),
+    Sections: [
+      { Index: 0, StartMs: 0, EndMs: 60000, DurationMs: 60000, TranscriptText: 'Good evening, everybody!', Results: { Summary: 'Crowd cheering, then the band starts.' }, Fields: [], Errors: [] },
+      { Index: 1, StartMs: 60000, EndMs: 120000, DurationMs: 60000, TranscriptText: 'This next one is an old favorite.', Results: { Summary: 'A mid-tempo song with a sing-along chorus.' }, Fields: [], Errors: [] },
+      { Index: 2, StartMs: 120000, EndMs: 182000, DurationMs: 62000, TranscriptText: null, Results: {}, Fields: [], Errors: ['Section 3 summary failed: endpoint llama-listen timed out.'] }
+    ],
+    ...over
   };
 }

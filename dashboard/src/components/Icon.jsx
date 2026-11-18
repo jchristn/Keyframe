@@ -59,7 +59,10 @@ const PATHS = {
   analytics: 'M4 20V10 M10 20V4 M16 20v-7 M22 20H2',
   audio: 'M4 10v4 M8 7v10 M12 4v16 M16 8v8 M20 11v2',
   clock: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z M12 6v6l4 2',
-  gauge: 'M12 14l4-4 M3.3 18a10 10 0 1 1 17.4 0'
+  gauge: 'M12 14l4-4 M3.3 18a10 10 0 1 1 17.4 0',
+  headphones: 'M3 18v-6a9 9 0 0 1 18 0v6 M3 15h3v6H4a1 1 0 0 1-1-1z M21 15h-3v6h2a1 1 0 0 0 1-1z',
+  mic: 'M9 5a3 3 0 0 1 6 0v6a3 3 0 0 1-6 0z M5 11a7 7 0 0 0 14 0 M12 18v3 M8 21h8',
+  braces: 'M8 3H7a2 2 0 0 0-2 2v4a2 2 0 0 1-2 2 2 2 0 0 1 2 2v4a2 2 0 0 0 2 2h1 M16 3h1a2 2 0 0 1 2 2v4a2 2 0 0 0 2 2 2 2 0 0 0-2 2v4a2 2 0 0 1-2 2h-1'
 };
 
 function Icon({ name, size = 16, className = '' }) {

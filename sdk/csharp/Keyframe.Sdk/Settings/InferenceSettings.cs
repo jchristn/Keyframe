@@ -29,6 +29,45 @@ namespace Keyframe.Sdk.Settings
         public string? DefaultTranscription { get; set; } = "whisper";
 
         /// <summary>
+        /// Completion endpoint used to listen to audio when a request does not name one (Listen.Model). The endpoint's
+        /// provider must accept audio input (Gemini, OpenAiCompatible, or Mock). Null means no default listening model;
+        /// requests then fall back to transcript-only analysis. Default null.
+        /// </summary>
+        public string? DefaultListening { get; set; } = null;
+
+        /// <summary>
+        /// Interval in milliseconds between health probes of an endpoint whose last probe succeeded. Default 300000.
+        /// Minimum 10000, maximum 3600000.
+        /// </summary>
+        public int HealthProbeIntervalMs
+        {
+            get
+            {
+                return _HealthProbeIntervalMs;
+            }
+            set
+            {
+                _HealthProbeIntervalMs = Math.Clamp(value, 10000, 3600000);
+            }
+        }
+
+        /// <summary>
+        /// Interval in milliseconds between health probes of an endpoint that is unhealthy or has not been checked.
+        /// Default 15000. Minimum 1000, maximum 600000.
+        /// </summary>
+        public int UnhealthyProbeIntervalMs
+        {
+            get
+            {
+                return _UnhealthyProbeIntervalMs;
+            }
+            set
+            {
+                _UnhealthyProbeIntervalMs = Math.Clamp(value, 1000, 600000);
+            }
+        }
+
+        /// <summary>
         /// Retries for transient failures (429, 5xx, timeouts). Default 2. Minimum 0, maximum 10.
         /// </summary>
         public int MaxRetries
@@ -128,6 +167,8 @@ namespace Keyframe.Sdk.Settings
         private int _RetryBackoffMs = 500;
         private int _RequestTimeoutMs = 300000;
         private int _MaxTranscriptCharacters = 60000;
+        private int _HealthProbeIntervalMs = 300000;
+        private int _UnhealthyProbeIntervalMs = 15000;
         private List<EndpointSettings> _Endpoints = new List<EndpointSettings>
         {
             new EndpointSettings { Name = "ollama-gemma3-4b", Provider = ProviderTypeEnum.Ollama, Kind = EndpointKindEnum.Completion, Endpoint = "http://127.0.0.1:11434", Model = "gemma3:4b", MaxOutputTokens = 4096, TimeoutMs = 300000 },

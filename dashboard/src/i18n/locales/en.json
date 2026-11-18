@@ -80,7 +80,8 @@
     "unhealthy": "Unhealthy",
     "unreachable": "Unreachable",
     "valid": "Valid",
-    "invalid": "Invalid"
+    "invalid": "Invalid",
+    "notChecked": "Not checked yet"
   },
   "topbar": {
     "toggleNav": "Toggle navigation",
@@ -337,7 +338,8 @@
     "name": "Model override",
     "namePlaceholder": "Endpoint default model",
     "textHelp": "The text endpoint handles text-only steps such as the whole-video summary. It defaults to Inference.DefaultText, then to the vision endpoint.",
-    "transcriptionEndpoint": "Transcription endpoint"
+    "transcriptionEndpoint": "Transcription endpoint",
+    "listeningEndpoint": "Listening endpoint"
   },
   "summarize": {
     "enable": "Summarize",
@@ -368,7 +370,9 @@
       "fields": "Fields",
       "telemetry": "Telemetry",
       "properties": "Properties",
-      "raw": "Raw JSON"
+      "raw": "Raw JSON",
+      "measurements": "Measurements",
+      "sections": "Sections"
     },
     "columns": {
       "key": "Key",
@@ -438,6 +442,20 @@
       "done": "Analysis finished in {{duration}}.",
       "partial": "Analysis finished with errors in {{duration}}. Check the result.",
       "canceled": "Analysis canceled."
+    },
+    "audioQuality": {
+      "title": "Audio quality",
+      "help": "Quality of the audio the model hears. Higher quality means fewer minutes fit in one call, so long recordings switch to excerpts or shorter clips sooner.",
+      "custom": "Custom",
+      "serverDefault": "Server default",
+      "serverDefaultValue": "Server default ({{value}})",
+      "format": "Format",
+      "sampleRate": "Sample rate",
+      "channels": "Channels",
+      "bitrate": "Bitrate (kbps)",
+      "bitrateHelp": "16 to 320 kbps.",
+      "bitrateMp3Only": "Applies to MP3 only. Choose MP3 as the format to set it.",
+      "flacRejected": "OpenAI-compatible endpoints such as llama-server accept only MP3 or WAV. A FLAC request to one is rejected."
     }
   },
   "analyzeImage": {
@@ -486,7 +504,15 @@
     },
     "languagePlaceholder": "en",
     "emptyTitle": "No video job yet",
-    "emptyMessage": "Choose a file or URL above and submit. Progress, scenes, the transcript, and results appear here."
+    "emptyMessage": "Choose a file or URL above and submit. Progress, scenes, the transcript, and results appear here.",
+    "sceneAudio": {
+      "title": "Scene audio",
+      "enable": "Send each scene's audio to the vision model",
+      "help": "{{name}} can take audio input, so each scene is judged on its frames, transcript, and sound.",
+      "helpUnknown": "Used when the vision endpoint can take audio input (Gemini or OpenAI-compatible). Otherwise scenes use frames and transcript only.",
+      "noAudioInput": "{{name}} cannot take audio input. Scenes will use frames and transcript only.",
+      "offHelp": "Scenes use frames and transcript only."
+    }
   },
   "samples": {
     "image": {
@@ -502,7 +528,8 @@
       "showsText": "Is prominent on-screen text visible?"
     },
     "audio": {
-      "speakerCount": "How many distinct speakers are there?"
+      "speakerCount": "How many distinct speakers are there?",
+      "sectionTopic": "What is this part of the recording about?"
     }
   },
   "home": {
@@ -659,7 +686,9 @@
       "scenes": "Scenes",
       "transcript": "Transcript",
       "telemetry": "Telemetry",
-      "raw": "Raw JSON"
+      "raw": "Raw JSON",
+      "sections": "Sections",
+      "measurements": "Measurements"
     },
     "wholeResults": "Whole-video results",
     "noScenes": "Scene detection was off or found no scenes.",
@@ -676,7 +705,8 @@
     "noTranscript": "Transcription was off or the video has no audio.",
     "noTranscriptMatches": "No transcript segments match.",
     "transcriptLanguage": "Language: {{language}}",
-    "searchTranscript": "Search transcript"
+    "searchTranscript": "Search transcript",
+    "wholeRecordingResults": "Whole-recording results"
   },
   "endpoints": {
     "title": "Endpoints",
@@ -695,12 +725,14 @@
       "timeout": "Timeout",
       "apiKey": "API key",
       "lastChecked": "Last checked",
-      "test": "Test"
+      "test": "Test",
+      "capabilities": "Capabilities"
     },
     "filters": {
       "kind": "Kind",
       "search": "Search",
-      "searchPlaceholder": "Name, provider, or model"
+      "searchPlaceholder": "Name, provider, or model",
+      "capability": "Capability"
     },
     "localFilterNote": "Showing {{shown}} of {{total}}. Filtering is local; the server returns every endpoint.",
     "default": "Default",
@@ -724,6 +756,17 @@
       "testOk": "Endpoint {{name}} responded in {{duration}}.",
       "testFailed": "Endpoint {{name}} failed its test after {{duration}}.",
       "testError": "Could not test endpoint {{name}}."
+    },
+    "capabilities": {
+      "images": "Images",
+      "imagesHelp": "Accepts images, so it can analyze images, frames, and scenes.",
+      "structuredOutput": "Structured output",
+      "structuredOutputHelp": "Receives a native JSON response format for field extraction.",
+      "audioInput": "Audio input",
+      "audioInputHelp": "Accepts audio on chat, so it can be a listening endpoint and hear scene audio.",
+      "transcription": "Transcription",
+      "transcriptionHelp": "Turns speech into text.",
+      "noAudioInputHelp": "This provider cannot take audio input, so it cannot be a listening endpoint."
     }
   },
   "requestHistory": {
@@ -776,7 +819,7 @@
     },
     "jsonTitle": "Request JSON",
     "emptyTitle": "No retained traffic",
-    "emptyMessage": "Requests appear here as the server handles them. If this stays empty, check that RequestHistory.Enabled is on in Settings.",
+    "emptyMessage": "Requests appear here as the server handles them. If this stays empty, check that RequestHistory.Enable is on in Settings.",
     "emptyFiltered": "No requests match these filters",
     "emptyFilteredMessage": "Clear or widen the filters, or pick a different time range.",
     "inspector": {
@@ -937,7 +980,10 @@
       "grpc": "gRPC",
       "httpprotobuf": "HTTP (protobuf)",
       "Completion": "Completion",
-      "Transcription": "Transcription"
+      "Transcription": "Transcription",
+      "Mp3": "MP3",
+      "Wav": "WAV",
+      "Flac": "FLAC"
     },
     "severity": {
       "0": "0 Debug",
@@ -979,7 +1025,7 @@
       },
       "media": {
         "title": "Media",
-        "help": "ffmpeg, download limits, and image sizing."
+        "help": "ffmpeg, download limits, image sizing, listening audio, and measurement thresholds."
       },
       "jobs": {
         "title": "Jobs",
@@ -1052,8 +1098,13 @@
           "TimeoutMs": "Timeout (ms)",
           "Temperature": "Temperature",
           "MaxOutputTokens": "Max output tokens",
-          "Active": "Active"
-        }
+          "Active": "Active",
+          "MaxInlineMediaBytes": "Max inline media per call",
+          "MaxListenSeconds": "Listen budget (seconds)"
+        },
+        "DefaultListening": "Default listening endpoint",
+        "HealthProbeIntervalMs": "Health probe interval (ms)",
+        "UnhealthyProbeIntervalMs": "Unhealthy re-probe interval (ms)"
       },
       "Media": {
         "TempDirectory": "Temp directory",
@@ -1069,7 +1120,18 @@
         "FfmpegTimeoutMs": "ffmpeg timeout (ms)",
         "MaxVideoDurationMs": "Max video duration (ms)",
         "TranscriptionChunkSeconds": "Transcription chunk (seconds)",
-        "MaxSegmentMs": "Max segment length (ms)"
+        "MaxSegmentMs": "Max segment length (ms)",
+        "MaxAudioDurationMs": "Max audio duration (ms)",
+        "ListenFormat": "Listen format",
+        "ListenSampleRate": "Listen sample rate (Hz)",
+        "ListenChannels": "Listen channels",
+        "ListenBitrateKbps": "Listen bitrate (kbps, MP3 only)",
+        "MaxListenSeconds": "Listen budget (seconds)",
+        "MeasureSilenceDb": "Silence threshold (dBFS)",
+        "MeasureMinSilenceMs": "Min silence (ms)",
+        "ClippingTruePeakDbtp": "Clipping true peak (dBTP)",
+        "ClippingMinPeaksPerMinute": "Clipping peaks per minute",
+        "MonoMaxSideDb": "Mono threshold (dB)"
       },
       "Jobs": {
         "MaxConcurrentJobs": "Max concurrent jobs",
@@ -1078,7 +1140,7 @@
         "MaxWaitTimeoutMs": "Max wait timeout (ms)"
       },
       "RequestHistory": {
-        "Enabled": "Capture requests",
+        "Enable": "Capture requests",
         "MaxRequestBodyBytes": "Max request body captured",
         "MaxResponseBodyBytes": "Max response body captured",
         "RetentionDays": "Retention (days)"
@@ -1112,8 +1174,19 @@
         "TraceSamplingRatio": "Trace sampling ratio"
       },
       "Analytics": {
-        "Enabled": "Record analytics",
+        "Enable": "Record analytics",
         "RetentionDays": "Retention (days)"
+      }
+    },
+    "audioInputOnly": "Only endpoints whose provider accepts audio input (Gemini, OpenAI-compatible) are listed.",
+    "subgroups": {
+      "listen": {
+        "title": "Listening audio",
+        "help": "Defaults for the audio sent to listening models when a request leaves Listen.Rendition unset."
+      },
+      "measure": {
+        "title": "Measurement thresholds",
+        "help": "Thresholds behind the silence, clipping, and mono figures in Measurements."
       }
     }
   },
@@ -1220,7 +1293,11 @@
       "Scenes": "Scenes",
       "Summarize": "Summarize",
       "Extract": "Extract",
-      "Reduce": "Reduce"
+      "Reduce": "Reduce",
+      "Measure": "Measure",
+      "SectionDetection": "Section detection",
+      "ListenExtraction": "Listening audio",
+      "Sections": "Sections"
     },
     "progressStage": {
       "Queued": "Queued",
@@ -1234,23 +1311,70 @@
       "Scenes": "Analyzing scenes",
       "Reduce": "Summarizing the video",
       "Summarize": "Summarizing",
-      "Extract": "Extracting fields"
+      "Extract": "Extracting fields",
+      "Complete": "Done",
+      "Measure": "Measuring audio",
+      "SectionDetection": "Detecting sections",
+      "Listen": "Preparing listening audio",
+      "ListenExtraction": "Preparing listening audio",
+      "Sections": "Analyzing sections"
     },
     "purpose": {
       "Summarize": "Summarize",
       "Extract": "Extract",
       "SceneSummarize": "Scene summary",
       "SceneExtract": "Scene fields",
-      "Transcribe": "Transcribe"
+      "Transcribe": "Transcribe",
+      "SectionSummarize": "Section summary",
+      "SectionExtract": "Section fields"
     },
     "health": {
       "Healthy": "Healthy",
       "Degraded": "Degraded"
+    },
+    "listeningMode": {
+      "Full": "Full recording",
+      "Sections": "Per-section clips",
+      "Excerpts": "Excerpts only",
+      "Scenes": "Scene audio",
+      "None": "Not listened"
+    },
+    "listenReason": {
+      "NotRequested": "Listening was turned off for this request",
+      "NoModelFunctions": "No function needed the audio",
+      "NoEndpointConfigured": "No listening endpoint is configured",
+      "EndpointLacksAudioInput": "The endpoint cannot take audio input",
+      "EndpointUnhealthy": "The listening endpoint was unhealthy",
+      "NoAudioTrack": "The media has no audio track"
+    },
+    "listenReasonHelp": {
+      "NotRequested": "The request set Listen.Enable to false, so results come from the transcript only.",
+      "NoModelFunctions": "No summary, field, or section function ran, so there was nothing for a listening model to do.",
+      "NoEndpointConfigured": "Set Inference.DefaultListening in Settings or choose a listening endpoint. Results came from the transcript only.",
+      "EndpointLacksAudioInput": "Choose an endpoint whose provider accepts audio (Gemini, OpenAI-compatible). Results came from the frames and transcript only.",
+      "EndpointUnhealthy": "The endpoint failed its last health check when the job started, so results came from the transcript only. A local llama-server may still be loading its model; check Endpoints and run the analysis again.",
+      "NoAudioTrack": "There was no audio to send."
+    },
+    "listenScope": {
+      "Recording": "Recording",
+      "Section": "Section",
+      "Scene": "Scene"
+    },
+    "listenFormat": {
+      "Mp3": "MP3",
+      "Wav": "WAV",
+      "Flac": "FLAC"
     }
   },
   "units": {
     "tokensPerSecond": "{{value}} tok/s",
-    "realtimeFactor": "{{value}}x"
+    "realtimeFactor": "{{value}}x",
+    "lufs": "{{value}} LUFS",
+    "lu": "{{value}} LU",
+    "dbtp": "{{value}} dBTP",
+    "dbfs": "{{value}} dBFS",
+    "db": "{{value}} dB",
+    "kilohertz": "{{value}} kHz"
   },
   "appearance": {
     "title": "Appearance",
@@ -1284,10 +1408,10 @@
   },
   "analyzeAudio": {
     "title": "Analyze audio",
-    "summary": "Transcribe an audio file (or the audio track of a video), then summarize it and extract typed fields from the transcript. Runs as a job; progress and the transcript appear below.",
-    "modelHelp": "The transcription endpoint turns speech into text (default Inference.DefaultTranscription). The text endpoint writes the summary and fields from the transcript (default Inference.DefaultText).",
+    "summary": "Listen to an audio file (or the audio track of a video), transcribe it, measure it, and split it at silences, then summarize it and extract typed fields. Runs as a job; progress and results appear below.",
+    "modelHelp": "The transcription endpoint turns speech into text (default Inference.DefaultTranscription). The text endpoint writes the summary and fields from the transcript when the analysis does not listen, and reduces section results (default Inference.DefaultText).",
     "languageHelp": "Optional ISO-639 code. Leave empty to let the model detect the language.",
-    "transcribeRequired": "Transcription is required: the summary and fields are produced from the transcript.",
+    "transcribeRequired": "Turn on Transcribe or Listen: the summary and fields need a transcript or the audio itself.",
     "summaryHelp": "Written by the text endpoint from the transcript.",
     "submit": "Submit audio job",
     "emptyTitle": "No audio job yet",
@@ -1296,7 +1420,55 @@
       "submitted": "Audio job {{id}} queued."
     },
     "errors": {
-      "notSupported": "This server does not support audio analysis (POST /v1.0/audio was not found)."
+      "notSupported": "This server does not support audio analysis (POST /v1.0/audio was not found).",
+      "sectionRange": "Max section must be at least min section.",
+      "noFunction": "Enable at least one of Transcribe, Summarize, Extract, Measure, or Sections."
+    },
+    "transcribeOffListening": "Transcription is off. The listening model works from the audio alone, with no transcript hint.",
+    "summaryHelpListen": "Written by the listening model from the audio, with the transcript as a hint. Falls back to the text endpoint and the transcript when no listening endpoint is usable.",
+    "sections": {
+      "listen": "Listening",
+      "measure": "Measurements",
+      "sections": "Sections"
+    },
+    "listen": {
+      "enable": "Listen to the audio",
+      "help": "The listening model hears the recording itself, so music, tone, crowd noise, and other sounds count, not only words. The transcript is passed along as a hint.",
+      "offHelp": "Listening is off. The summary and fields come from the transcript only, as text.",
+      "sampleClips": "Excerpts",
+      "clipSeconds": "Excerpt length (seconds)",
+      "excerptHelp": "Used when the recording is longer than the endpoint's listen budget and sections are off: this many evenly spaced excerpts (1 to 32), each this long (5 to 300 seconds).",
+      "fallbackTitle": "This analysis will fall back to the transcript",
+      "firstStartHint": "On a first start, a local llama-server may still be downloading its model. Check its health on the Endpoints page.",
+      "noTranscriptHint": "Transcribe is off, so with no usable listening endpoint there is nothing to analyze and the server rejects the request. Turn on Transcribe to keep a fallback.",
+      "willFallBack": "No usable listening endpoint; results will come from the transcript.",
+      "status": {
+        "ok": "Listening through {{name}} ({{model}}).",
+        "unchecked": "{{name}} has not been health-checked yet. It is used if it responds, and a failed call is reported as an error.",
+        "unknown": "Uses the server's default listening endpoint (Inference.DefaultListening). If it is missing or unhealthy when the job starts, the analysis falls back to the transcript.",
+        "none": "No active endpoint on this server can take audio input. Add a Gemini or OpenAI-compatible endpoint (such as llama-server) in Settings.",
+        "noDefault": "No default listening endpoint is set (Inference.DefaultListening). Choose an endpoint above, or set a default in Settings.",
+        "unhealthy": "{{name}} is unhealthy right now. Unless it recovers before the job starts, results come from the transcript only.",
+        "allUnhealthy": "Every audio-capable endpoint is unhealthy right now. Unless one recovers before the job starts, results come from the transcript only."
+      }
+    },
+    "measure": {
+      "enable": "Measure loudness, levels, silence, and stereo width",
+      "help": "Deterministic ffmpeg measurements with no model calls. The numbers are also passed to the models as context."
+    },
+    "sectionsPanel": {
+      "enable": "Split the recording at silences and analyze each section",
+      "help": "Sections come from ffmpeg silence detection, never from a model. Each section can be downloaded and gets its own summary and fields.",
+      "silenceDb": "Silence threshold (dBFS)",
+      "silenceDbHelp": "Audio below this level counts as silence (-90 to -10).",
+      "minSilenceMs": "Min silence (ms)",
+      "minSectionMs": "Min section (ms)",
+      "maxSectionMs": "Max section (ms)",
+      "maxSections": "Max sections",
+      "maxSectionsHelp": "Caps cost. Extra sections are merged.",
+      "summary": "Per-section summary",
+      "extract": "Extract fields for each section",
+      "reduceHelp": "With a text endpoint chosen above, the whole-recording summary and fields are reduced from the section results."
     }
   },
   "analysisJob": {
@@ -1336,7 +1508,7 @@
     "notAdminTitle": "Analytics require the admin key",
     "notAdminMessage": "Sign in with the admin key to see performance and telemetry across all analyses.",
     "unavailableTitle": "Analytics are not available on this server",
-    "unavailableMessage": "GET /v1.0/analytics/summary was not found. Upgrade the server to a version with analytics, and check that Analytics.Enabled is on in Settings.",
+    "unavailableMessage": "GET /v1.0/analytics/summary was not found. Upgrade the server to a version with analytics, and check that Analytics.Enable is on in Settings.",
     "emptyTitle": "No analyses in this range",
     "emptyMessage": "Run an analysis or widen the time range. Every finished image, video, and audio analysis is recorded here.",
     "windowNote": "Showing {{from}} to {{to}}, grouped by {{bucket}}.",
@@ -1558,5 +1730,82 @@
     "toast": {
       "deleted": "Analysis record {{id}} deleted."
     }
+  },
+  "listening": {
+    "title": "Listening",
+    "listened": "The model heard the audio.",
+    "notListened": "The model did not hear the audio.",
+    "mode": "Mode",
+    "reason": "Reason",
+    "endpoint": "Endpoint",
+    "model": "Model",
+    "rendition": "Audio sent",
+    "heard": "Heard",
+    "heardOf": "{{heard}} of {{total}} ({{percent}})",
+    "clipCount": "Clips",
+    "clips_one": "{{count}} clip sent",
+    "clips_other": "{{count}} clips sent",
+    "scopeIndex": "{{scope}} {{n}}",
+    "mono": "Mono",
+    "stereo": "Stereo",
+    "channels_one": "{{count}} channel",
+    "channels_other": "{{count}} channels",
+    "columns": {
+      "scope": "Sent with",
+      "start": "Start",
+      "end": "End",
+      "length": "Length",
+      "size": "Size"
+    },
+    "modeHelp": {
+      "Sections": "The whole-recording results were reduced from per-section clips, so no single call heard the full recording.",
+      "Excerpts": "The recording was too long to send whole, so the model heard evenly spaced excerpts only. Results describe those excerpts."
+    }
+  },
+  "measurements": {
+    "help": "Measured by ffmpeg in one decode pass, with no model calls. Levels are relative to full scale.",
+    "none": "Measurements were turned off for this analysis.",
+    "missingTitle": "No measurements",
+    "missingMessage": "Measure was off, or the measurement failed. Check the errors above.",
+    "monoSource": "n/a (mono source)",
+    "copy": "Copy {{name}}",
+    "fields": {
+      "IntegratedLufs": "Integrated loudness",
+      "LoudnessRangeLu": "Loudness range",
+      "TruePeakDbtp": "True peak",
+      "PeakDbfs": "Sample peak",
+      "RmsDbfs": "RMS level",
+      "CrestFactorDb": "Crest factor",
+      "PeakCount": "Samples at peak level",
+      "ClippingLikely": "Clipping likely",
+      "SilenceRatio": "Silence",
+      "SilenceCount": "Silent stretches",
+      "LeadingSilenceMs": "Leading silence",
+      "TrailingSilenceMs": "Trailing silence",
+      "Channels": "Channels",
+      "StereoWidthDb": "Stereo width",
+      "EffectivelyMono": "Effectively mono"
+    }
+  },
+  "sections": {
+    "notRequested": "Sections were not requested for this analysis.",
+    "none": "Section detection found no sections.",
+    "barAria": "Sections of a {{duration}} recording. Use the arrow keys to choose a section.",
+    "sectionAria": "Section {{n}} of {{count}}, {{start}} to {{end}}, {{duration}}",
+    "hasErrors_one": "Has {{count}} error.",
+    "hasErrors_other": "Has {{count}} errors.",
+    "legend": {
+      "section": "Section",
+      "silence": "Silence at the start or end",
+      "heard": "Heard by the listening model"
+    },
+    "keyboardHint": "Dashed lines are cuts at silences. Arrow keys, Home, and End move between sections.",
+    "heading": "Section {{n}} of {{count}}",
+    "prev": "Previous section",
+    "next": "Next section",
+    "heardClips": "Audio the model heard",
+    "results": "Section results",
+    "fields": "Section fields",
+    "transcript": "Transcript during this section"
   }
 }

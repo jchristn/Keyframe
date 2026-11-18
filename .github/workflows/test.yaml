@@ -219,8 +219,10 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/keyframe"
           jq '.Inference.DefaultVision = "mock" | .Inference.DefaultText = null | .Inference.DefaultTranscription = "mock-stt"
+              | .Inference.DefaultListening = "mock-listen"
               | .Inference.Endpoints = [
                   { "Name": "mock", "Provider": "Mock", "Kind": "Completion", "Model": "mock-vision", "MaxConcurrentRequests": 4, "Active": true },
+                  { "Name": "mock-listen", "Provider": "Mock", "Kind": "Completion", "Model": "mock-listen", "MaxConcurrentRequests": 4, "Active": true },
                   { "Name": "mock-stt", "Provider": "Mock", "Kind": "Transcription", "Model": "mock-whisper", "MaxConcurrentRequests": 4, "Active": true } ]' \
             src/Keyframe.Server/keyframe.json > "$RUNNER_TEMP/keyframe/keyframe.json"
           cd "$RUNNER_TEMP/keyframe"

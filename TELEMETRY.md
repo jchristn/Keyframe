@@ -32,7 +32,7 @@ This document describes all three: every statistic, where it is stored, and how 
 | `TotalMs` | Stopwatch from analyzer start to response completion. Excludes queue time. |
 | `QueueWaitMs` | Job queued to job started (`Job.StartedUtc - Job.CreatedUtc`). Always `0` for synchronous image calls. |
 | `QueuedMs` | The same value as `QueueWaitMs` for video and audio jobs, `null` for images. Kept for older clients. |
-| `Stages[]` | One entry per pipeline stage: `Name`, `StartUtc`, `DurationMs` (stopwatch around the stage), `Success` (false when the stage recorded an error). Stages that run in parallel (Summarize and Extract) overlap. |
+| `Stages[]` | One entry per pipeline stage: `Name`, `StartUtc`, `DurationMs` (stopwatch around the stage), `Success` (false when the stage recorded an error). Stages that run in parallel (Summarize and Extract) overlap. Audio stages, in order: `Resolve`, `Probe`, `Measure`, `AudioExtraction`, `Transcribe`, `SectionDetection`, `ListenExtraction`, `Sections`, `Summarize`, `Extract`, each present only when it ran. `ListenExtraction` renders the whole-recording listening clips; per-section clips are rendered inside `Sections`, and scene audio clips inside the video `Scenes` stage. |
 | `ModelCalls[]` | One entry per logical model call. A call that was retried or repaired is still one entry; see below. |
 | `Totals` | Sums over `ModelCalls`: `ModelCalls`, `FailedModelCalls`, `ModelMs` (sum of call durations, so parallel calls can exceed `TotalMs`), token counts, `InputImages`, `InputImageBytes`. |
 
@@ -40,7 +40,7 @@ Each `ModelCalls[]` entry:
 
 | Field | How it is measured |
 | --- | --- |
-| `Purpose`, `Target` | Why the call was made (`Summarize`, `Extract`, `SceneSummarize`, `SceneExtract`, `Transcribe`) and the field key, scene, or audio chunk it served. |
+| `Purpose`, `Target` | Why the call was made (`Summarize`, `Extract`, `SceneSummarize`, `SceneExtract`, `SectionSummarize`, `SectionExtract`, `Transcribe`) and the field key, scene (`scene:<index>`), audio section (`section:<index>`), or transcription chunk (`chunk:<index>`) it served. |
 | `Endpoint`, `Provider`, `Model` | The configured endpoint, its provider, and the model the provider reported (or the requested one). |
 | `StartUtc` | Start of the first attempt. |
 | `DurationMs` | Stopwatch around every attempt of the call, including retry backoff and the wait on the endpoint's concurrency gate. |
@@ -50,7 +50,7 @@ Each `ModelCalls[]` entry:
 | `TokensPerSecond` | `CompletionTokens / (GenerationMs / 1000)` for that attempt; `null` when either is unknown or zero. |
 | `Attempts`, `RepairAttempts` | Attempts made (1 means no retry), and how many were repairs of unusable output. Retries are `Attempts - 1 - RepairAttempts`. |
 | `Success`, `Error`, `StatusCode`, `FinishReason` | Outcome of the call and details of the last attempt. |
-| `InputImages`, `InputImageBytes`, `InputAudioBytes` | What was sent. |
+| `InputImages`, `InputImageBytes`, `InputAudioBytes` | What was sent. `InputAudioBytes` is the audio file for a transcription call, or the audio clips attached to a completion call (a listening call, or a scene call that heard its audio), counted before base64. |
 | `PromptTokens`, `CompletionTokens`, `TotalTokens`, `CachedTokens`, `ReasoningTokens` | As reported by the provider, summed over attempts. `null` when the provider reports nothing. |
 
 The mock provider reports simulated, deterministic timing so the analytics pipeline can be tested offline: time to first token is 2 ms plus 0.02 ms per prompt token, and generation runs at 500 tokens per second (with `DelayMs` set, a quarter of the delay is first-token time and the rest generation).
@@ -61,7 +61,7 @@ The mock provider reports simulated, deterministic timing so the analytics pipel
 
 | Setting | Default | Range | Applies |
 | --- | --- | --- | --- |
-| `Analytics.Enabled` | `true` | | Live. When false, nothing new is written; stored rows stay readable. |
+| `Analytics.Enable` | `true` | | Live. When false, nothing new is written; stored rows stay readable. |
 | `Analytics.RetentionDays` | `90` | 1 to 3650 | Live. The hourly maintenance pass deletes analyses (and their calls) that completed before the cutoff. |
 
 Schema migration 2 creates both tables on SQLite, MySQL, PostgreSQL, and SQL Server.
@@ -77,11 +77,11 @@ Schema migration 2 creates both tables on SQLite, MySQL, PostgreSQL, and SQL Ser
 | `analysisms`, `queuewaitms` | `Telemetry.TotalMs` and `QueueWaitMs`. |
 | `mediadurationms`, `mediabytes` | Probed duration (video and audio) and resolved size. |
 | `realtimefactor` | `analysisms / mediadurationms` for video and audio; below 1 means faster than real time. |
-| `visionendpoint`, `visionmodel`, `textendpoint`, `textmodel`, `transcriptionendpoint`, `transcriptionmodel` | The endpoints and models the analysis resolved, whether or not each was called. |
+| `visionendpoint`, `visionmodel`, `textendpoint`, `textmodel`, `transcriptionendpoint`, `transcriptionmodel` | The endpoints and models the analysis resolved, whether or not each was called. For an audio analysis that listened, `visionendpoint` and `visionmodel` hold the listening endpoint and model; an audio analysis that fell back leaves them null and records the text endpoint instead. |
 | `modelcalls`, `failedmodelcalls` | Logical calls, from `Totals`. |
 | `retries`, `repairattempts` | Summed over calls. |
 | `prompttokens`, `completiontokens`, `totaltokens`, `cachedtokens`, `reasoningtokens` | From `Totals`. |
-| `inputimages`, `inputimagebytes`, `inputaudiobytes` | What was sent to models. |
+| `inputimages`, `inputimagebytes`, `inputaudiobytes` | What was sent to models. `inputaudiobytes` sums every call: transcription audio plus the audio clips attached to completion calls. Before listening existed it counted transcription audio only, so a listening analysis reports more audio bytes than the same request with `Listen.Enable` false. |
 | `scenes`, `transcriptcharacters` | Scene count (video) and transcript length. |
 | `fieldcount`, `invalidfields` | Extracted fields, including per-scene fields, and how many failed validation. |
 | `stagesjson` | `Telemetry.Stages` as JSON. |
@@ -186,7 +186,7 @@ The Prometheus exporter rewrites instrument names: dots become underscores, seco
 | `keyframe.jobs.active` | `keyframe_jobs_active` | Gauge | none | Jobs running now. |
 | `keyframe.jobs.queued` | `keyframe_jobs_queued` | Gauge | none | Jobs waiting for a slot. |
 | `keyframe.auth.requests` | `keyframe_auth_requests_total` | Counter | `result` | Authentication outcomes. |
-| `keyframe.endpoint.healthy` | `keyframe_endpoint_healthy` | Gauge | `endpoint` | 1 when a configured model endpoint is healthy, 0 when not. |
+| `keyframe.endpoint.healthy` | `keyframe_endpoint_healthy` | Gauge | `endpoint` | 1 when a configured model endpoint is healthy, 0 when not. Updated by each health probe (see [Endpoint health probes](#endpoint-health-probes)). |
 | `keyframe.model.queue.duration` | `keyframe_model_queue_duration_seconds_bucket/_sum/_count` | Histogram | `purpose`, `provider` | Time each model call attempt waited for a slot on its endpoint. |
 | `keyframe.model.ttft` | `keyframe_model_ttft_seconds_bucket/_sum/_count` | Histogram | `purpose`, `provider` | Time to first token of each completion attempt (streamed). |
 | `keyframe.model.generation.duration` | `keyframe_model_generation_duration_seconds_bucket/_sum/_count` | Histogram | `purpose`, `provider` | First token to last token of each completion attempt. |
@@ -194,8 +194,10 @@ The Prometheus exporter rewrites instrument names: dots become underscores, seco
 | `keyframe.jobs.queue.duration` | `keyframe_jobs_queue_duration_seconds_bucket/_sum/_count` | Histogram | `media_kind` | Time a video or audio job waited in the queue before a worker started it. |
 | `keyframe.analysis.realtime_factor` | `keyframe_analysis_realtime_factor_bucket/_sum/_count` | Histogram | `media_kind` | Analysis time divided by media duration for completed video and audio analyses. |
 | `keyframe.analytics.writes` | `keyframe_analytics_writes_total` | Counter | `outcome` | Analytics rows written to the database. |
+| `keyframe.model.input.audio.bytes` | `keyframe_model_input_audio_bytes_bucket/_sum/_count` | Histogram | `provider`, `purpose` | Bytes of audio attached to one completion call (listening and scene audio), before base64. Unit `By`; default histogram buckets. Calls without audio, and transcription calls, are not recorded, so `_count` is the number of completion calls that carried audio. |
+| `keyframe.analysis.listen.total` | `keyframe_analysis_listen_total` | Counter | `media_kind`, `mode`, `reason` | One per audio analysis and per video analysis with scenes enabled, including fallbacks (`mode="none"`). Shows how many requests that asked to listen were answered from text. |
 
-Audio analyses are counted by the existing `keyframe.analysis.total` and `keyframe.analysis.duration` instruments with `media_kind="audio"`. The seven instruments above were added with audio analysis and streaming model calls; the provisioned Grafana dashboards chart them (Overview, Models, Jobs, Analysis, and Media), broken down by provider and purpose; they carry no endpoint or model label, so per-model views come from the analytics API. They are also queryable directly, for example `histogram_quantile(0.95, sum by (le, provider) (rate(keyframe_model_ttft_seconds_bucket[5m])))`.
+Audio analyses are counted by the existing `keyframe.analysis.total` and `keyframe.analysis.duration` instruments with `media_kind="audio"`. Listening adds the last two instruments. The listening fallback rate is the signal to watch: `sum by (reason) (rate(keyframe_analysis_listen_total{mode="none",reason!~"none|NotRequested|NoModelFunctions"}[5m]))` counts requests that wanted to listen and were answered from the transcript. The seven instruments above were added with audio analysis and streaming model calls; the provisioned Grafana dashboards chart them (Overview, Models, Jobs, Analysis, and Media), broken down by provider and purpose; they carry no endpoint or model label, so per-model views come from the analytics API. They are also queryable directly, for example `histogram_quantile(0.95, sum by (le, provider) (rate(keyframe_model_ttft_seconds_bucket[5m])))`.
 
 ### Label values
 
@@ -205,19 +207,25 @@ Every label has a small, fixed set of values. No ids, paths, prompts, or user in
 | --- | --- |
 | `media_kind` | `image`, `video`, `audio` |
 | `outcome` (analysis) | `success`, `partial` (completed, but a field failed validation), `failure` |
-| `stage` | `resolve`, `probe`, `normalize`, `scenedetection`, `frameextraction`, `audioextraction`, `transcribe`, `scenes`, `summarize`, `extract` |
-| `purpose` | `summarize`, `extract`, `scenesummarize`, `sceneextract`, `transcribe` |
+| `stage` | `resolve`, `probe`, `normalize`, `scenedetection`, `frameextraction`, `measure`, `audioextraction`, `sectiondetection`, `listenextraction`, `transcribe`, `scenes`, `sections`, `summarize`, `extract` |
+| `purpose` | `summarize`, `extract`, `scenesummarize`, `sceneextract`, `sectionsummarize`, `sectionextract`, `transcribe` |
 | `provider` | Lowercased provider type: `mock`, `ollama`, `ollamacloud`, `openai`, `openaicompatible`, `azureopenai`, `anthropic`, `gemini`, `vertexai`, `bedrock`, `xai`, `cohere` |
 | `outcome` (model call) | `success`, `failure` |
 | `kind` | `prompt`, `completion` |
-| `operation` | `version`, `probe`, `normalize`, `scene_detect`, `frame_extract`, `audio_extract`, `segment_video`, `segment_audio`, `segment_frame` |
+| `operation` | `version`, `probe`, `normalize`, `scene_detect`, `frame_extract`, `audio_extract`, `audio_measure` (measurements: one pass, plus a mid/side pass for stereo), `section_detect` (silence detection for sections), `listen_extract` (one per listening clip rendered), `segment_video`, `segment_audio`, `segment_frame` |
 | `outcome` (ffmpeg) | `success`, `failure`, `timeout`, `canceled`, `unavailable` |
 | `outcome` (jobs) | `succeeded`, `failed`, `canceled`, `interrupted` |
 | `result` | `success`, `failure`, `rate_limited` |
 | `outcome` (analytics writes) | `success`, `failure`, `dropped` (the in-memory queue of 10000 rows was full) |
 | `endpoint` | Endpoint names from `Inference.Endpoints` in settings (operator defined, few) |
+| `mode` (listening) | Lowercased `ListeningModeEnum`: `full`, `excerpts`, `sections`, `scenes`, `none` |
+| `reason` (listening) | `none` when the audio was heard, otherwise the `ListenSkipReasonEnum` name as is: `NotRequested`, `NoModelFunctions`, `NoEndpointConfigured`, `EndpointLacksAudioInput`, `EndpointUnhealthy`, `NoAudioTrack` |
 
-Whole-video summary and extraction, and audio summary and extraction, record their time under the `summarize` and `extract` stages.
+Whole-video summary and extraction, and audio summary and extraction (including a reduce from section results), record their time under the `summarize` and `extract` stages.
+
+### Endpoint health probes
+
+The health service probes every active endpoint within a second of startup. After that, an endpoint whose last probe succeeded is probed again after `Inference.HealthProbeIntervalMs` (default 300000, five minutes; 10000 to 3600000), and an endpoint that is unhealthy is probed again after `Inference.UnhealthyProbeIntervalMs` (default 15000; 1000 to 600000). Both apply live. Endpoints are probed concurrently, so one slow endpoint does not delay the rest. A scheduled probe never waits behind real work: when an endpoint's concurrency gate (`MaxConcurrentRequests`) is full, the endpoint is busy rather than down, the probe is skipped, and its last state is kept. A model call that cannot reach its endpoint at all (no HTTP response, for example connection refused) also marks the endpoint unhealthy at once; timeouts and HTTP errors do not. So a llama-server that stops is reported unhealthy by the first call that tries it, and from then on listening requests fall back with `EndpointUnhealthy`. Once it is back, the 15-second unhealthy interval means it is used again within about 15 seconds.
 
 ## Built-in metrics from Watson and .NET
 
@@ -245,11 +253,13 @@ All Keyframe spans come from the `Keyframe` ActivitySource and nest under Watson
 | `analysis:image` | Internal | Watson request span | `keyframe.analysis_id`, `keyframe.endpoint` |
 | `analysis:video` | Internal | Request span or `job video` | `keyframe.analysis_id`, `keyframe.endpoint` |
 | `analysis:audio` | Internal | `job audio` | `keyframe.analysis_id` |
-| `stage:<Name>` | Internal | Analysis span | `keyframe.media_kind`; the stage is in the span name (`stage:Probe`, `stage:SceneDetection`, `stage:Summarize`, ...) |
-| `inference <Purpose>` | Client | Stage span | `keyframe.purpose`, `keyframe.endpoint`, `keyframe.provider`, `keyframe.model`, `keyframe.input_images`, `keyframe.attempts`, `keyframe.prompt_tokens`, `keyframe.completion_tokens` |
+| `stage:<Name>` | Internal | Analysis span | `keyframe.media_kind`; the stage is in the span name (`stage:Probe`, `stage:SceneDetection`, `stage:Measure`, `stage:ListenExtraction`, `stage:Summarize`, ...) |
+| `inference <Purpose>` | Client | Stage span | `keyframe.purpose`, `keyframe.endpoint`, `keyframe.provider`, `keyframe.model`, `keyframe.input_images`, `keyframe.attempts`, `keyframe.prompt_tokens`, `keyframe.completion_tokens`, and, when the call carries audio, `keyframe.input_audio_clips` and `keyframe.input_audio_bytes` |
 | `inference Transcribe` | Client | Transcribe stage | `keyframe.endpoint`, `keyframe.provider` |
 | `ffmpeg <operation>` | Internal | Stage span | `keyframe.ffmpeg.operation`, `keyframe.ffmpeg.exit_code` |
 | `job video`, `job audio` | Internal | none (root) | `keyframe.job_id`, `keyframe.job_status` |
+
+Clip offsets, URLs, and audio content never go on spans or metric labels.
 
 Spans set `Error` status on caught failures (a failed model call after retries, a failed or timed-out ffmpeg process, a failed analysis or job), so Tempo's `status = error` filter finds them.
 
@@ -271,10 +281,12 @@ Grafana provisions all six into the `Keyframe` folder. Datasources use the fixed
 | --- | --- | --- |
 | Keyframe Overview | `keyframe-overview` | Is the server up, how busy is it, what is failing? Uptime, request rate, 5xx ratio, p95, analyses, jobs, endpoint health, auth failures, memory, recent analysis traces. Start here; it is also Grafana's home dashboard. |
 | Keyframe HTTP | `keyframe-http` | Which route is slow or erroring? Rate by route and status, error ratios, latency quantiles, p95 by route, top routes, payload sizes, connections. |
-| Keyframe Analysis | `keyframe-analysis` | Where does analysis time go? Throughput by outcome, end-to-end p50/p95/p99 by media kind, per-stage p95, stacked stage time, stage tables, slow analysis traces. |
-| Keyframe Models | `keyframe-models` | Is a provider slow, failing, or expensive? Calls by purpose and provider, failure ratio, p95 by purpose and provider, outbound HTTP, tokens per second and per call, endpoint health, failed inference traces. |
+| Keyframe Analysis | `keyframe-analysis` | Where does analysis time go? Throughput by outcome, end-to-end p50/p95/p99 by media kind, per-stage p95, stacked stage time, stage tables, the audio row (including "Listening analyses by mode" and "Listening fallbacks by reason"), slow analysis traces. |
+| Keyframe Models | `keyframe-models` | Is a provider slow, failing, or expensive? Calls by purpose and provider, failure ratio, p95 by purpose and provider, outbound HTTP, tokens per second and per call, an "Audio input" row ("Audio bytes sent to models by provider" at p50 and p95, and "Model calls with audio by purpose"), endpoint health, failed inference traces. |
 | Keyframe Jobs | `keyframe-jobs` | Is the job queue keeping up? Running and queued, completions by outcome, failure ratio, video analysis duration, job traces, job logs from Loki. |
-| Keyframe Media | `keyframe-media` | Is ffmpeg the bottleneck? Invocations by operation, failures and timeouts, p95 and average duration, ffmpeg seconds per second, media stage p95. |
+| Keyframe Media | `keyframe-media` | Is ffmpeg the bottleneck? Invocations by operation, failures and timeouts, p95 and average duration, ffmpeg seconds per second, media stage p95 (now including `measure`, `sectiondetection`, and `listenextraction`), and audio ffmpeg p95 by operation (now including `audio_measure`, `section_detect`, and `listen_extract`). |
+
+The listening panels: "Listening analyses by mode" charts `keyframe_analysis_listen_total` by media kind and mode, where `none` includes requests that did not ask to listen. "Listening fallbacks by reason" keeps only `mode="none"` with a reason other than `none`, `NotRequested`, or `NoModelFunctions`, so every line on it is a request that wanted the audio heard and got a transcript-only answer. "Audio bytes sent to models by provider" covers completion calls only; transcription audio is not in that histogram.
 
 The Analysis, HTTP, Models, and Media dashboards have a variable (media kind, route, provider, operation) to narrow every panel.
 

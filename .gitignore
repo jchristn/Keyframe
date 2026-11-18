@@ -57,3 +57,9 @@ Thumbs.db
 
 # Ollama models for the optional container (docker compose --profile ollama)
 docker/ollama-models/
+
+# llama-server models for the optional container (docker compose --profile listen)
+docker/llama-models/
+
+# vLLM models for the optional GPU container (docker compose --profile listen-gpu)
+docker/vllm-models/

@@ -28,6 +28,13 @@ namespace Keyframe.Core.Inference
         public bool Retryable { get; set; } = false;
 
         /// <summary>
+        /// True when the endpoint could not be reached at all (no HTTP response, for example connection refused). Timeouts
+        /// and HTTP errors are not unreachable. Used to mark the endpoint unhealthy without waiting for the next probe.
+        /// Default false.
+        /// </summary>
+        public bool Unreachable { get; set; } = false;
+
+        /// <summary>
         /// HTTP status code, when known.
         /// </summary>
         public int? StatusCode { get; set; } = null;

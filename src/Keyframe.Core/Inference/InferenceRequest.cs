@@ -24,7 +24,7 @@ namespace Keyframe.Core.Inference
         public string SystemPrompt { get; set; } = string.Empty;
 
         /// <summary>
-        /// User prompt text. Images follow the text in order.
+        /// User prompt text. Images, then audio clips, follow the text in order.
         /// </summary>
         public string UserPrompt { get; set; } = string.Empty;
 
@@ -32,6 +32,21 @@ namespace Keyframe.Core.Inference
         /// Images, in order. Never null.
         /// </summary>
         public List<InferenceImage> Images { get; set; } = new List<InferenceImage>();
+
+        /// <summary>
+        /// Audio clips, in order, sent after the images. Never null; setting null stores an empty list.
+        /// </summary>
+        public List<InferenceAudio> Audio
+        {
+            get
+            {
+                return _Audio;
+            }
+            set
+            {
+                _Audio = value ?? new List<InferenceAudio>();
+            }
+        }
 
         /// <summary>
         /// Requested response format.
@@ -57,5 +72,7 @@ namespace Keyframe.Core.Inference
         /// Temperature. Null uses the endpoint setting.
         /// </summary>
         public double? Temperature { get; set; } = null;
+
+        private List<InferenceAudio> _Audio = new List<InferenceAudio>();
     }
 }

@@ -3,7 +3,7 @@
     "name": "Keyframe",
     "_postman_id": "5b8c3f0e-6a4d-4f1e-9a37-0c2d9e5b7a10",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Keyframe v0.1.0 (ALPHA) REST API: summaries and typed metadata from images, video, and audio, segment retrieval, and analytics.\n\nSet the collection variables before sending: protocol, host, and port build baseUrl; accessKey is sent as x-api-key on every request; adminKey is used by admin-only requests (settings, restart, endpoint tests, request history deletion, analytics). sampleImageUrl, sampleVideoUrl, and sampleAudioUrl must be publicly reachable, because the server refuses private-network URLs by default.\n\nRun order that exercises everything: System, Image, Video / Analyze video (job), Audio / Analyze audio (job), Jobs / Get job until Succeeded, Jobs / Get job result, Segments, then Endpoints, Analytics, Settings, and Request History. Full reference: REST_API.md in the repository."
+    "description": "Keyframe v0.1.0 (ALPHA) REST API: summaries and typed metadata from images, video, and audio (audio is heard by a listening model, not only transcribed), audio measurements and sections, segment retrieval, and analytics.\n\nSet the collection variables before sending: protocol, host, and port build baseUrl; accessKey is sent as x-api-key on every request; adminKey is used by admin-only requests (settings, restart, endpoint tests, request history deletion, analytics). sampleImageUrl, sampleVideoUrl, sampleAudioUrl, sampleMusicUrl, and sampleSectionsUrl must be publicly reachable, because the server refuses private-network URLs by default. listeningEndpoint names the endpoint the Listen requests use (llama-listen on the factory configuration).\n\nRun order that exercises everything: System, Image, Video / Analyze video (job), Audio / Analyze audio (job), Jobs / Get job until Succeeded, Jobs / Get job result, Segments, then Endpoints, Analytics, Settings, and Request History. Full reference: REST_API.md in the repository."
   },
   "auth": {
     "type": "apikey",
@@ -100,6 +100,21 @@
       "key": "analysisId",
       "value": "",
       "description": "Set by Analytics / List analyses and Audio / Analyze audio (wait, defaults)"
+    },
+    {
+      "key": "listeningEndpoint",
+      "value": "llama-listen",
+      "description": "Listening endpoint for the Listen requests. Alternatives: vllm-voxtral (listen-gpu profile, activate it first) or any Gemini or OpenAI-compatible endpoint you add."
+    },
+    {
+      "key": "sampleMusicUrl",
+      "value": "https://archive.org/download/The_Simple_Life_Part_2_1667-16369/Josh_Woodward_-_01_-_Ships.mp3",
+      "description": "Music for the listening requests: Josh Woodward, \"Ships\" (CC BY 4.0, 2:02), long enough that a 120-second listen budget (llama-listen) hears excerpts"
+    },
+    {
+      "key": "sampleSectionsUrl",
+      "value": "https://raw.githubusercontent.com/jchristn/Keyframe/main/docker/factory/samples/sample.mp3",
+      "description": "Recording with silences for the Sections request: the factory sample, three spoken clips separated by 4-second silences (89 s)"
     }
   ],
   "item": [
@@ -559,12 +574,103 @@
               }
             }
           ]
+        },
+        {
+          "name": "Scenes with audio",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/video",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "video"
+              ]
+            },
+            "description": "Each scene's audio is attached to that scene's model calls when the vision endpoint accepts audio (Gemini or an OpenAI-compatible server). The default Ollama vision endpoints do not, so on the factory stack Listening reports EndpointLacksAudioInput and scenes use frames and transcript, as saved in the example. Scene audio never causes a 400.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Video\": {\n    \"Url\": \"{{sampleVideoUrl}}\"\n  },\n  \"Functions\": {\n    \"Scenes\": {\n      \"Enable\": true,\n      \"Summarize\": {\n        \"Enable\": true\n      },\n      \"Audio\": {\n        \"Enable\": true,\n        \"Rendition\": {\n          \"Channels\": 2\n        }\n      }\n    },\n    \"Transcribe\": {\n      \"Enable\": true\n    }\n  },\n  \"Wait\": true,\n  \"WaitTimeoutMs\": 600000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200 or 202', function () { pm.expect([200, 202]).to.include(pm.response.code); });",
+                  "const body = pm.response.json();",
+                  "if (pm.response.code === 200 && body.Id && body.Id.startsWith('kfa_')) {",
+                  "  pm.test('Listening present with scenes', function () { pm.expect(body.Listening).to.be.an('object'); });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Ollama vision endpoint (no audio input)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/v1.0/video",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "v1.0",
+                    "video"
+                  ]
+                },
+                "description": "Each scene's audio is attached to that scene's model calls when the vision endpoint accepts audio (Gemini or an OpenAI-compatible server). The default Ollama vision endpoints do not, so on the factory stack Listening reports EndpointLacksAudioInput and scenes use frames and transcript, as saved in the example. Scene audio never causes a 400.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"Video\": {\n    \"Url\": \"{{sampleVideoUrl}}\"\n  },\n  \"Functions\": {\n    \"Scenes\": {\n      \"Enable\": true,\n      \"Summarize\": {\n        \"Enable\": true\n      },\n      \"Audio\": {\n        \"Enable\": true,\n        \"Rendition\": {\n          \"Channels\": 2\n        }\n      }\n    },\n    \"Transcribe\": {\n      \"Enable\": true\n    }\n  },\n  \"Wait\": true,\n  \"WaitTimeoutMs\": 600000\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"Id\": \"kfa_example\",\n  \"MediaKind\": \"Video\",\n  \"Success\": true,\n  \"Scenes\": [\n    {\n      \"Index\": 0,\n      \"StartMs\": 0,\n      \"EndMs\": 4000,\n      \"DurationMs\": 4000,\n      \"Results\": {\n        \"Summary\": \"A presenter speaks over applause.\"\n      }\n    }\n  ],\n  \"Listening\": {\n    \"Listened\": false,\n    \"Mode\": \"None\",\n    \"Reason\": \"EndpointLacksAudioInput\",\n    \"Endpoint\": null,\n    \"Model\": null,\n    \"Rendition\": {\n      \"Format\": \"Mp3\",\n      \"SampleRate\": 16000,\n      \"Channels\": 2,\n      \"BitrateKbps\": 64\n    },\n    \"DurationMs\": 5800,\n    \"HeardMs\": 0,\n    \"Clips\": []\n  },\n  \"Telemetry\": {\n    \"TotalMs\": 48210.5,\n    \"Stages\": [],\n    \"ModelCalls\": [],\n    \"Totals\": {\n      \"ModelCalls\": 3\n    }\n  },\n  \"Warnings\": [],\n  \"Errors\": []\n}"
+            }
+          ]
         }
       ]
     },
     {
       "name": "Audio",
-      "description": "Audio analysis runs as a background job, like video: 202 with the job (MediaKind Audio), or 200 with the full AudioAnalysisResponse when Wait is true and the job finishes in time. Accepts audio files (mp3, wav, flac, m4a or aac, ogg or opus, webm audio) and video files (audio track only). Transcribe and Summarize are on by default; Summarize and Extract run on the transcript with the text model. The test scripts store the job id in jobId for the Jobs folder and the analysis id in analysisId for the Analytics folder.",
+      "description": "Audio analysis runs as a background job, like video: 202 with the job (MediaKind Audio), or 200 with the full AudioAnalysisResponse when Wait is true and the job finishes in time. Accepts audio files (mp3, wav, flac, m4a or aac, ogg or opus, webm audio) and video files (audio track only). Transcribe, Summarize, Listen, and Measure are on by default. The listening model hears the audio itself, not only the transcript; without a usable audio-capable endpoint the analysis falls back to the transcript and Listening.Listened is false with a reason code. The test scripts store the job id in jobId for the Jobs folder and the analysis id in analysisId for the Analytics folder.",
       "item": [
         {
           "name": "Analyze audio (job)",
@@ -701,6 +807,696 @@
                   "pm.test('job accepted or finished', function () { pm.expect([200, 202]).to.include(pm.response.code); });"
                 ]
               }
+            }
+          ]
+        },
+        {
+          "name": "Listen to a track",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/audio",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "audio"
+              ]
+            },
+            "description": "The listening model hears the audio itself, with the transcript as a hint, so questions about how the recording sounds (live or studio, instruments) are answered from the sound. The factory configuration listens through a llama-server on the host at port 8720, reached from the containers as llama-listen (start one with: llama-server -hf ggml-org/Voxtral-Mini-3B-2507-GGUF:Q4_K_M --port 8720), or through the keyframe-llama container with docker compose --profile listen. A recording longer than the endpoint's listen budget (120 seconds on llama-listen) is heard as evenly spaced excerpts, and Listening says so. When the listening server is stopped or still loading, the request still succeeds from the transcript and Listening.Listened is false with reason EndpointUnhealthy; both outcomes are saved as examples. Check Listening.Listened before trusting an answer about how the audio sounds.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Audio\": {\n    \"Url\": \"{{sampleMusicUrl}}\"\n  },\n  \"Listen\": {\n    \"Enable\": true,\n    \"Model\": {\n      \"Endpoint\": \"{{listeningEndpoint}}\"\n    }\n  },\n  \"Context\": [\n    {\n      \"Label\": \"Artist\",\n      \"Text\": \"Archive of a touring rock band, 1978 to 1994.\"\n    }\n  ],\n  \"Functions\": {\n    \"Transcribe\": {\n      \"Enable\": true\n    },\n    \"Summarize\": {\n      \"Enable\": true,\n      \"MaxWords\": 80\n    },\n    \"Extract\": {\n      \"Enable\": true,\n      \"Fields\": [\n        {\n          \"Key\": \"chorusLyrics\",\n          \"Type\": \"String\",\n          \"Prompt\": \"Lyrics of the chorus.\"\n        },\n        {\n          \"Key\": \"recording\",\n          \"Type\": \"Enum\",\n          \"Options\": [\n            \"Live\",\n            \"Studio\",\n            \"Rehearsal\",\n            \"Demo\"\n          ],\n          \"Prompt\": \"How was this recorded?\"\n        },\n        {\n          \"Key\": \"explicit\",\n          \"Type\": \"Boolean\",\n          \"Prompt\": \"Does it contain profanity?\"\n        },\n        {\n          \"Key\": \"instruments\",\n          \"Type\": \"StringList\",\n          \"Prompt\": \"Instruments you can hear.\"\n        }\n      ]\n    }\n  },\n  \"Wait\": true,\n  \"WaitTimeoutMs\": 600000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200 or 202', function () { pm.expect([200, 202]).to.include(pm.response.code); });",
+                  "const body = pm.response.json();",
+                  "if (pm.response.code === 200 && body.Id && body.Id.startsWith('kfa_')) {",
+                  "  pm.collectionVariables.set('analysisId', body.Id);",
+                  "  pm.test('Listening is always present', function () { pm.expect(body.Listening).to.be.an('object'); pm.expect(body.Listening).to.have.property('Listened'); });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Listened (excerpts on llama-server)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/v1.0/audio",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "v1.0",
+                    "audio"
+                  ]
+                },
+                "description": "The listening model hears the audio itself, with the transcript as a hint, so questions about how the recording sounds (live or studio, instruments) are answered from the sound. The factory configuration listens through a llama-server on the host at port 8720, reached from the containers as llama-listen (start one with: llama-server -hf ggml-org/Voxtral-Mini-3B-2507-GGUF:Q4_K_M --port 8720), or through the keyframe-llama container with docker compose --profile listen. A recording longer than the endpoint's listen budget (120 seconds on llama-listen) is heard as evenly spaced excerpts, and Listening says so. When the listening server is stopped or still loading, the request still succeeds from the transcript and Listening.Listened is false with reason EndpointUnhealthy; both outcomes are saved as examples. Check Listening.Listened before trusting an answer about how the audio sounds.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"Audio\": {\n    \"Url\": \"{{sampleMusicUrl}}\"\n  },\n  \"Listen\": {\n    \"Enable\": true,\n    \"Model\": {\n      \"Endpoint\": \"{{listeningEndpoint}}\"\n    }\n  },\n  \"Context\": [\n    {\n      \"Label\": \"Artist\",\n      \"Text\": \"Archive of a touring rock band, 1978 to 1994.\"\n    }\n  ],\n  \"Functions\": {\n    \"Transcribe\": {\n      \"Enable\": true\n    },\n    \"Summarize\": {\n      \"Enable\": true,\n      \"MaxWords\": 80\n    },\n    \"Extract\": {\n      \"Enable\": true,\n      \"Fields\": [\n        {\n          \"Key\": \"chorusLyrics\",\n          \"Type\": \"String\",\n          \"Prompt\": \"Lyrics of the chorus.\"\n        },\n        {\n          \"Key\": \"recording\",\n          \"Type\": \"Enum\",\n          \"Options\": [\n            \"Live\",\n            \"Studio\",\n            \"Rehearsal\",\n            \"Demo\"\n          ],\n          \"Prompt\": \"How was this recorded?\"\n        },\n        {\n          \"Key\": \"explicit\",\n          \"Type\": \"Boolean\",\n          \"Prompt\": \"Does it contain profanity?\"\n        },\n        {\n          \"Key\": \"instruments\",\n          \"Type\": \"StringList\",\n          \"Prompt\": \"Instruments you can hear.\"\n        }\n      ]\n    }\n  },\n  \"Wait\": true,\n  \"WaitTimeoutMs\": 600000\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"Id\": \"kfa_example\",\n  \"MediaKind\": \"Audio\",\n  \"Success\": true,\n  \"Results\": {\n    \"Summary\": \"A studio song with a sung vocal over acoustic guitar and light percussion.\",\n    \"chorusLyrics\": \"The ships on the bay all go sailing away\",\n    \"recording\": \"Studio\",\n    \"explicit\": false,\n    \"instruments\": [\n      \"acoustic guitar\",\n      \"vocals\",\n      \"percussion\"\n    ]\n  },\n  \"Warnings\": [\n    \"Listened to 4 excerpts (2m00s) of a 2m02s recording.\"\n  ],\n  \"Errors\": [],\n  \"Listening\": {\n    \"Listened\": true,\n    \"Mode\": \"Excerpts\",\n    \"Reason\": null,\n    \"Endpoint\": \"llama-listen\",\n    \"Model\": \"voxtral-mini-3b\",\n    \"Rendition\": {\n      \"Format\": \"Mp3\",\n      \"SampleRate\": 16000,\n      \"Channels\": 1,\n      \"BitrateKbps\": 64\n    },\n    \"DurationMs\": 122000,\n    \"HeardMs\": 120000,\n    \"Clips\": [\n      {\n        \"Scope\": \"Recording\",\n        \"Index\": null,\n        \"StartMs\": 0,\n        \"EndMs\": 30000,\n        \"SizeBytes\": 240000\n      },\n      {\n        \"Scope\": \"Recording\",\n        \"Index\": null,\n        \"StartMs\": 30666,\n        \"EndMs\": 60666,\n        \"SizeBytes\": 240000\n      },\n      {\n        \"Scope\": \"Recording\",\n        \"Index\": null,\n        \"StartMs\": 61333,\n        \"EndMs\": 91333,\n        \"SizeBytes\": 240000\n      },\n      {\n        \"Scope\": \"Recording\",\n        \"Index\": null,\n        \"StartMs\": 92000,\n        \"EndMs\": 122000,\n        \"SizeBytes\": 240000\n      }\n    ]\n  },\n  \"Measurements\": {\n    \"IntegratedLufs\": -9.4,\n    \"LoudnessRangeLu\": 5.1,\n    \"TruePeakDbtp\": 0.1,\n    \"PeakDbfs\": -0.3,\n    \"RmsDbfs\": -11.8,\n    \"CrestFactorDb\": 11.5,\n    \"PeakCount\": 214,\n    \"ClippingLikely\": true,\n    \"SilenceRatio\": 0.03,\n    \"SilenceCount\": 2,\n    \"LeadingSilenceMs\": 400,\n    \"TrailingSilenceMs\": 2100,\n    \"Channels\": 2,\n    \"StereoWidthDb\": -14.2,\n    \"EffectivelyMono\": false\n  },\n  \"Telemetry\": {\n    \"TotalMs\": 48210.5,\n    \"Stages\": [],\n    \"ModelCalls\": [],\n    \"Totals\": {\n      \"ModelCalls\": 3\n    }\n  }\n}"
+            },
+            {
+              "name": "Fallback (listening endpoint unhealthy)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/v1.0/audio",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "v1.0",
+                    "audio"
+                  ]
+                },
+                "description": "The listening model hears the audio itself, with the transcript as a hint, so questions about how the recording sounds (live or studio, instruments) are answered from the sound. The factory configuration listens through a llama-server on the host at port 8720, reached from the containers as llama-listen (start one with: llama-server -hf ggml-org/Voxtral-Mini-3B-2507-GGUF:Q4_K_M --port 8720), or through the keyframe-llama container with docker compose --profile listen. A recording longer than the endpoint's listen budget (120 seconds on llama-listen) is heard as evenly spaced excerpts, and Listening says so. When the listening server is stopped or still loading, the request still succeeds from the transcript and Listening.Listened is false with reason EndpointUnhealthy; both outcomes are saved as examples. Check Listening.Listened before trusting an answer about how the audio sounds.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"Audio\": {\n    \"Url\": \"{{sampleMusicUrl}}\"\n  },\n  \"Listen\": {\n    \"Enable\": true,\n    \"Model\": {\n      \"Endpoint\": \"{{listeningEndpoint}}\"\n    }\n  },\n  \"Context\": [\n    {\n      \"Label\": \"Artist\",\n      \"Text\": \"Archive of a touring rock band, 1978 to 1994.\"\n    }\n  ],\n  \"Functions\": {\n    \"Transcribe\": {\n      \"Enable\": true\n    },\n    \"Summarize\": {\n      \"Enable\": true,\n      \"MaxWords\": 80\n    },\n    \"Extract\": {\n      \"Enable\": true,\n      \"Fields\": [\n        {\n          \"Key\": \"chorusLyrics\",\n          \"Type\": \"String\",\n          \"Prompt\": \"Lyrics of the chorus.\"\n        },\n        {\n          \"Key\": \"recording\",\n          \"Type\": \"Enum\",\n          \"Options\": [\n            \"Live\",\n            \"Studio\",\n            \"Rehearsal\",\n            \"Demo\"\n          ],\n          \"Prompt\": \"How was this recorded?\"\n        },\n        {\n          \"Key\": \"explicit\",\n          \"Type\": \"Boolean\",\n          \"Prompt\": \"Does it contain profanity?\"\n        },\n        {\n          \"Key\": \"instruments\",\n          \"Type\": \"StringList\",\n          \"Prompt\": \"Instruments you can hear.\"\n        }\n      ]\n    }\n  },\n  \"Wait\": true,\n  \"WaitTimeoutMs\": 600000\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"Id\": \"kfa_example\",\n  \"MediaKind\": \"Audio\",\n  \"Success\": true,\n  \"Results\": {\n    \"Summary\": \"A song whose transcript repeats lines about ships leaving the bay.\",\n    \"chorusLyrics\": null,\n    \"recording\": null,\n    \"explicit\": false,\n    \"instruments\": []\n  },\n  \"Warnings\": [\n    \"The listening endpoint 'llama-listen' is unhealthy; results come from the transcript only.\"\n  ],\n  \"Errors\": [],\n  \"Listening\": {\n    \"Listened\": false,\n    \"Mode\": \"None\",\n    \"Reason\": \"EndpointUnhealthy\",\n    \"Endpoint\": null,\n    \"Model\": null,\n    \"Rendition\": {\n      \"Format\": \"Mp3\",\n      \"SampleRate\": 16000,\n      \"Channels\": 1,\n      \"BitrateKbps\": 64\n    },\n    \"DurationMs\": 122000,\n    \"HeardMs\": 0,\n    \"Clips\": []\n  },\n  \"Measurements\": {\n    \"IntegratedLufs\": -9.4,\n    \"LoudnessRangeLu\": 5.1,\n    \"TruePeakDbtp\": 0.1,\n    \"PeakDbfs\": -0.3,\n    \"RmsDbfs\": -11.8,\n    \"CrestFactorDb\": 11.5,\n    \"PeakCount\": 214,\n    \"ClippingLikely\": true,\n    \"SilenceRatio\": 0.03,\n    \"SilenceCount\": 2,\n    \"LeadingSilenceMs\": 400,\n    \"TrailingSilenceMs\": 2100,\n    \"Channels\": 2,\n    \"StereoWidthDb\": -14.2,\n    \"EffectivelyMono\": false\n  },\n  \"Telemetry\": {\n    \"TotalMs\": 48210.5,\n    \"Stages\": [],\n    \"ModelCalls\": [],\n    \"Totals\": {\n      \"ModelCalls\": 3\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Listen with vLLM (GPU)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/audio",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "audio"
+              ]
+            },
+            "description": "The same listening request served by vLLM running Voxtral Mini 3B. Start it with docker compose --profile listen-gpu up -d on a host with an NVIDIA GPU (about 10 GB of free GPU memory), then activate the vllm-voxtral endpoint on the Settings page (it ships inactive). The default listen budget of 1200 seconds hears a typical track whole (Mode Full).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Audio\": {\n    \"Url\": \"{{sampleMusicUrl}}\"\n  },\n  \"Listen\": {\n    \"Model\": {\n      \"Endpoint\": \"vllm-voxtral\"\n    }\n  },\n  \"Functions\": {\n    \"Summarize\": {\n      \"Enable\": true\n    },\n    \"Extract\": {\n      \"Enable\": true,\n      \"Fields\": [\n        {\n          \"Key\": \"recording\",\n          \"Type\": \"Enum\",\n          \"Options\": [\n            \"Live\",\n            \"Studio\",\n            \"Rehearsal\",\n            \"Demo\"\n          ],\n          \"Prompt\": \"How was this recorded?\"\n        },\n        {\n          \"Key\": \"explicit\",\n          \"Type\": \"Boolean\",\n          \"Prompt\": \"Does it contain profanity?\"\n        },\n        {\n          \"Key\": \"instruments\",\n          \"Type\": \"StringList\",\n          \"Prompt\": \"Instruments you can hear.\"\n        }\n      ]\n    }\n  },\n  \"Wait\": true,\n  \"WaitTimeoutMs\": 600000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (pm.response.code === 400) {",
+                  "  pm.test('vllm-voxtral is inactive until the listen-gpu profile runs and it is activated', function () { pm.expect(JSON.stringify(body)).to.include('not an active completion endpoint'); });",
+                  "} else {",
+                  "  pm.test('status 200 or 202', function () { pm.expect([200, 202]).to.include(pm.response.code); });",
+                  "  if (pm.response.code === 200 && body.Id && body.Id.startsWith('kfa_')) {",
+                  "    pm.collectionVariables.set('analysisId', body.Id);",
+                  "    pm.test('Listening is always present', function () { pm.expect(body.Listening).to.be.an('object'); });",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Listened in full",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/v1.0/audio",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "v1.0",
+                    "audio"
+                  ]
+                },
+                "description": "The same listening request served by vLLM running Voxtral Mini 3B. Start it with docker compose --profile listen-gpu up -d on a host with an NVIDIA GPU (about 10 GB of free GPU memory), then activate the vllm-voxtral endpoint on the Settings page (it ships inactive). The default listen budget of 1200 seconds hears a typical track whole (Mode Full).",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"Audio\": {\n    \"Url\": \"{{sampleMusicUrl}}\"\n  },\n  \"Listen\": {\n    \"Model\": {\n      \"Endpoint\": \"vllm-voxtral\"\n    }\n  },\n  \"Functions\": {\n    \"Summarize\": {\n      \"Enable\": true\n    },\n    \"Extract\": {\n      \"Enable\": true,\n      \"Fields\": [\n        {\n          \"Key\": \"recording\",\n          \"Type\": \"Enum\",\n          \"Options\": [\n            \"Live\",\n            \"Studio\",\n            \"Rehearsal\",\n            \"Demo\"\n          ],\n          \"Prompt\": \"How was this recorded?\"\n        },\n        {\n          \"Key\": \"explicit\",\n          \"Type\": \"Boolean\",\n          \"Prompt\": \"Does it contain profanity?\"\n        },\n        {\n          \"Key\": \"instruments\",\n          \"Type\": \"StringList\",\n          \"Prompt\": \"Instruments you can hear.\"\n        }\n      ]\n    }\n  },\n  \"Wait\": true,\n  \"WaitTimeoutMs\": 600000\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"Id\": \"kfa_example\",\n  \"MediaKind\": \"Audio\",\n  \"Success\": true,\n  \"Results\": {\n    \"Summary\": \"A studio song with a sung vocal over acoustic guitar and light percussion.\",\n    \"recording\": \"Studio\",\n    \"explicit\": false,\n    \"instruments\": [\n      \"acoustic guitar\",\n      \"vocals\",\n      \"percussion\"\n    ]\n  },\n  \"Warnings\": [],\n  \"Errors\": [],\n  \"Listening\": {\n    \"Listened\": true,\n    \"Mode\": \"Full\",\n    \"Reason\": null,\n    \"Endpoint\": \"vllm-voxtral\",\n    \"Model\": \"mistralai/Voxtral-Mini-3B-2507\",\n    \"Rendition\": {\n      \"Format\": \"Mp3\",\n      \"SampleRate\": 16000,\n      \"Channels\": 1,\n      \"BitrateKbps\": 64\n    },\n    \"DurationMs\": 122000,\n    \"HeardMs\": 122000,\n    \"Clips\": [\n      {\n        \"Scope\": \"Recording\",\n        \"Index\": null,\n        \"StartMs\": 0,\n        \"EndMs\": 122000,\n        \"SizeBytes\": 976000\n      }\n    ]\n  },\n  \"Measurements\": {\n    \"IntegratedLufs\": -9.4,\n    \"LoudnessRangeLu\": 5.1,\n    \"TruePeakDbtp\": 0.1,\n    \"PeakDbfs\": -0.3,\n    \"RmsDbfs\": -11.8,\n    \"CrestFactorDb\": 11.5,\n    \"PeakCount\": 214,\n    \"ClippingLikely\": true,\n    \"SilenceRatio\": 0.03,\n    \"SilenceCount\": 2,\n    \"LeadingSilenceMs\": 400,\n    \"TrailingSilenceMs\": 2100,\n    \"Channels\": 2,\n    \"StereoWidthDb\": -14.2,\n    \"EffectivelyMono\": false\n  },\n  \"Telemetry\": {\n    \"TotalMs\": 48210.5,\n    \"Stages\": [],\n    \"ModelCalls\": [],\n    \"Totals\": {\n      \"ModelCalls\": 3\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Listen with a custom rendition",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/audio",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "audio"
+              ]
+            },
+            "description": "Sends stereo mp3 at 44.1 kHz and 128 kbps instead of the mono 16 kHz 64 kbps default, for questions about stereo image or high frequencies. A larger rendition fits fewer minutes in one call, so long recordings switch to excerpts sooner. OpenAI-compatible endpoints accept only Mp3 and Wav; Flac to one is rejected with 400.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Audio\": {\n    \"Url\": \"{{sampleMusicUrl}}\"\n  },\n  \"Listen\": {\n    \"Rendition\": {\n      \"Format\": \"Mp3\",\n      \"SampleRate\": 44100,\n      \"Channels\": 2,\n      \"BitrateKbps\": 128\n    }\n  },\n  \"Functions\": {\n    \"Summarize\": {\n      \"Enable\": true\n    }\n  },\n  \"Wait\": true,\n  \"WaitTimeoutMs\": 600000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200 or 202', function () { pm.expect([200, 202]).to.include(pm.response.code); });",
+                  "const body = pm.response.json();",
+                  "if (pm.response.code === 200 && body.Id && body.Id.startsWith('kfa_')) {",
+                  "  pm.collectionVariables.set('analysisId', body.Id);",
+                  "  pm.test('Listening is always present', function () { pm.expect(body.Listening).to.be.an('object'); pm.expect(body.Listening).to.have.property('Listened'); });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Listened with the requested rendition",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/v1.0/audio",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "v1.0",
+                    "audio"
+                  ]
+                },
+                "description": "Sends stereo mp3 at 44.1 kHz and 128 kbps instead of the mono 16 kHz 64 kbps default, for questions about stereo image or high frequencies. A larger rendition fits fewer minutes in one call, so long recordings switch to excerpts sooner. OpenAI-compatible endpoints accept only Mp3 and Wav; Flac to one is rejected with 400.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"Audio\": {\n    \"Url\": \"{{sampleMusicUrl}}\"\n  },\n  \"Listen\": {\n    \"Rendition\": {\n      \"Format\": \"Mp3\",\n      \"SampleRate\": 44100,\n      \"Channels\": 2,\n      \"BitrateKbps\": 128\n    }\n  },\n  \"Functions\": {\n    \"Summarize\": {\n      \"Enable\": true\n    }\n  },\n  \"Wait\": true,\n  \"WaitTimeoutMs\": 600000\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"Id\": \"kfa_example\",\n  \"MediaKind\": \"Audio\",\n  \"Success\": true,\n  \"Results\": {\n    \"Summary\": \"A studio song with a sung vocal over acoustic guitar and light percussion.\"\n  },\n  \"Warnings\": [\n    \"Listened to 4 excerpts (2m00s) of a 2m02s recording.\"\n  ],\n  \"Errors\": [],\n  \"Listening\": {\n    \"Listened\": true,\n    \"Mode\": \"Excerpts\",\n    \"Reason\": null,\n    \"Endpoint\": \"llama-listen\",\n    \"Model\": \"voxtral-mini-3b\",\n    \"Rendition\": {\n      \"Format\": \"Mp3\",\n      \"SampleRate\": 44100,\n      \"Channels\": 2,\n      \"BitrateKbps\": 128\n    },\n    \"DurationMs\": 122000,\n    \"HeardMs\": 120000,\n    \"Clips\": [\n      {\n        \"Scope\": \"Recording\",\n        \"Index\": null,\n        \"StartMs\": 0,\n        \"EndMs\": 30000,\n        \"SizeBytes\": 480000\n      },\n      {\n        \"Scope\": \"Recording\",\n        \"Index\": null,\n        \"StartMs\": 30666,\n        \"EndMs\": 60666,\n        \"SizeBytes\": 480000\n      },\n      {\n        \"Scope\": \"Recording\",\n        \"Index\": null,\n        \"StartMs\": 61333,\n        \"EndMs\": 91333,\n        \"SizeBytes\": 480000\n      },\n      {\n        \"Scope\": \"Recording\",\n        \"Index\": null,\n        \"StartMs\": 92000,\n        \"EndMs\": 122000,\n        \"SizeBytes\": 480000\n      }\n    ]\n  },\n  \"Measurements\": {\n    \"IntegratedLufs\": -9.4,\n    \"LoudnessRangeLu\": 5.1,\n    \"TruePeakDbtp\": 0.1,\n    \"PeakDbfs\": -0.3,\n    \"RmsDbfs\": -11.8,\n    \"CrestFactorDb\": 11.5,\n    \"PeakCount\": 214,\n    \"ClippingLikely\": true,\n    \"SilenceRatio\": 0.03,\n    \"SilenceCount\": 2,\n    \"LeadingSilenceMs\": 400,\n    \"TrailingSilenceMs\": 2100,\n    \"Channels\": 2,\n    \"StereoWidthDb\": -14.2,\n    \"EffectivelyMono\": false\n  },\n  \"Telemetry\": {\n    \"TotalMs\": 48210.5,\n    \"Stages\": [],\n    \"ModelCalls\": [],\n    \"Totals\": {\n      \"ModelCalls\": 3\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Transcript only",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/audio",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "audio"
+              ]
+            },
+            "description": "Listen.Enable false is the explicit way to get transcript-only behavior regardless of configuration: Summarize runs on the transcript with the text model, and Listening reports reason NotRequested with no warning.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Audio\": {\n    \"Url\": \"{{sampleAudioUrl}}\"\n  },\n  \"Listen\": {\n    \"Enable\": false\n  },\n  \"Wait\": true,\n  \"WaitTimeoutMs\": 600000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200 or 202', function () { pm.expect([200, 202]).to.include(pm.response.code); });",
+                  "const body = pm.response.json();",
+                  "if (pm.response.code === 200 && body.Id && body.Id.startsWith('kfa_')) {",
+                  "  pm.collectionVariables.set('analysisId', body.Id);",
+                  "  pm.test('Listening is always present', function () { pm.expect(body.Listening).to.be.an('object'); pm.expect(body.Listening).to.have.property('Listened'); });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Transcript only",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/v1.0/audio",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "v1.0",
+                    "audio"
+                  ]
+                },
+                "description": "Listen.Enable false is the explicit way to get transcript-only behavior regardless of configuration: Summarize runs on the transcript with the text model, and Listening reports reason NotRequested with no warning.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"Audio\": {\n    \"Url\": \"{{sampleAudioUrl}}\"\n  },\n  \"Listen\": {\n    \"Enable\": false\n  },\n  \"Wait\": true,\n  \"WaitTimeoutMs\": 600000\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"Id\": \"kfa_example\",\n  \"MediaKind\": \"Audio\",\n  \"Success\": true,\n  \"Results\": {\n    \"Summary\": \"A voicemail from a dental office confirming a cleaning appointment on Thursday at 2:30 p.m.\"\n  },\n  \"Warnings\": [],\n  \"Errors\": [],\n  \"Listening\": {\n    \"Listened\": false,\n    \"Mode\": \"None\",\n    \"Reason\": \"NotRequested\",\n    \"Endpoint\": null,\n    \"Model\": null,\n    \"Rendition\": {\n      \"Format\": \"Mp3\",\n      \"SampleRate\": 16000,\n      \"Channels\": 1,\n      \"BitrateKbps\": 64\n    },\n    \"DurationMs\": 241000,\n    \"HeardMs\": 0,\n    \"Clips\": []\n  },\n  \"Measurements\": {\n    \"IntegratedLufs\": -9.4,\n    \"LoudnessRangeLu\": 5.1,\n    \"TruePeakDbtp\": 0.1,\n    \"PeakDbfs\": -0.3,\n    \"RmsDbfs\": -11.8,\n    \"CrestFactorDb\": 11.5,\n    \"PeakCount\": 214,\n    \"ClippingLikely\": true,\n    \"SilenceRatio\": 0.03,\n    \"SilenceCount\": 2,\n    \"LeadingSilenceMs\": 400,\n    \"TrailingSilenceMs\": 2100,\n    \"Channels\": 2,\n    \"StereoWidthDb\": -14.2,\n    \"EffectivelyMono\": false\n  },\n  \"Telemetry\": {\n    \"TotalMs\": 48210.5,\n    \"Stages\": [],\n    \"ModelCalls\": [],\n    \"Totals\": {\n      \"ModelCalls\": 3\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Measure only",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/audio",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "audio"
+              ]
+            },
+            "description": "Loudness (EBU R128 integrated loudness, loudness range, true peak), sample peak and RMS levels, crest factor, silence, and stereo width from ffmpeg, with no model calls, so it runs against any stack. Listening reports NoModelFunctions because nothing needed the audio.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Audio\": {\n    \"Url\": \"{{sampleMusicUrl}}\"\n  },\n  \"Functions\": {\n    \"Transcribe\": {\n      \"Enable\": false\n    },\n    \"Summarize\": {\n      \"Enable\": false\n    },\n    \"Measure\": {\n      \"Enable\": true\n    }\n  },\n  \"Wait\": true,\n  \"WaitTimeoutMs\": 120000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200 or 202', function () { pm.expect([200, 202]).to.include(pm.response.code); });",
+                  "const body = pm.response.json();",
+                  "if (pm.response.code === 200 && body.Id && body.Id.startsWith('kfa_')) {",
+                  "  pm.collectionVariables.set('analysisId', body.Id);",
+                  "  pm.test('Listening is always present', function () { pm.expect(body.Listening).to.be.an('object'); pm.expect(body.Listening).to.have.property('Listened'); });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Measurements",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/v1.0/audio",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "v1.0",
+                    "audio"
+                  ]
+                },
+                "description": "Loudness (EBU R128 integrated loudness, loudness range, true peak), sample peak and RMS levels, crest factor, silence, and stereo width from ffmpeg, with no model calls, so it runs against any stack. Listening reports NoModelFunctions because nothing needed the audio.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"Audio\": {\n    \"Url\": \"{{sampleMusicUrl}}\"\n  },\n  \"Functions\": {\n    \"Transcribe\": {\n      \"Enable\": false\n    },\n    \"Summarize\": {\n      \"Enable\": false\n    },\n    \"Measure\": {\n      \"Enable\": true\n    }\n  },\n  \"Wait\": true,\n  \"WaitTimeoutMs\": 120000\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"Id\": \"kfa_example\",\n  \"MediaKind\": \"Audio\",\n  \"Success\": true,\n  \"Results\": {},\n  \"Warnings\": [],\n  \"Errors\": [],\n  \"Measurements\": {\n    \"IntegratedLufs\": -9.4,\n    \"LoudnessRangeLu\": 5.1,\n    \"TruePeakDbtp\": 0.1,\n    \"PeakDbfs\": -0.3,\n    \"RmsDbfs\": -11.8,\n    \"CrestFactorDb\": 11.5,\n    \"PeakCount\": 214,\n    \"ClippingLikely\": true,\n    \"SilenceRatio\": 0.03,\n    \"SilenceCount\": 2,\n    \"LeadingSilenceMs\": 400,\n    \"TrailingSilenceMs\": 2100,\n    \"Channels\": 2,\n    \"StereoWidthDb\": -14.2,\n    \"EffectivelyMono\": false\n  },\n  \"Listening\": {\n    \"Listened\": false,\n    \"Mode\": \"None\",\n    \"Reason\": \"NoModelFunctions\",\n    \"Endpoint\": null,\n    \"Model\": null,\n    \"Rendition\": {\n      \"Format\": \"Mp3\",\n      \"SampleRate\": 16000,\n      \"Channels\": 1,\n      \"BitrateKbps\": 64\n    },\n    \"DurationMs\": 122000,\n    \"HeardMs\": 0,\n    \"Clips\": []\n  },\n  \"Telemetry\": {\n    \"TotalMs\": 1840.2,\n    \"Stages\": [\n      {\n        \"Name\": \"Measure\"\n      }\n    ],\n    \"ModelCalls\": [],\n    \"Totals\": {\n      \"ModelCalls\": 0\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Sections of a long recording",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/audio",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "audio"
+              ]
+            },
+            "description": "Splits the recording at silences (ffmpeg silencedetect; models never choose boundaries) and summarizes each section by listening to it. With TextModel set, the whole-recording summary is reduced from the section results with the text model (Listening.Mode Sections). sampleSectionsUrl points at the factory sample, three spoken clips separated by 4-second silences, so it yields three sections. A section longer than the listen budget is heard as a centered excerpt. Each section can be cut back out with POST /v1.0/segment. Runs as a job; poll it from the Jobs folder.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Audio\": {\n    \"Url\": \"{{sampleSectionsUrl}}\"\n  },\n  \"TextModel\": {\n    \"Endpoint\": \"ollama-gpt-oss-20b\"\n  },\n  \"Functions\": {\n    \"Summarize\": {\n      \"Enable\": true,\n      \"MaxWords\": 120\n    },\n    \"Sections\": {\n      \"Enable\": true,\n      \"Detection\": {\n        \"SilenceDb\": -40,\n        \"MinSilenceMs\": 1500,\n        \"MinSectionMs\": 20000\n      },\n      \"Summarize\": {\n        \"Enable\": true,\n        \"MaxWords\": 40\n      }\n    }\n  },\n  \"Wait\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200 or 202', function () { pm.expect([200, 202]).to.include(pm.response.code); });",
+                  "const body = pm.response.json();",
+                  "if (pm.response.code === 200 && body.Id && body.Id.startsWith('kfa_')) {",
+                  "  pm.collectionVariables.set('analysisId', body.Id);",
+                  "  pm.test('Listening is always present', function () { pm.expect(body.Listening).to.be.an('object'); pm.expect(body.Listening).to.have.property('Listened'); });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Sections (job result)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/v1.0/audio",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "v1.0",
+                    "audio"
+                  ]
+                },
+                "description": "Splits the recording at silences (ffmpeg silencedetect; models never choose boundaries) and summarizes each section by listening to it. With TextModel set, the whole-recording summary is reduced from the section results with the text model (Listening.Mode Sections). A section longer than the listen budget is heard as a centered excerpt. Each section can be cut back out with POST /v1.0/segment. Runs as a job; poll it from the Jobs folder.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"Audio\": {\n    \"Url\": \"{{sampleSectionsUrl}}\"\n  },\n  \"TextModel\": {\n    \"Endpoint\": \"ollama-gpt-oss-20b\"\n  },\n  \"Functions\": {\n    \"Summarize\": {\n      \"Enable\": true,\n      \"MaxWords\": 120\n    },\n    \"Sections\": {\n      \"Enable\": true,\n      \"Detection\": {\n        \"SilenceDb\": -40,\n        \"MinSilenceMs\": 1500,\n        \"MinSectionMs\": 20000\n      },\n      \"Summarize\": {\n        \"Enable\": true,\n        \"MaxWords\": 40\n      }\n    }\n  },\n  \"Wait\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"Id\": \"kfa_example\",\n  \"MediaKind\": \"Audio\",\n  \"Success\": true,\n  \"Warnings\": [],\n  \"Errors\": [],\n  \"Results\": {\n    \"Summary\": \"Three separate recordings: a project status meeting, a nature podcast intro about puffins, and a dental appointment voicemail.\"\n  },\n  \"Listening\": {\n    \"Listened\": true,\n    \"Mode\": \"Sections\",\n    \"Reason\": null,\n    \"Endpoint\": \"llama-listen\",\n    \"Model\": \"voxtral-mini-3b\",\n    \"Rendition\": {\n      \"Format\": \"Mp3\",\n      \"SampleRate\": 16000,\n      \"Channels\": 1,\n      \"BitrateKbps\": 64\n    },\n    \"DurationMs\": 89300,\n    \"HeardMs\": 89300,\n    \"Clips\": [\n      {\n        \"Scope\": \"Section\",\n        \"Index\": 0,\n        \"StartMs\": 0,\n        \"EndMs\": 47600,\n        \"SizeBytes\": 380800\n      },\n      {\n        \"Scope\": \"Section\",\n        \"Index\": 1,\n        \"StartMs\": 47600,\n        \"EndMs\": 68800,\n        \"SizeBytes\": 169600\n      },\n      {\n        \"Scope\": \"Section\",\n        \"Index\": 2,\n        \"StartMs\": 68800,\n        \"EndMs\": 89300,\n        \"SizeBytes\": 164000\n      }\n    ]\n  },\n  \"Sections\": [\n    {\n      \"Index\": 0,\n      \"StartMs\": 0,\n      \"EndMs\": 47600,\n      \"DurationMs\": 47600,\n      \"TranscriptText\": \"...\",\n      \"Results\": {\n        \"Summary\": \"A two-person status meeting about search latency and a delayed billing migration.\"\n      },\n      \"Fields\": [],\n      \"Errors\": []\n    },\n    {\n      \"Index\": 1,\n      \"StartMs\": 47600,\n      \"EndMs\": 68800,\n      \"DurationMs\": 21200,\n      \"TranscriptText\": \"...\",\n      \"Results\": {\n        \"Summary\": \"The opening of a nature podcast about puffins on the Norwegian coast.\"\n      },\n      \"Fields\": [],\n      \"Errors\": []\n    },\n    {\n      \"Index\": 2,\n      \"StartMs\": 68800,\n      \"EndMs\": 89300,\n      \"DurationMs\": 20500,\n      \"TranscriptText\": \"...\",\n      \"Results\": {\n        \"Summary\": \"A voicemail confirming a dental cleaning appointment on Thursday.\"\n      },\n      \"Fields\": [],\n      \"Errors\": []\n    }\n  ],\n  \"Telemetry\": {\n    \"TotalMs\": 31840.2,\n    \"Stages\": [],\n    \"ModelCalls\": [],\n    \"Totals\": {\n      \"ModelCalls\": 4\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Excerpts of a long recording",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1.0/audio",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1.0",
+                "audio"
+              ]
+            },
+            "description": "When a recording is longer than the listen budget and sections are off, the model hears SampleClips evenly spaced excerpts of ClipSeconds each in one call, each labeled with its offset. When SampleClips times ClipSeconds exceeds the budget, the excerpts are shortened and a warning says so.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Audio\": {\n    \"Url\": \"{{sampleMusicUrl}}\"\n  },\n  \"Listen\": {\n    \"SampleClips\": 6,\n    \"ClipSeconds\": 20\n  },\n  \"Functions\": {\n    \"Summarize\": {\n      \"Enable\": true\n    }\n  },\n  \"Wait\": true,\n  \"WaitTimeoutMs\": 600000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200 or 202', function () { pm.expect([200, 202]).to.include(pm.response.code); });",
+                  "const body = pm.response.json();",
+                  "if (pm.response.code === 200 && body.Id && body.Id.startsWith('kfa_')) {",
+                  "  pm.collectionVariables.set('analysisId', body.Id);",
+                  "  pm.test('Listening is always present', function () { pm.expect(body.Listening).to.be.an('object'); pm.expect(body.Listening).to.have.property('Listened'); });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Listened to excerpts",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/v1.0/audio",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "v1.0",
+                    "audio"
+                  ]
+                },
+                "description": "When a recording is longer than the listen budget and sections are off, the model hears SampleClips evenly spaced excerpts of ClipSeconds each in one call, each labeled with its offset. When SampleClips times ClipSeconds exceeds the budget, the excerpts are shortened and a warning says so.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"Audio\": {\n    \"Url\": \"{{sampleMusicUrl}}\"\n  },\n  \"Listen\": {\n    \"SampleClips\": 6,\n    \"ClipSeconds\": 20\n  },\n  \"Functions\": {\n    \"Summarize\": {\n      \"Enable\": true\n    }\n  },\n  \"Wait\": true,\n  \"WaitTimeoutMs\": 600000\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"Id\": \"kfa_example\",\n  \"MediaKind\": \"Audio\",\n  \"Success\": true,\n  \"Results\": {\n    \"Summary\": \"A live performance with crowd noise between songs and a sung chorus.\"\n  },\n  \"Warnings\": [\n    \"Listened to 6 excerpts (2m00s) of a 4m01s recording.\"\n  ],\n  \"Errors\": [],\n  \"Listening\": {\n    \"Listened\": true,\n    \"Mode\": \"Excerpts\",\n    \"Reason\": null,\n    \"Endpoint\": \"llama-listen\",\n    \"Model\": \"voxtral-mini-3b\",\n    \"Rendition\": {\n      \"Format\": \"Mp3\",\n      \"SampleRate\": 16000,\n      \"Channels\": 1,\n      \"BitrateKbps\": 64\n    },\n    \"DurationMs\": 241000,\n    \"HeardMs\": 120000,\n    \"Clips\": [\n      {\n        \"Scope\": \"Recording\",\n        \"Index\": null,\n        \"StartMs\": 0,\n        \"EndMs\": 20000,\n        \"SizeBytes\": 160000\n      },\n      {\n        \"Scope\": \"Recording\",\n        \"Index\": null,\n        \"StartMs\": 44200,\n        \"EndMs\": 64200,\n        \"SizeBytes\": 160000\n      },\n      {\n        \"Scope\": \"Recording\",\n        \"Index\": null,\n        \"StartMs\": 88400,\n        \"EndMs\": 108400,\n        \"SizeBytes\": 160000\n      },\n      {\n        \"Scope\": \"Recording\",\n        \"Index\": null,\n        \"StartMs\": 132600,\n        \"EndMs\": 152600,\n        \"SizeBytes\": 160000\n      },\n      {\n        \"Scope\": \"Recording\",\n        \"Index\": null,\n        \"StartMs\": 176800,\n        \"EndMs\": 196800,\n        \"SizeBytes\": 160000\n      },\n      {\n        \"Scope\": \"Recording\",\n        \"Index\": null,\n        \"StartMs\": 221000,\n        \"EndMs\": 241000,\n        \"SizeBytes\": 160000\n      }\n    ]\n  },\n  \"Measurements\": {\n    \"IntegratedLufs\": -9.4,\n    \"LoudnessRangeLu\": 5.1,\n    \"TruePeakDbtp\": 0.1,\n    \"PeakDbfs\": -0.3,\n    \"RmsDbfs\": -11.8,\n    \"CrestFactorDb\": 11.5,\n    \"PeakCount\": 214,\n    \"ClippingLikely\": true,\n    \"SilenceRatio\": 0.03,\n    \"SilenceCount\": 2,\n    \"LeadingSilenceMs\": 400,\n    \"TrailingSilenceMs\": 2100,\n    \"Channels\": 2,\n    \"StereoWidthDb\": -14.2,\n    \"EffectivelyMono\": false\n  },\n  \"Telemetry\": {\n    \"TotalMs\": 48210.5,\n    \"Stages\": [],\n    \"ModelCalls\": [],\n    \"Totals\": {\n      \"ModelCalls\": 3\n    }\n  }\n}"
             }
           ]
         }
@@ -1076,7 +1872,7 @@
                 "endpoints"
               ]
             },
-            "description": "Every configured completion and transcription endpoint."
+            "description": "Every configured completion and transcription endpoint. SupportsAudioInput marks the endpoints that can listen to audio (Gemini and OpenAI-compatible providers); only those can be Listen.Model or Inference.DefaultListening."
           },
           "event": [
             {
@@ -1087,6 +1883,36 @@
                   "pm.test('status is 200', function () { pm.response.to.have.status(200); });"
                 ]
               }
+            }
+          ],
+          "response": [
+            {
+              "name": "Endpoints with capabilities",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/v1.0/endpoints",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "v1.0",
+                    "endpoints"
+                  ]
+                },
+                "description": "Every configured completion and transcription endpoint."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "[\n  {\n    \"Name\": \"ollama-gemma3-4b\",\n    \"Provider\": \"Ollama\",\n    \"Kind\": \"Completion\",\n    \"Model\": \"gemma3:4b\",\n    \"Active\": true,\n    \"IsDefault\": true,\n    \"ProviderAvailable\": true,\n    \"SupportsImages\": true,\n    \"SupportsStructuredOutput\": false,\n    \"SupportsTranscription\": false,\n    \"SupportsAudioInput\": false,\n    \"Healthy\": true,\n    \"HealthMessage\": \"OK\"\n  },\n  {\n    \"Name\": \"llama-listen\",\n    \"Provider\": \"OpenAiCompatible\",\n    \"Kind\": \"Completion\",\n    \"Model\": \"voxtral-mini-3b\",\n    \"Active\": true,\n    \"IsDefault\": false,\n    \"ProviderAvailable\": true,\n    \"SupportsImages\": true,\n    \"SupportsStructuredOutput\": false,\n    \"SupportsTranscription\": true,\n    \"SupportsAudioInput\": true,\n    \"Healthy\": true,\n    \"HealthMessage\": \"OK\"\n  },\n  {\n    \"Name\": \"whisper\",\n    \"Provider\": \"OpenAiCompatible\",\n    \"Kind\": \"Transcription\",\n    \"Model\": \"Systran/faster-whisper-small\",\n    \"Active\": true,\n    \"IsDefault\": true,\n    \"ProviderAvailable\": true,\n    \"SupportsImages\": true,\n    \"SupportsStructuredOutput\": false,\n    \"SupportsTranscription\": true,\n    \"SupportsAudioInput\": false,\n    \"Healthy\": true,\n    \"HealthMessage\": \"OK\"\n  }\n]"
             }
           ]
         },
@@ -1145,7 +1971,7 @@
     },
     {
       "name": "Analytics",
-      "description": "Every finished image, video, and audio analysis is stored as an analysis row plus one row per model call attempt. These requests read and delete them, and all use the admin key. Summary distributions report Count, Min, Max, Avg, P50, P90, P95, P99, StdDev, and Sum; every bucket in the range is present. Analytics.Enabled and Analytics.RetentionDays control writing and pruning.",
+      "description": "Every finished image, video, and audio analysis is stored as an analysis row plus one row per model call attempt. These requests read and delete them, and all use the admin key. Summary distributions report Count, Min, Max, Avg, P50, P90, P95, P99, StdDev, and Sum; every bucket in the range is present. Analytics.Enable and Analytics.RetentionDays control writing and pruning.",
       "item": [
         {
           "name": "Get analytics summary",

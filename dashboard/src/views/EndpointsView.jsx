@@ -14,6 +14,35 @@ import CopyButton from '../components/CopyButton';
 import useRemote from '../hooks/useRemote';
 import { describeError } from '../utils/errors';
 
+const CAPABILITIES = [
+  { id: 'images', flag: 'SupportsImages', icon: 'image', kind: 'Completion' },
+  { id: 'structuredOutput', flag: 'SupportsStructuredOutput', icon: 'braces', kind: 'Completion' },
+  { id: 'audioInput', flag: 'SupportsAudioInput', icon: 'headphones', kind: 'Completion' },
+  { id: 'transcription', flag: 'SupportsTranscription', icon: 'mic', kind: 'Transcription' }
+];
+
+/** Capabilities that apply to an endpoint of its kind (a transcription endpoint never takes images). */
+export function endpointCapabilities(endpoint) {
+  return CAPABILITIES.filter((c) => c.kind === endpoint.Kind && endpoint[c.flag]);
+}
+
+/** Capability pills, each with an icon and text so meaning never relies on color. */
+export function CapabilityBadges({ endpoint }) {
+  const { t } = useLocale();
+  const caps = endpointCapabilities(endpoint);
+  if (!caps.length) return <span className="muted">{t('common.none')}</span>;
+  return (
+    <span className="capability-badges">
+      {caps.map((c) => (
+        <span key={c.id} className={'badge capability-badge' + (c.id === 'audioInput' ? ' badge-accent' : ' badge-info')} title={t('endpoints.capabilities.' + c.id + 'Help')}>
+          <Icon name={c.icon} size={12} />
+          {t('endpoints.capabilities.' + c.id)}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 /** Configured model endpoints with health, connectivity tests (admin), and JSON. */
 function EndpointsView() {
   const { t, locale } = useLocale();
@@ -22,6 +51,7 @@ function EndpointsView() {
   const ids = useId();
   const endpoints = useRemote(() => apiClient.listEndpoints(), [apiClient]);
   const [kind, setKind] = useState('');
+  const [capability, setCapability] = useState('');
   const [query, setQuery] = useState('');
   const [detail, setDetail] = useState(null);
   const [json, setJson] = useState(null);
@@ -31,7 +61,7 @@ function EndpointsView() {
   const all = endpoints.data || [];
   const q = query.trim().toLowerCase();
   const rows = all.filter(
-    (e) => (!kind || e.Kind === kind) && (!q || [e.Name, e.Provider, e.Model, e.Endpoint].some((v) => v && String(v).toLowerCase().includes(q)))
+    (e) => (!kind || e.Kind === kind) && (!capability || endpointCapabilities(e).some((c) => c.id === capability)) && (!q || [e.Name, e.Provider, e.Model, e.Endpoint].some((v) => v && String(v).toLowerCase().includes(q)))
   );
 
   const runTest = async (e) => {
@@ -61,6 +91,7 @@ function EndpointsView() {
     { key: 'Kind', label: t('endpoints.columns.kind'), sortable: true, render: (e) => t('enums.endpointKind.' + e.Kind, { defaultValue: e.Kind }) },
     { key: 'Provider', label: t('endpoints.columns.provider'), sortable: true, render: (e) => t('enums.provider.' + e.Provider, { defaultValue: e.Provider }) },
     { key: 'Model', label: t('endpoints.columns.model'), sortable: true, mono: true },
+    { key: 'Capabilities', label: t('endpoints.columns.capabilities'), render: (e) => <CapabilityBadges endpoint={e} /> },
     { key: 'Endpoint', label: t('endpoints.columns.url'), mono: true, render: (e) => e.Endpoint || <span className="muted">{t('endpoints.noUrl')}</span> },
     { key: 'IsDefault', label: t('endpoints.columns.default'), sortable: true, render: (e) => (e.IsDefault ? <StatusBadge tone="accent" label={t('endpoints.default')} /> : '') },
     { key: 'MaxConcurrentRequests', label: t('endpoints.columns.concurrency'), sortable: true, align: 'right', defaultHidden: true },
@@ -103,6 +134,19 @@ function EndpointsView() {
           <option value="">{t('common.any')}</option>
           <option value="Completion">{t('enums.endpointKind.Completion')}</option>
           <option value="Transcription">{t('enums.endpointKind.Transcription')}</option>
+        </select>
+      </div>
+      <div className="form-field form-field-xs">
+        <label htmlFor={ids + 'cap'} className="field-label">
+          {t('endpoints.filters.capability')}
+        </label>
+        <select id={ids + 'cap'} className="select-compact" value={capability} onChange={(e) => setCapability(e.target.value)}>
+          <option value="">{t('common.any')}</option>
+          {CAPABILITIES.map((c) => (
+            <option key={c.id} value={c.id}>
+              {t('endpoints.capabilities.' + c.id)}
+            </option>
+          ))}
         </select>
       </div>
       <div className="form-field form-field-xs">
@@ -197,6 +241,13 @@ function EndpointsView() {
               <div>
                 <dt>{t('endpoints.columns.model')}</dt>
                 <dd className="mono">{detail.Model || t('common.none')}</dd>
+              </div>
+              <div className="kv-grid-wide">
+                <dt>{t('endpoints.columns.capabilities')}</dt>
+                <dd>
+                  <CapabilityBadges endpoint={detail} />
+                  {detail.Kind === 'Completion' && !detail.SupportsAudioInput ? <p className="help-text">{t('endpoints.capabilities.noAudioInputHelp')}</p> : null}
+                </dd>
               </div>
               <div className="kv-grid-wide">
                 <dt>{t('endpoints.columns.url')}</dt>

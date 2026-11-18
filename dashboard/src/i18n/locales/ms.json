@@ -80,7 +80,8 @@
     "unhealthy": "Tidak sihat",
     "unreachable": "Tidak dapat dicapai",
     "valid": "Sah",
-    "invalid": "Tidak sah"
+    "invalid": "Tidak sah",
+    "notChecked": "Belum disemak"
   },
   "topbar": {
     "toggleNav": "Togol navigasi",
@@ -335,7 +336,8 @@
     "name": "Ganti model",
     "namePlaceholder": "Model lalai titik akhir",
     "textHelp": "Titik akhir teks mengendalikan langkah teks sahaja seperti ringkasan keseluruhan video. Lalainya ialah Inference.DefaultText, kemudian titik akhir penglihatan.",
-    "transcriptionEndpoint": "Titik akhir transkripsi"
+    "transcriptionEndpoint": "Titik akhir transkripsi",
+    "listeningEndpoint": "Titik akhir pendengaran"
   },
   "summarize": {
     "enable": "Ringkaskan",
@@ -364,7 +366,9 @@
       "fields": "Medan",
       "telemetry": "Telemetri",
       "properties": "Sifat",
-      "raw": "JSON mentah"
+      "raw": "JSON mentah",
+      "measurements": "Ukuran",
+      "sections": "Bahagian"
     },
     "columns": {
       "key": "Kunci",
@@ -434,6 +438,20 @@
       "done": "Analisis selesai dalam {{duration}}.",
       "partial": "Analisis selesai dengan ralat dalam {{duration}}. Semak hasilnya.",
       "canceled": "Analisis dibatalkan."
+    },
+    "audioQuality": {
+      "title": "Kualiti audio",
+      "help": "Kualiti audio yang didengar oleh model. Kualiti lebih tinggi bermakna lebih sedikit minit muat dalam satu panggilan, jadi rakaman panjang beralih kepada petikan atau klip lebih pendek dengan lebih awal.",
+      "custom": "Tersuai",
+      "serverDefault": "Lalai pelayan",
+      "serverDefaultValue": "Lalai pelayan ({{value}})",
+      "format": "Format",
+      "sampleRate": "Kadar sampel",
+      "channels": "Saluran",
+      "bitrate": "Kadar bit (kbps)",
+      "bitrateHelp": "16 hingga 320 kbps.",
+      "bitrateMp3Only": "Hanya terpakai untuk MP3. Pilih MP3 sebagai format untuk menetapkannya.",
+      "flacRejected": "Titik akhir serasi OpenAI seperti llama-server hanya menerima MP3 atau WAV. Permintaan FLAC kepadanya akan ditolak."
     }
   },
   "analyzeImage": {
@@ -482,7 +500,15 @@
     },
     "languagePlaceholder": "en",
     "emptyTitle": "Belum ada kerja video",
-    "emptyMessage": "Pilih fail atau URL di atas dan hantar. Kemajuan, babak, transkrip dan hasil dipaparkan di sini."
+    "emptyMessage": "Pilih fail atau URL di atas dan hantar. Kemajuan, babak, transkrip dan hasil dipaparkan di sini.",
+    "sceneAudio": {
+      "title": "Audio adegan",
+      "enable": "Hantar audio setiap adegan kepada model penglihatan",
+      "help": "{{name}} boleh menerima input audio, jadi setiap adegan dinilai berdasarkan bingkai, transkrip, dan bunyinya.",
+      "helpUnknown": "Digunakan apabila titik akhir penglihatan boleh menerima input audio (Gemini atau serasi OpenAI). Jika tidak, adegan hanya menggunakan bingkai dan transkrip.",
+      "noAudioInput": "{{name}} tidak boleh menerima input audio. Adegan hanya akan menggunakan bingkai dan transkrip.",
+      "offHelp": "Adegan hanya menggunakan bingkai dan transkrip."
+    }
   },
   "samples": {
     "image": {
@@ -498,7 +524,8 @@
       "showsText": "Adakah teks yang ketara kelihatan pada skrin?"
     },
     "audio": {
-      "speakerCount": "Berapa ramai penutur yang berbeza?"
+      "speakerCount": "Berapa ramai penutur yang berbeza?",
+      "sectionTopic": "Tentang apakah bahagian rakaman ini?"
     }
   },
   "home": {
@@ -648,7 +675,9 @@
       "scenes": "Adegan",
       "transcript": "Transkrip",
       "telemetry": "Telemetri",
-      "raw": "JSON mentah"
+      "raw": "JSON mentah",
+      "sections": "Bahagian",
+      "measurements": "Ukuran"
     },
     "wholeResults": "Hasil keseluruhan video",
     "noScenes": "Pengesanan adegan dimatikan atau tiada adegan ditemui.",
@@ -665,7 +694,8 @@
     "noTranscript": "Transkripsi dimatikan atau video tidak mempunyai audio.",
     "noTranscriptMatches": "Tiada segmen transkrip yang sepadan.",
     "transcriptLanguage": "Bahasa: {{language}}",
-    "searchTranscript": "Cari transkrip"
+    "searchTranscript": "Cari transkrip",
+    "wholeRecordingResults": "Hasil keseluruhan rakaman"
   },
   "endpoints": {
     "title": "Titik Akhir",
@@ -684,12 +714,14 @@
       "timeout": "Had masa",
       "apiKey": "Kunci API",
       "lastChecked": "Terakhir disemak",
-      "test": "Uji"
+      "test": "Uji",
+      "capabilities": "Keupayaan"
     },
     "filters": {
       "kind": "Jenis",
       "search": "Cari",
-      "searchPlaceholder": "Nama, penyedia, atau model"
+      "searchPlaceholder": "Nama, penyedia, atau model",
+      "capability": "Keupayaan"
     },
     "localFilterNote": "Memaparkan {{shown}} daripada {{total}}. Penapisan dibuat secara tempatan; pelayan memulangkan setiap titik akhir.",
     "default": "Lalai",
@@ -713,6 +745,17 @@
       "testOk": "Titik akhir {{name}} memberikan respons dalam {{duration}}.",
       "testFailed": "Titik akhir {{name}} gagal ujian selepas {{duration}}.",
       "testError": "Tidak dapat menguji titik akhir {{name}}."
+    },
+    "capabilities": {
+      "images": "Imej",
+      "imagesHelp": "Menerima imej, jadi ia boleh menganalisis imej, bingkai, dan adegan.",
+      "structuredOutput": "Output berstruktur",
+      "structuredOutputHelp": "Menerima format respons JSON asli untuk pengekstrakan medan.",
+      "audioInput": "Input audio",
+      "audioInputHelp": "Menerima audio melalui sembang, jadi ia boleh menjadi titik akhir pendengaran dan mendengar audio adegan.",
+      "transcription": "Transkripsi",
+      "transcriptionHelp": "Menukar pertuturan kepada teks.",
+      "noAudioInputHelp": "Penyedia ini tidak boleh menerima input audio, jadi ia tidak boleh menjadi titik akhir pendengaran."
     }
   },
   "requestHistory": {
@@ -763,7 +806,7 @@
     },
     "jsonTitle": "JSON permintaan",
     "emptyTitle": "Tiada trafik disimpan",
-    "emptyMessage": "Permintaan dipaparkan di sini apabila pelayan mengendalikannya. Jika ini kekal kosong, pastikan RequestHistory.Enabled dihidupkan dalam Tetapan.",
+    "emptyMessage": "Permintaan dipaparkan di sini apabila pelayan mengendalikannya. Jika ini kekal kosong, pastikan RequestHistory.Enable dihidupkan dalam Tetapan.",
     "emptyFiltered": "Tiada permintaan yang sepadan dengan penapis ini",
     "emptyFilteredMessage": "Kosongkan atau luaskan penapis, atau pilih julat masa yang lain.",
     "inspector": {
@@ -921,7 +964,10 @@
       "grpc": "gRPC",
       "httpprotobuf": "HTTP (protobuf)",
       "Completion": "Pelengkapan",
-      "Transcription": "Transkripsi"
+      "Transcription": "Transkripsi",
+      "Mp3": "MP3",
+      "Wav": "WAV",
+      "Flac": "FLAC"
     },
     "severity": {
       "0": "0 Nyahpepijat",
@@ -963,7 +1009,7 @@
       },
       "media": {
         "title": "Media",
-        "help": "ffmpeg, had muat turun, dan saiz imej."
+        "help": "ffmpeg, had muat turun, saiz imej, audio pendengaran, dan ambang ukuran."
       },
       "jobs": {
         "title": "Kerja",
@@ -1036,8 +1082,13 @@
           "TimeoutMs": "Had masa (ms)",
           "Temperature": "Suhu",
           "MaxOutputTokens": "Token output maks",
-          "Active": "Aktif"
-        }
+          "Active": "Aktif",
+          "MaxInlineMediaBytes": "Media sebaris maks setiap panggilan",
+          "MaxListenSeconds": "Bajet dengar (saat)"
+        },
+        "DefaultListening": "Titik akhir pendengaran lalai",
+        "HealthProbeIntervalMs": "Selang semakan kesihatan (ms)",
+        "UnhealthyProbeIntervalMs": "Selang semakan semula tidak sihat (ms)"
       },
       "Media": {
         "TempDirectory": "Direktori sementara",
@@ -1053,7 +1104,18 @@
         "FfmpegTimeoutMs": "Had masa ffmpeg (ms)",
         "MaxVideoDurationMs": "Tempoh video maks (ms)",
         "TranscriptionChunkSeconds": "Cebisan transkripsi (saat)",
-        "MaxSegmentMs": "Panjang segmen maks (ms)"
+        "MaxSegmentMs": "Panjang segmen maks (ms)",
+        "MaxAudioDurationMs": "Tempoh audio maks (ms)",
+        "ListenFormat": "Format dengar",
+        "ListenSampleRate": "Kadar sampel dengar (Hz)",
+        "ListenChannels": "Saluran dengar",
+        "ListenBitrateKbps": "Kadar bit dengar (kbps, MP3 sahaja)",
+        "MaxListenSeconds": "Bajet dengar (saat)",
+        "MeasureSilenceDb": "Ambang senyap (dBFS)",
+        "MeasureMinSilenceMs": "Senyap min (ms)",
+        "ClippingTruePeakDbtp": "Puncak sebenar klip (dBTP)",
+        "ClippingMinPeaksPerMinute": "Puncak klip seminit",
+        "MonoMaxSideDb": "Ambang mono (dB)"
       },
       "Jobs": {
         "MaxConcurrentJobs": "Kerja serentak maks",
@@ -1062,7 +1124,7 @@
         "MaxWaitTimeoutMs": "Had masa menunggu maks (ms)"
       },
       "RequestHistory": {
-        "Enabled": "Tangkap permintaan",
+        "Enable": "Tangkap permintaan",
         "MaxRequestBodyBytes": "Badan permintaan maks yang ditangkap",
         "MaxResponseBodyBytes": "Badan respons maks yang ditangkap",
         "RetentionDays": "Tempoh simpanan (hari)"
@@ -1096,8 +1158,19 @@
         "TraceSamplingRatio": "Nisbah pensampelan jejak"
       },
       "Analytics": {
-        "Enabled": "Rekod analitik",
+        "Enable": "Rekod analitik",
         "RetentionDays": "Tempoh simpanan (hari)"
+      }
+    },
+    "audioInputOnly": "Hanya titik akhir yang penyedianya menerima input audio (Gemini, serasi OpenAI) disenaraikan.",
+    "subgroups": {
+      "listen": {
+        "title": "Audio pendengaran",
+        "help": "Lalai untuk audio yang dihantar kepada model pendengaran apabila permintaan tidak menetapkan Listen.Rendition."
+      },
+      "measure": {
+        "title": "Ambang ukuran",
+        "help": "Ambang di sebalik angka senyap, klip, dan mono dalam Ukuran."
       }
     }
   },
@@ -1204,7 +1277,11 @@
       "Scenes": "Adegan",
       "Summarize": "Ringkaskan",
       "Extract": "Ekstrak",
-      "Reduce": "Kurangkan"
+      "Reduce": "Kurangkan",
+      "Measure": "Ukur",
+      "SectionDetection": "Pengesanan bahagian",
+      "ListenExtraction": "Audio pendengaran",
+      "Sections": "Bahagian"
     },
     "progressStage": {
       "Queued": "Dalam baris gilir",
@@ -1218,23 +1295,70 @@
       "Scenes": "Menganalisis adegan",
       "Reduce": "Meringkaskan video",
       "Summarize": "Meringkaskan",
-      "Extract": "Mengekstrak medan"
+      "Extract": "Mengekstrak medan",
+      "Complete": "Selesai",
+      "Measure": "Mengukur audio",
+      "SectionDetection": "Mengesan bahagian",
+      "Listen": "Menyediakan audio pendengaran",
+      "ListenExtraction": "Menyediakan audio pendengaran",
+      "Sections": "Menganalisis bahagian"
     },
     "purpose": {
       "Summarize": "Ringkaskan",
       "Extract": "Ekstrak",
       "SceneSummarize": "Ringkasan adegan",
       "SceneExtract": "Medan adegan",
-      "Transcribe": "Transkripsi"
+      "Transcribe": "Transkripsi",
+      "SectionSummarize": "Ringkasan bahagian",
+      "SectionExtract": "Medan bahagian"
     },
     "health": {
       "Healthy": "Sihat",
       "Degraded": "Merosot"
+    },
+    "listeningMode": {
+      "Full": "Rakaman penuh",
+      "Sections": "Klip setiap bahagian",
+      "Excerpts": "Petikan sahaja",
+      "Scenes": "Audio adegan",
+      "None": "Tidak didengar"
+    },
+    "listenReason": {
+      "NotRequested": "Pendengaran dimatikan untuk permintaan ini",
+      "NoModelFunctions": "Tiada fungsi yang memerlukan audio",
+      "NoEndpointConfigured": "Tiada titik akhir pendengaran dikonfigurasikan",
+      "EndpointLacksAudioInput": "Titik akhir tidak boleh menerima input audio",
+      "EndpointUnhealthy": "Titik akhir pendengaran tidak sihat",
+      "NoAudioTrack": "Media tidak mempunyai trek audio"
+    },
+    "listenReasonHelp": {
+      "NotRequested": "Permintaan menetapkan Listen.Enable kepada false, jadi hasil datang daripada transkrip sahaja.",
+      "NoModelFunctions": "Tiada fungsi ringkasan, medan, atau bahagian yang dijalankan, jadi tiada apa untuk dilakukan oleh model pendengaran.",
+      "NoEndpointConfigured": "Tetapkan Inference.DefaultListening dalam Tetapan atau pilih titik akhir pendengaran. Hasil datang daripada transkrip sahaja.",
+      "EndpointLacksAudioInput": "Pilih titik akhir yang penyedianya menerima audio (Gemini, serasi OpenAI). Hasil datang daripada bingkai dan transkrip sahaja.",
+      "EndpointUnhealthy": "Titik akhir gagal semakan kesihatan terakhirnya semasa kerja bermula, jadi hasil datang daripada transkrip sahaja. llama-server tempatan mungkin masih memuatkan modelnya; semak Titik Akhir dan jalankan analisis sekali lagi.",
+      "NoAudioTrack": "Tiada audio untuk dihantar."
+    },
+    "listenScope": {
+      "Recording": "Rakaman",
+      "Section": "Bahagian",
+      "Scene": "Adegan"
+    },
+    "listenFormat": {
+      "Mp3": "MP3",
+      "Wav": "WAV",
+      "Flac": "FLAC"
     }
   },
   "units": {
     "tokensPerSecond": "{{value}} tok/s",
-    "realtimeFactor": "{{value}}x"
+    "realtimeFactor": "{{value}}x",
+    "lufs": "{{value}} LUFS",
+    "lu": "{{value}} LU",
+    "dbtp": "{{value}} dBTP",
+    "dbfs": "{{value}} dBFS",
+    "db": "{{value}} dB",
+    "kilohertz": "{{value}} kHz"
   },
   "appearance": {
     "title": "Penampilan",
@@ -1268,10 +1392,10 @@
   },
   "analyzeAudio": {
     "title": "Analisis audio",
-    "summary": "Transkripsikan fail audio (atau trek audio video), kemudian ringkaskan dan ekstrak medan bertaip daripada transkrip. Dijalankan sebagai kerja; kemajuan dan transkrip dipaparkan di bawah.",
-    "modelHelp": "Titik akhir transkripsi menukar pertuturan kepada teks (lalai Inference.DefaultTranscription). Titik akhir teks menulis ringkasan dan medan daripada transkrip (lalai Inference.DefaultText).",
+    "summary": "Dengar fail audio (atau trek audio video), transkripsikan, ukur, dan pisahkan pada senyap, kemudian ringkaskan dan ekstrak medan bertaip. Dijalankan sebagai kerja; kemajuan dan hasil dipaparkan di bawah.",
+    "modelHelp": "Titik akhir transkripsi menukar pertuturan kepada teks (lalai Inference.DefaultTranscription). Titik akhir teks menulis ringkasan dan medan daripada transkrip apabila analisis tidak mendengar, dan mengurangkan hasil bahagian (lalai Inference.DefaultText).",
     "languageHelp": "Kod ISO-639 pilihan. Biarkan kosong untuk membenarkan model mengesan bahasa.",
-    "transcribeRequired": "Transkripsi diperlukan: ringkasan dan medan dihasilkan daripada transkrip.",
+    "transcribeRequired": "Hidupkan Transkripsi atau Dengar: ringkasan dan medan memerlukan transkrip atau audio itu sendiri.",
     "summaryHelp": "Ditulis oleh titik akhir teks daripada transkrip.",
     "submit": "Hantar kerja audio",
     "emptyTitle": "Belum ada kerja audio",
@@ -1280,7 +1404,55 @@
       "submitted": "Kerja audio {{id}} dimasukkan ke dalam baris gilir."
     },
     "errors": {
-      "notSupported": "Pelayan ini tidak menyokong analisis audio (POST /v1.0/audio tidak ditemui)."
+      "notSupported": "Pelayan ini tidak menyokong analisis audio (POST /v1.0/audio tidak ditemui).",
+      "sectionRange": "Bahagian maks mesti sekurang-kurangnya sama dengan bahagian min.",
+      "noFunction": "Dayakan sekurang-kurangnya satu daripada Transkripsi, Ringkaskan, Ekstrak, Ukur, atau Bahagian."
+    },
+    "transcribeOffListening": "Transkripsi dimatikan. Model pendengaran bekerja daripada audio sahaja, tanpa petunjuk transkrip.",
+    "summaryHelpListen": "Ditulis oleh model pendengaran daripada audio, dengan transkrip sebagai petunjuk. Beralih kepada titik akhir teks dan transkrip apabila tiada titik akhir pendengaran yang boleh digunakan.",
+    "sections": {
+      "listen": "Pendengaran",
+      "measure": "Ukuran",
+      "sections": "Bahagian"
+    },
+    "listen": {
+      "enable": "Dengar audio",
+      "help": "Model pendengaran mendengar rakaman itu sendiri, jadi muzik, nada, bunyi orang ramai, dan bunyi lain turut dikira, bukan hanya perkataan. Transkrip turut dihantar sebagai petunjuk.",
+      "offHelp": "Pendengaran dimatikan. Ringkasan dan medan datang daripada transkrip sahaja, sebagai teks.",
+      "sampleClips": "Petikan",
+      "clipSeconds": "Panjang petikan (saat)",
+      "excerptHelp": "Digunakan apabila rakaman lebih panjang daripada bajet dengar titik akhir dan bahagian dimatikan: sebanyak ini petikan yang dijarakkan sama rata (1 hingga 32), setiap satu sepanjang ini (5 hingga 300 saat).",
+      "fallbackTitle": "Analisis ini akan beralih kepada transkrip",
+      "firstStartHint": "Pada permulaan pertama, llama-server tempatan mungkin masih memuat turun modelnya. Semak kesihatannya di halaman Titik Akhir.",
+      "noTranscriptHint": "Transkripsi dimatikan, jadi tanpa titik akhir pendengaran yang boleh digunakan, tiada apa untuk dianalisis dan pelayan menolak permintaan. Hidupkan Transkripsi untuk mengekalkan sandaran.",
+      "willFallBack": "Tiada titik akhir pendengaran yang boleh digunakan; hasil akan datang daripada transkrip.",
+      "status": {
+        "ok": "Mendengar melalui {{name}} ({{model}}).",
+        "unchecked": "Kesihatan {{name}} belum disemak. Ia digunakan jika memberikan respons, dan panggilan yang gagal dilaporkan sebagai ralat.",
+        "unknown": "Menggunakan titik akhir pendengaran lalai pelayan (Inference.DefaultListening). Jika ia tiada atau tidak sihat semasa kerja bermula, analisis beralih kepada transkrip.",
+        "none": "Tiada titik akhir aktif pada pelayan ini yang boleh menerima input audio. Tambah titik akhir Gemini atau serasi OpenAI (seperti llama-server) dalam Tetapan.",
+        "noDefault": "Tiada titik akhir pendengaran lalai ditetapkan (Inference.DefaultListening). Pilih titik akhir di atas, atau tetapkan lalai dalam Tetapan.",
+        "unhealthy": "{{name}} tidak sihat pada masa ini. Melainkan ia pulih sebelum kerja bermula, hasil datang daripada transkrip sahaja.",
+        "allUnhealthy": "Semua titik akhir yang menyokong audio tidak sihat pada masa ini. Melainkan salah satu pulih sebelum kerja bermula, hasil datang daripada transkrip sahaja."
+      }
+    },
+    "measure": {
+      "enable": "Ukur kelantangan, aras, senyap, dan lebar stereo",
+      "help": "Ukuran ffmpeg yang deterministik tanpa panggilan model. Nilai-nilai ini juga dihantar kepada model sebagai konteks."
+    },
+    "sectionsPanel": {
+      "enable": "Pisahkan rakaman pada senyap dan analisis setiap bahagian",
+      "help": "Bahagian datang daripada pengesanan senyap ffmpeg, bukan daripada model. Setiap bahagian boleh dimuat turun dan mendapat ringkasan serta medannya sendiri.",
+      "silenceDb": "Ambang senyap (dBFS)",
+      "silenceDbHelp": "Audio di bawah aras ini dikira sebagai senyap (-90 hingga -10).",
+      "minSilenceMs": "Senyap min (ms)",
+      "minSectionMs": "Bahagian min (ms)",
+      "maxSectionMs": "Bahagian maks (ms)",
+      "maxSections": "Bahagian maksimum",
+      "maxSectionsHelp": "Mengehadkan kos. Bahagian tambahan digabungkan.",
+      "summary": "Ringkasan setiap bahagian",
+      "extract": "Ekstrak medan untuk setiap bahagian",
+      "reduceHelp": "Dengan titik akhir teks dipilih di atas, ringkasan dan medan keseluruhan rakaman dikurangkan daripada hasil bahagian."
     }
   },
   "analysisJob": {
@@ -1320,7 +1492,7 @@
     "notAdminTitle": "Analitik memerlukan kunci pentadbir",
     "notAdminMessage": "Log masuk dengan kunci pentadbir untuk melihat prestasi dan telemetri merentas semua analisis.",
     "unavailableTitle": "Analitik tidak tersedia pada pelayan ini",
-    "unavailableMessage": "GET /v1.0/analytics/summary tidak ditemui. Naik taraf pelayan kepada versi yang mempunyai analitik, dan pastikan Analytics.Enabled dihidupkan dalam Tetapan.",
+    "unavailableMessage": "GET /v1.0/analytics/summary tidak ditemui. Naik taraf pelayan kepada versi yang mempunyai analitik, dan pastikan Analytics.Enable dihidupkan dalam Tetapan.",
     "emptyTitle": "Tiada analisis dalam julat ini",
     "emptyMessage": "Jalankan analisis atau luaskan julat masa. Setiap analisis imej, video, dan audio yang selesai direkodkan di sini.",
     "windowNote": "Memaparkan {{from}} hingga {{to}}, dikumpulkan mengikut {{bucket}}.",
@@ -1540,5 +1712,79 @@
     "toast": {
       "deleted": "Rekod analisis {{id}} dipadam."
     }
+  },
+  "listening": {
+    "title": "Pendengaran",
+    "listened": "Model telah mendengar audio.",
+    "notListened": "Model tidak mendengar audio.",
+    "mode": "Mod",
+    "reason": "Sebab",
+    "endpoint": "Titik akhir",
+    "model": "Model",
+    "rendition": "Audio dihantar",
+    "heard": "Didengar",
+    "heardOf": "{{heard}} daripada {{total}} ({{percent}})",
+    "clipCount": "Klip",
+    "clips_other": "{{count}} klip dihantar",
+    "scopeIndex": "{{scope}} {{n}}",
+    "mono": "Mono",
+    "stereo": "Stereo",
+    "channels_other": "{{count}} saluran",
+    "columns": {
+      "scope": "Dihantar bersama",
+      "start": "Mula",
+      "end": "Tamat",
+      "length": "Panjang",
+      "size": "Saiz"
+    },
+    "modeHelp": {
+      "Sections": "Hasil keseluruhan rakaman dikurangkan daripada klip setiap bahagian, jadi tiada satu panggilan pun yang mendengar rakaman penuh.",
+      "Excerpts": "Rakaman terlalu panjang untuk dihantar sepenuhnya, jadi model hanya mendengar petikan yang dijarakkan sama rata. Hasil menerangkan petikan tersebut."
+    }
+  },
+  "measurements": {
+    "help": "Diukur oleh ffmpeg dalam satu laluan nyahkod, tanpa panggilan model. Aras adalah relatif kepada skala penuh.",
+    "none": "Ukuran dimatikan untuk analisis ini.",
+    "missingTitle": "Tiada ukuran",
+    "missingMessage": "Ukur dimatikan, atau pengukuran gagal. Semak ralat di atas.",
+    "monoSource": "t/b (sumber mono)",
+    "copy": "Salin {{name}}",
+    "fields": {
+      "IntegratedLufs": "Kelantangan bersepadu",
+      "LoudnessRangeLu": "Julat kelantangan",
+      "TruePeakDbtp": "Puncak sebenar",
+      "PeakDbfs": "Puncak sampel",
+      "RmsDbfs": "Aras RMS",
+      "CrestFactorDb": "Faktor puncak",
+      "PeakCount": "Sampel pada aras puncak",
+      "ClippingLikely": "Kemungkinan klip",
+      "SilenceRatio": "Senyap",
+      "SilenceCount": "Tempoh senyap",
+      "LeadingSilenceMs": "Senyap di awal",
+      "TrailingSilenceMs": "Senyap di akhir",
+      "Channels": "Saluran",
+      "StereoWidthDb": "Lebar stereo",
+      "EffectivelyMono": "Pada dasarnya mono"
+    }
+  },
+  "sections": {
+    "notRequested": "Bahagian tidak diminta untuk analisis ini.",
+    "none": "Pengesanan bahagian tidak menemui sebarang bahagian.",
+    "barAria": "Bahagian rakaman berdurasi {{duration}}. Gunakan kekunci anak panah untuk memilih bahagian.",
+    "sectionAria": "Bahagian {{n}} daripada {{count}}, {{start}} hingga {{end}}, {{duration}}",
+    "hasErrors_other": "Mempunyai {{count}} ralat.",
+    "legend": {
+      "section": "Bahagian",
+      "silence": "Senyap di awal atau akhir",
+      "heard": "Didengar oleh model pendengaran"
+    },
+    "keyboardHint": "Garis putus-putus ialah potongan pada senyap. Kekunci anak panah, Home, dan End beralih antara bahagian.",
+    "heading": "Bahagian {{n}} daripada {{count}}",
+    "prev": "Bahagian sebelumnya",
+    "next": "Bahagian seterusnya",
+    "heardClips": "Audio yang didengar oleh model",
+    "results": "Hasil bahagian",
+    "fields": "Medan bahagian",
+    "transcript": "Transkrip semasa bahagian ini"
   }
 }

@@ -130,6 +130,7 @@ namespace Keyframe.Server
             _Auth = new AuthenticationService(live);
             _Jobs = new JobService(_Database, _Analysis, live, _Logging);
             _EndpointHealth = new EndpointHealthService(_Analysis, live, _Logging);
+            _Analysis.Health = _EndpointHealth;
             _Capture = new RequestHistoryCaptureService(_Database, live, _Logging);
             _Maintenance = new MaintenanceService(_Database, live, _Auth, _Logging);
             _Analytics = new AnalyticsService(_Database, live, _Logging);

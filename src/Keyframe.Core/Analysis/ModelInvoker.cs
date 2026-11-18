@@ -17,6 +17,15 @@ namespace Keyframe.Core.Analysis
     /// </summary>
     public class ModelInvoker
     {
+        #region Public-Members
+
+        /// <summary>
+        /// Health lookup told about endpoints a call could not reach, or null. Default null.
+        /// </summary>
+        public IEndpointHealthLookup? Health { get; set; } = null;
+
+        #endregion
+
         #region Private-Members
 
         private readonly Func<InferenceSettings> _Settings;
@@ -73,6 +82,7 @@ namespace Keyframe.Core.Analysis
                 StartUtc = DateTime.UtcNow,
                 InputImages = request.Images.Count,
                 InputImageBytes = request.Images.Sum(i => (long)i.Data.Length),
+                InputAudioBytes = request.Audio.Sum(a => (long)a.Data.Length),
                 Attempts = 0
             };
 
@@ -87,6 +97,11 @@ namespace Keyframe.Core.Analysis
                 activity?.SetTag("keyframe.model", telemetry.Model);
                 activity?.SetTag("keyframe.purpose", request.Purpose.ToString());
                 activity?.SetTag("keyframe.input_images", request.Images.Count);
+                if (request.Audio.Count > 0)
+                {
+                    activity?.SetTag("keyframe.input_audio_clips", request.Audio.Count);
+                    activity?.SetTag("keyframe.input_audio_bytes", telemetry.InputAudioBytes);
+                }
 
                 int retries = 0;
                 int repairs = 0;
@@ -100,6 +115,7 @@ namespace Keyframe.Core.Analysis
                     InferenceResponse response = await client.CompleteAsync(request, token).ConfigureAwait(false);
                     attemptWatch.Stop();
                     Accumulate(telemetry, response);
+                    if (response.Unreachable) Health?.ReportUnreachable(client.EndpointName, response.Error);
                     ModelCallAttempt attempt = ToAttempt(telemetry.Attempts, attemptStart, attemptWatch, response);
                     telemetry.AttemptDetails.Add(attempt);
                     KeyframeMetrics.RecordModelTiming(
@@ -172,6 +188,7 @@ namespace Keyframe.Core.Analysis
                 telemetry.PromptTokens,
                 telemetry.CompletionTokens);
 
+            KeyframeMetrics.RecordModelInputAudio(client.Provider.ToString().ToLowerInvariant(), request.Purpose.ToString().ToLowerInvariant(), telemetry.InputAudioBytes);
             context.AddModelCall(telemetry);
             return result;
         }

@@ -31,9 +31,24 @@ namespace Keyframe.Sdk.Enums
         FrameExtraction,
 
         /// <summary>
+        /// Measure loudness, levels, silence, and stereo width.
+        /// </summary>
+        Measure,
+
+        /// <summary>
         /// Extract the audio track.
         /// </summary>
         AudioExtraction,
+
+        /// <summary>
+        /// Find section boundaries at silences.
+        /// </summary>
+        SectionDetection,
+
+        /// <summary>
+        /// Render the audio clips sent to listening models.
+        /// </summary>
+        ListenExtraction,
 
         /// <summary>
         /// Transcribe speech.
@@ -44,6 +59,11 @@ namespace Keyframe.Sdk.Enums
         /// Analyze each scene.
         /// </summary>
         Scenes,
+
+        /// <summary>
+        /// Analyze each audio section.
+        /// </summary>
+        Sections,
 
         /// <summary>
         /// Summarize the media.

@@ -484,6 +484,74 @@ describe('audio', () => {
   it('missing Audio is 400', async () => {
     await expectApiError(400, () => user.audio.analyze({ Functions: { Transcribe: { Enable: true } } }));
   });
+
+  it('default analysis listens through the mock (Mode Full)', async (t) => {
+    if (!requireFixtures(t)) return;
+    const result = await user.audio.analyzeAndWait({ Audio: await mediaFromFile(fx.audio) }, { pollIntervalMs: 200, timeoutMs: 120000 });
+    assert.equal(result.Success, true, (result.Errors || []).join('; '));
+    const listening = result.Listening;
+    assert.ok(listening, 'Listening missing');
+    assert.equal(listening.Listened, true, `not listened, reason ${listening.Reason}`);
+    assert.equal(listening.Mode, 'Full');
+    assert.equal(listening.Reason, null);
+    assert.equal(listening.Endpoint, 'mock-listen');
+    assert.equal(listening.Rendition.Format, 'Mp3');
+    assert.equal(typeof listening.Rendition.SampleRate, 'number');
+    assert.ok(listening.DurationMs > 0 && listening.HeardMs > 0, 'DurationMs or HeardMs is zero');
+    assert.ok(listening.Clips.some((c) => c.Scope === 'Recording' && c.Index === null && c.EndMs > c.StartMs && c.SizeBytes > 0), 'no Recording clip');
+    assert.ok(result.Measurements, 'Measurements missing (Measure is on by default)');
+    assert.ok(result.Sections == null, 'Sections present without Sections.Enable');
+    assert.ok(result.Telemetry.Stages.some((st) => st.Name === 'ListenExtraction'), 'no ListenExtraction stage');
+  });
+
+  it('Listen.Enable false reports NotRequested', async (t) => {
+    if (!requireFixtures(t)) return;
+    const result = await user.audio.analyzeAndWait({ Audio: await mediaFromFile(fx.audio), Listen: { Enable: false } }, { pollIntervalMs: 200, timeoutMs: 120000 });
+    assert.equal(result.Success, true, (result.Errors || []).join('; '));
+    assert.equal(result.Listening.Listened, false);
+    assert.equal(result.Listening.Mode, 'None');
+    assert.equal(result.Listening.Reason, 'NotRequested');
+    assert.deepEqual(result.Listening.Clips, []);
+  });
+
+  it('measure-only has Measurements and no model calls', async (t) => {
+    if (!requireFixtures(t)) return;
+    const result = await user.audio.analyzeAndWait({
+      Audio: await mediaFromFile(fx.audio),
+      Functions: { Transcribe: { Enable: false }, Summarize: { Enable: false } }
+    }, { pollIntervalMs: 200, timeoutMs: 120000 });
+    assert.equal(result.Success, true, (result.Errors || []).join('; '));
+    assert.equal(result.Transcript, null);
+    const m = result.Measurements;
+    assert.ok(m, 'Measurements missing');
+    assert.equal(m.Channels, 1);
+    assert.equal(typeof m.IntegratedLufs, 'number');
+    assert.equal(typeof m.TruePeakDbtp, 'number');
+    assert.equal(m.StereoWidthDb, null);
+    assert.equal(m.EffectivelyMono, true);
+    assert.equal(typeof m.ClippingLikely, 'boolean');
+    assert.ok(m.SilenceRatio >= 0 && m.SilenceRatio <= 1, 'SilenceRatio out of range');
+    assert.equal(result.Telemetry.ModelCalls.length, 0, 'measure-only made model calls');
+    assert.equal(result.Telemetry.Totals.ModelCalls, 0);
+    assert.equal(result.Listening.Reason, 'NoModelFunctions');
+    assert.ok(result.Telemetry.Stages.some((st) => st.Name === 'Measure'), 'no Measure stage');
+  });
+
+  it('sections with per-section summaries', async (t) => {
+    if (!requireFixtures(t)) return;
+    const result = await user.audio.analyzeAndWait({
+      Audio: await mediaFromFile(fx.audio),
+      Functions: { Sections: { Enable: true, Summarize: { Enable: true } } }
+    }, { pollIntervalMs: 200, timeoutMs: 120000 });
+    assert.equal(result.Success, true, (result.Errors || []).join('; '));
+    assert.ok(Array.isArray(result.Sections) && result.Sections.length > 0, 'Sections missing or empty');
+    const first = result.Sections[0];
+    assert.equal(first.Index, 0);
+    assert.ok(first.EndMs > first.StartMs && first.DurationMs > 0, 'section bounds');
+    assert.equal(typeof first.Results.Summary, 'string');
+    assert.ok(result.Telemetry.ModelCalls.some((c) => c.Purpose === 'SectionSummarize'), 'no SectionSummarize call');
+    assert.ok(result.Listening.Clips.some((c) => c.Scope === 'Section' && c.Index === 0), 'no Section clip');
+  });
 });
 
 describe('segments', () => {
@@ -638,6 +706,8 @@ describe('endpoints', () => {
     assert.equal(mock.Provider, 'Mock');
     assert.equal(mock.IsDefault, true);
     assert.ok(endpoints.some((e) => e.Kind === 'Transcription'));
+    assert.equal(mock.SupportsAudioInput, true);
+    assert.ok(endpoints.some((e) => e.Name === 'mock-listen' && e.SupportsAudioInput === true), 'mock-listen missing or without SupportsAudioInput');
   });
 
   it('test endpoint (admin)', async () => {
@@ -666,11 +736,23 @@ describe('settings', () => {
   it('includes Analytics and the segment and audio limits', async () => {
     const s = (await admin.settings.get()).Settings;
     assert.ok(s.Analytics, 'Analytics missing');
-    assert.equal(typeof s.Analytics.Enabled, 'boolean');
+    assert.equal(typeof s.Analytics.Enable, 'boolean');
     assert.equal(typeof s.Analytics.RetentionDays, 'number');
     assert.equal(typeof s.Media.MaxSegmentMs, 'number');
     assert.ok(s.Media.MaxSegmentMs >= 1000);
     assert.equal(typeof s.Media.MaxAudioDurationMs, 'number');
+  });
+
+  it('includes the listening and measurement settings', async () => {
+    const s = (await admin.settings.get()).Settings;
+    assert.equal(s.Inference.DefaultListening, 'mock-listen');
+    assert.equal(typeof s.Inference.HealthProbeIntervalMs, 'number');
+    assert.equal(typeof s.Inference.UnhealthyProbeIntervalMs, 'number');
+    assert.equal(s.Media.ListenFormat, 'Mp3');
+    assert.ok(s.Media.ListenSampleRate >= 8000 && s.Media.ListenSampleRate <= 48000);
+    assert.equal(typeof s.Media.MeasureSilenceDb, 'number');
+    assert.equal(typeof s.Media.MonoMaxSideDb, 'number');
+    assert.ok(s.Inference.Endpoints.every((e) => e.MaxInlineMediaBytes >= 1048576));
   });
 
   it('live write round-trips masked secrets', async () => {

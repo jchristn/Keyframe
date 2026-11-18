@@ -106,8 +106,13 @@ namespace Keyframe.Core.Inference.Providers
             {
                 if (request.Images.Count > 0 && !_Client.Supports(Capability.ImageInput))
                     throw new CapabilityNotSupportedException(_Client.ProviderName, Capability.ImageInput, nameof(CompleteAsync));
+                if (request.Audio.Count > 0 && !_Client.Supports(Capability.AudioInput))
+                    throw new CapabilityNotSupportedException(_Client.ProviderName, Capability.AudioInput, nameof(CompleteAsync));
 
-                List<ChatMessage> messages = BuildMessages(request);
+                // Voxtral (through vLLM and mistral-common) rejects a system prompt in any request that carries audio, so for
+                // OpenAI-compatible servers the system prompt leads the user message instead. Every such server accepts this shape.
+                bool foldSystem = request.Audio.Count > 0 && _Endpoint.Provider == ProviderTypeEnum.OpenAiCompatible;
+                List<ChatMessage> messages = BuildMessages(request, foldSystem);
                 CompletionOptions options = BuildOptions(request, model);
                 ChatStreamingResponse response = await _Client.ChatStreamingAsync(messages, options, token).ConfigureAwait(false);
 
@@ -143,6 +148,7 @@ namespace Keyframe.Core.Inference.Providers
                     string? error = response.Error ?? response.StreamError;
                     result.Error = String.IsNullOrEmpty(error) ? "Provider returned an unsuccessful response." : error;
                     result.Retryable = response.Success ? true : PolyPromptClientBuilder.IsRetryable(response.StatusCode);
+                    result.Unreachable = !response.Success && (!response.StatusCode.HasValue || response.StatusCode.Value == 0);
                 }
                 else if (String.IsNullOrEmpty(text))
                 {
@@ -187,6 +193,7 @@ namespace Keyframe.Core.Inference.Providers
                 result.Success = false;
                 result.Error = ex.Message;
                 result.Retryable = true;
+                result.Unreachable = ex is not OperationCanceledException;
             }
 
             result.DurationMs = Math.Round(sw.Elapsed.TotalMilliseconds, 3);
@@ -221,23 +228,31 @@ namespace Keyframe.Core.Inference.Providers
 
         #region Private-Methods
 
-        private static List<ChatMessage> BuildMessages(InferenceRequest request)
+        private static List<ChatMessage> BuildMessages(InferenceRequest request, bool foldSystem)
         {
             List<ChatMessage> messages = new List<ChatMessage>();
-            if (!String.IsNullOrWhiteSpace(request.SystemPrompt)) messages.Add(ChatMessage.System(request.SystemPrompt));
+            bool hasSystem = !String.IsNullOrWhiteSpace(request.SystemPrompt);
+            if (hasSystem && !foldSystem) messages.Add(ChatMessage.System(request.SystemPrompt));
 
-            if (request.Images.Count == 0)
+            if (request.Images.Count == 0 && request.Audio.Count == 0)
             {
                 messages.Add(ChatMessage.User(String.IsNullOrEmpty(request.UserPrompt) ? " " : request.UserPrompt));
                 return messages;
             }
 
             List<ContentPart> parts = new List<ContentPart>();
-            if (!String.IsNullOrWhiteSpace(request.UserPrompt)) parts.Add(ContentPart.FromText(request.UserPrompt));
+            if (hasSystem && foldSystem) parts.Add(ContentPart.FromText(request.SystemPrompt.Trim() + "\n\n" + (request.UserPrompt ?? String.Empty)));
+            else if (!String.IsNullOrWhiteSpace(request.UserPrompt)) parts.Add(ContentPart.FromText(request.UserPrompt));
             foreach (InferenceImage image in request.Images)
             {
                 if (!String.IsNullOrWhiteSpace(image.Label)) parts.Add(ContentPart.FromText(image.Label));
                 parts.Add(ContentPart.Image(image.Data, image.MediaType));
+            }
+
+            foreach (InferenceAudio audio in request.Audio)
+            {
+                if (!String.IsNullOrWhiteSpace(audio.Label)) parts.Add(ContentPart.FromText(audio.Label));
+                parts.Add(ContentPart.Audio(audio.Data, audio.MediaType));
             }
 
             messages.Add(ChatMessage.User(parts));

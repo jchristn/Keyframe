@@ -15,7 +15,7 @@ namespace Keyframe.Server.Services
     /// <summary>
     /// Persists analytics for every finished analysis. Completions are queued without blocking the response path
     /// and written by one background writer; write failures are logged and counted, never thrown. Respects
-    /// Analytics.Enabled live.
+    /// Analytics.Enable live.
     /// Thread safety: safe for concurrent use.
     /// </summary>
     public class AnalyticsService : IDisposable
@@ -109,7 +109,7 @@ namespace Keyframe.Server.Services
             if (completion == null) return;
             try
             {
-                if (!_Settings().Analytics.Enabled) return;
+                if (!_Settings().Analytics.Enable) return;
                 AnalysisRecord record = AnalyticsRecordFactory.Build(completion);
                 if (!_Queue.Writer.TryWrite(record))
                 {

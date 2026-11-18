@@ -80,7 +80,8 @@
     "unhealthy": "異常",
     "unreachable": "到達不能",
     "valid": "有効",
-    "invalid": "無効"
+    "invalid": "無効",
+    "notChecked": "未確認"
   },
   "topbar": {
     "toggleNav": "ナビゲーションの切り替え",
@@ -335,7 +336,8 @@
     "name": "モデルの上書き",
     "namePlaceholder": "エンドポイントの既定モデル",
     "textHelp": "テキストエンドポイントは、動画全体の要約などテキストのみの処理を担当します。既定では Inference.DefaultText、次にビジョンエンドポイントが使用されます。",
-    "transcriptionEndpoint": "文字起こしエンドポイント"
+    "transcriptionEndpoint": "文字起こしエンドポイント",
+    "listeningEndpoint": "リスニングエンドポイント"
   },
   "summarize": {
     "enable": "要約",
@@ -364,7 +366,9 @@
       "fields": "フィールド",
       "telemetry": "テレメトリ",
       "properties": "プロパティ",
-      "raw": "Raw JSON"
+      "raw": "Raw JSON",
+      "measurements": "測定",
+      "sections": "セクション"
     },
     "columns": {
       "key": "キー",
@@ -434,6 +438,20 @@
       "done": "分析が {{duration}} で完了しました。",
       "partial": "分析は {{duration}} で完了しましたが、エラーがあります。結果を確認してください。",
       "canceled": "分析をキャンセルしました。"
+    },
+    "audioQuality": {
+      "title": "音声の品質",
+      "help": "モデルが聞く音声の品質です。品質を上げるほど 1 回の呼び出しに収まる時間が短くなるため、長い録音は早めに抜粋や短いクリップに切り替わります。",
+      "custom": "カスタム",
+      "serverDefault": "サーバーの既定値",
+      "serverDefaultValue": "サーバーの既定値 ({{value}})",
+      "format": "形式",
+      "sampleRate": "サンプルレート",
+      "channels": "チャンネル",
+      "bitrate": "ビットレート (kbps)",
+      "bitrateHelp": "16 から 320 kbps。",
+      "bitrateMp3Only": "MP3 のみに適用されます。設定するには形式で MP3 を選択してください。",
+      "flacRejected": "llama-server などの OpenAI 互換エンドポイントは MP3 または WAV のみ受け付けます。FLAC のリクエストは拒否されます。"
     }
   },
   "analyzeImage": {
@@ -482,7 +500,15 @@
     },
     "languagePlaceholder": "en",
     "emptyTitle": "動画ジョブはまだありません",
-    "emptyMessage": "上でファイルまたは URL を選んで送信してください。進捗、シーン、文字起こし、結果がここに表示されます。"
+    "emptyMessage": "上でファイルまたは URL を選んで送信してください。進捗、シーン、文字起こし、結果がここに表示されます。",
+    "sceneAudio": {
+      "title": "シーンの音声",
+      "enable": "各シーンの音声をビジョンモデルに送信",
+      "help": "{{name}} は音声入力を受け付けるため、各シーンはフレーム、文字起こし、音声に基づいて判断されます。",
+      "helpUnknown": "ビジョンエンドポイントが音声入力を受け付ける場合 (Gemini または OpenAI 互換) に使用します。それ以外の場合、シーンはフレームと文字起こしのみを使用します。",
+      "noAudioInput": "{{name}} は音声入力を受け付けません。シーンはフレームと文字起こしのみを使用します。",
+      "offHelp": "シーンはフレームと文字起こしのみを使用します。"
+    }
   },
   "samples": {
     "image": {
@@ -498,7 +524,8 @@
       "showsText": "画面上に目立つテキストは表示されていますか?"
     },
     "audio": {
-      "speakerCount": "異なる話者は何人いますか?"
+      "speakerCount": "異なる話者は何人いますか?",
+      "sectionTopic": "録音のこの部分は何についての内容ですか?"
     }
   },
   "home": {
@@ -648,7 +675,9 @@
       "scenes": "シーン",
       "transcript": "文字起こし",
       "telemetry": "テレメトリ",
-      "raw": "Raw JSON"
+      "raw": "Raw JSON",
+      "sections": "セクション",
+      "measurements": "測定"
     },
     "wholeResults": "動画全体の結果",
     "noScenes": "シーン検出がオフだったか、シーンが見つかりませんでした。",
@@ -665,7 +694,8 @@
     "noTranscript": "文字起こしがオフだったか、動画に音声がありません。",
     "noTranscriptMatches": "一致する文字起こしのセグメントはありません。",
     "transcriptLanguage": "言語: {{language}}",
-    "searchTranscript": "文字起こしを検索"
+    "searchTranscript": "文字起こしを検索",
+    "wholeRecordingResults": "録音全体の結果"
   },
   "endpoints": {
     "title": "エンドポイント",
@@ -684,12 +714,14 @@
       "timeout": "タイムアウト",
       "apiKey": "API キー",
       "lastChecked": "最終確認",
-      "test": "テスト"
+      "test": "テスト",
+      "capabilities": "機能"
     },
     "filters": {
       "kind": "種類",
       "search": "検索",
-      "searchPlaceholder": "名前、プロバイダー、モデル"
+      "searchPlaceholder": "名前、プロバイダー、モデル",
+      "capability": "機能"
     },
     "localFilterNote": "{{total}} 件中 {{shown}} 件を表示。フィルターはローカルで適用され、サーバーはすべてのエンドポイントを返します。",
     "default": "既定",
@@ -713,6 +745,17 @@
       "testOk": "エンドポイント {{name}} が {{duration}} で応答しました。",
       "testFailed": "エンドポイント {{name}} は {{duration}} 後にテストに失敗しました。",
       "testError": "エンドポイント {{name}} をテストできませんでした。"
+    },
+    "capabilities": {
+      "images": "画像",
+      "imagesHelp": "画像を受け付けるため、画像、フレーム、シーンを分析できます。",
+      "structuredOutput": "構造化出力",
+      "structuredOutputHelp": "フィールド抽出にネイティブの JSON レスポンス形式を使用します。",
+      "audioInput": "音声入力",
+      "audioInputHelp": "チャットで音声を受け付けるため、リスニングエンドポイントとして使用でき、シーンの音声も聞くことができます。",
+      "transcription": "文字起こし",
+      "transcriptionHelp": "音声をテキストに変換します。",
+      "noAudioInputHelp": "このプロバイダーは音声入力を受け付けないため、リスニングエンドポイントにはできません。"
     }
   },
   "requestHistory": {
@@ -763,7 +806,7 @@
     },
     "jsonTitle": "リクエスト JSON",
     "emptyTitle": "保持されたトラフィックはありません",
-    "emptyMessage": "サーバーがリクエストを処理すると、ここに表示されます。空のままの場合は、設定で RequestHistory.Enabled がオンになっていることを確認してください。",
+    "emptyMessage": "サーバーがリクエストを処理すると、ここに表示されます。空のままの場合は、設定で RequestHistory.Enable がオンになっていることを確認してください。",
     "emptyFiltered": "これらのフィルターに一致するリクエストはありません",
     "emptyFilteredMessage": "フィルターをクリアまたは緩めるか、別の期間を選択してください。",
     "inspector": {
@@ -921,7 +964,10 @@
       "grpc": "gRPC",
       "httpprotobuf": "HTTP (protobuf)",
       "Completion": "補完",
-      "Transcription": "文字起こし"
+      "Transcription": "文字起こし",
+      "Mp3": "MP3",
+      "Wav": "WAV",
+      "Flac": "FLAC"
     },
     "severity": {
       "0": "0 デバッグ",
@@ -963,7 +1009,7 @@
       },
       "media": {
         "title": "メディア",
-        "help": "ffmpeg、ダウンロードの上限、画像サイズ。"
+        "help": "ffmpeg、ダウンロードの上限、画像サイズ、リスニング音声、測定のしきい値。"
       },
       "jobs": {
         "title": "ジョブ",
@@ -1036,8 +1082,13 @@
           "TimeoutMs": "タイムアウト (ms)",
           "Temperature": "Temperature",
           "MaxOutputTokens": "最大出力トークン数",
-          "Active": "有効"
-        }
+          "Active": "有効",
+          "MaxInlineMediaBytes": "1 回の呼び出しの最大インラインメディア",
+          "MaxListenSeconds": "リスニング上限 (秒)"
+        },
+        "DefaultListening": "既定のリスニングエンドポイント",
+        "HealthProbeIntervalMs": "ヘルスチェックの間隔 (ms)",
+        "UnhealthyProbeIntervalMs": "異常時の再チェック間隔 (ms)"
       },
       "Media": {
         "TempDirectory": "一時ディレクトリ",
@@ -1053,7 +1104,18 @@
         "FfmpegTimeoutMs": "ffmpeg のタイムアウト (ms)",
         "MaxVideoDurationMs": "動画の最大長 (ms)",
         "TranscriptionChunkSeconds": "文字起こしのチャンク (秒)",
-        "MaxSegmentMs": "セグメントの最大長 (ms)"
+        "MaxSegmentMs": "セグメントの最大長 (ms)",
+        "MaxAudioDurationMs": "音声の最大長 (ms)",
+        "ListenFormat": "リスニング形式",
+        "ListenSampleRate": "リスニングのサンプルレート (Hz)",
+        "ListenChannels": "リスニングのチャンネル",
+        "ListenBitrateKbps": "リスニングのビットレート (kbps、MP3 のみ)",
+        "MaxListenSeconds": "リスニング上限 (秒)",
+        "MeasureSilenceDb": "無音のしきい値 (dBFS)",
+        "MeasureMinSilenceMs": "最小無音長 (ms)",
+        "ClippingTruePeakDbtp": "クリッピングのトゥルーピーク (dBTP)",
+        "ClippingMinPeaksPerMinute": "1 分あたりのクリッピングピーク数",
+        "MonoMaxSideDb": "モノラルのしきい値 (dB)"
       },
       "Jobs": {
         "MaxConcurrentJobs": "最大同時ジョブ数",
@@ -1062,7 +1124,7 @@
         "MaxWaitTimeoutMs": "最大待機タイムアウト (ms)"
       },
       "RequestHistory": {
-        "Enabled": "リクエストを記録",
+        "Enable": "リクエストを記録",
         "MaxRequestBodyBytes": "記録するリクエスト本文の最大サイズ",
         "MaxResponseBodyBytes": "記録するレスポンス本文の最大サイズ",
         "RetentionDays": "保持期間 (日)"
@@ -1096,8 +1158,19 @@
         "TraceSamplingRatio": "トレースのサンプリング率"
       },
       "Analytics": {
-        "Enabled": "アナリティクスを記録",
+        "Enable": "アナリティクスを記録",
         "RetentionDays": "保持期間 (日)"
+      }
+    },
+    "audioInputOnly": "プロバイダーが音声入力を受け付けるエンドポイント (Gemini、OpenAI 互換) のみが表示されます。",
+    "subgroups": {
+      "listen": {
+        "title": "リスニング音声",
+        "help": "リクエストで Listen.Rendition が未設定の場合に、リスニングモデルへ送る音声の既定値。"
+      },
+      "measure": {
+        "title": "測定のしきい値",
+        "help": "測定の無音、クリッピング、モノラルの判定に使うしきい値。"
       }
     }
   },
@@ -1204,7 +1277,11 @@
       "Scenes": "シーン",
       "Summarize": "要約",
       "Extract": "抽出",
-      "Reduce": "集約"
+      "Reduce": "集約",
+      "Measure": "測定",
+      "SectionDetection": "セクション検出",
+      "ListenExtraction": "リスニング音声",
+      "Sections": "セクション"
     },
     "progressStage": {
       "Queued": "キュー待ち",
@@ -1218,23 +1295,70 @@
       "Scenes": "シーンを分析中",
       "Reduce": "動画を要約中",
       "Summarize": "要約中",
-      "Extract": "フィールドを抽出中"
+      "Extract": "フィールドを抽出中",
+      "Complete": "完了",
+      "Measure": "音声を測定中",
+      "SectionDetection": "セクションを検出中",
+      "Listen": "リスニング音声を準備中",
+      "ListenExtraction": "リスニング音声を準備中",
+      "Sections": "セクションを分析中"
     },
     "purpose": {
       "Summarize": "要約",
       "Extract": "抽出",
       "SceneSummarize": "シーンの要約",
       "SceneExtract": "シーンのフィールド",
-      "Transcribe": "文字起こし"
+      "Transcribe": "文字起こし",
+      "SectionSummarize": "セクションの要約",
+      "SectionExtract": "セクションのフィールド"
     },
     "health": {
       "Healthy": "正常",
       "Degraded": "低下"
+    },
+    "listeningMode": {
+      "Full": "録音全体",
+      "Sections": "セクションごとのクリップ",
+      "Excerpts": "抜粋のみ",
+      "Scenes": "シーンの音声",
+      "None": "未リスニング"
+    },
+    "listenReason": {
+      "NotRequested": "このリクエストではリスニングがオフでした",
+      "NoModelFunctions": "音声を必要とする機能がありませんでした",
+      "NoEndpointConfigured": "リスニングエンドポイントが設定されていません",
+      "EndpointLacksAudioInput": "エンドポイントが音声入力を受け付けません",
+      "EndpointUnhealthy": "リスニングエンドポイントが異常でした",
+      "NoAudioTrack": "メディアに音声トラックがありません"
+    },
+    "listenReasonHelp": {
+      "NotRequested": "リクエストで Listen.Enable が false に設定されていたため、結果は文字起こしのみから作成されました。",
+      "NoModelFunctions": "要約、フィールド、セクションの機能が実行されなかったため、リスニングモデルが行う処理はありませんでした。",
+      "NoEndpointConfigured": "設定で Inference.DefaultListening を設定するか、リスニングエンドポイントを選択してください。結果は文字起こしのみから作成されました。",
+      "EndpointLacksAudioInput": "プロバイダーが音声を受け付けるエンドポイント (Gemini、OpenAI 互換) を選択してください。結果はフレームと文字起こしのみから作成されました。",
+      "EndpointUnhealthy": "ジョブ開始時にエンドポイントが直近のヘルスチェックに失敗していたため、結果は文字起こしのみから作成されました。ローカルの llama-server がまだモデルを読み込み中の可能性があります。エンドポイントを確認して分析を再実行してください。",
+      "NoAudioTrack": "送信する音声がありませんでした。"
+    },
+    "listenScope": {
+      "Recording": "録音",
+      "Section": "セクション",
+      "Scene": "シーン"
+    },
+    "listenFormat": {
+      "Mp3": "MP3",
+      "Wav": "WAV",
+      "Flac": "FLAC"
     }
   },
   "units": {
     "tokensPerSecond": "{{value}} tok/s",
-    "realtimeFactor": "{{value}}x"
+    "realtimeFactor": "{{value}}x",
+    "lufs": "{{value}} LUFS",
+    "lu": "{{value}} LU",
+    "dbtp": "{{value}} dBTP",
+    "dbfs": "{{value}} dBFS",
+    "db": "{{value}} dB",
+    "kilohertz": "{{value}} kHz"
   },
   "appearance": {
     "title": "外観",
@@ -1268,10 +1392,10 @@
   },
   "analyzeAudio": {
     "title": "音声を分析",
-    "summary": "音声ファイル (または動画の音声トラック) を文字起こしし、その文字起こしから要約と型付きフィールドの抽出を行います。ジョブとして実行され、進捗と文字起こしが下に表示されます。",
-    "modelHelp": "文字起こしエンドポイントは音声をテキストに変換します (既定は Inference.DefaultTranscription)。テキストエンドポイントは文字起こしから要約とフィールドを作成します (既定は Inference.DefaultText)。",
+    "summary": "音声ファイル (または動画の音声トラック) を聞き、文字起こし、測定、無音位置での分割を行ってから、要約と型付きフィールドの抽出を行います。ジョブとして実行され、進捗と結果が下に表示されます。",
+    "modelHelp": "文字起こしエンドポイントは音声をテキストに変換します (既定は Inference.DefaultTranscription)。テキストエンドポイントは、分析でリスニングを行わない場合に文字起こしから要約とフィールドを作成し、セクションの結果を集約します (既定は Inference.DefaultText)。",
     "languageHelp": "任意の ISO-639 コード。空欄にするとモデルが言語を検出します。",
-    "transcribeRequired": "文字起こしは必須です: 要約とフィールドは文字起こしから生成されます。",
+    "transcribeRequired": "文字起こしかリスニングをオンにしてください: 要約とフィールドには文字起こしか音声そのものが必要です。",
     "summaryHelp": "テキストエンドポイントが文字起こしから作成します。",
     "submit": "音声ジョブを送信",
     "emptyTitle": "音声ジョブはまだありません",
@@ -1280,7 +1404,55 @@
       "submitted": "音声ジョブ {{id}} をキューに追加しました。"
     },
     "errors": {
-      "notSupported": "このサーバーは音声の分析に対応していません (POST /v1.0/audio が見つかりませんでした)。"
+      "notSupported": "このサーバーは音声の分析に対応していません (POST /v1.0/audio が見つかりませんでした)。",
+      "sectionRange": "最大セクション長は最小セクション長以上にしてください。",
+      "noFunction": "文字起こし、要約、抽出、測定、セクションのうち少なくとも 1 つを有効にしてください。"
+    },
+    "transcribeOffListening": "文字起こしはオフです。リスニングモデルは文字起こしのヒントなしで音声のみから処理します。",
+    "summaryHelpListen": "リスニングモデルが文字起こしをヒントに音声から作成します。使用できるリスニングエンドポイントがない場合は、テキストエンドポイントと文字起こしにフォールバックします。",
+    "sections": {
+      "listen": "リスニング",
+      "measure": "測定",
+      "sections": "セクション"
+    },
+    "listen": {
+      "enable": "音声を聞く",
+      "help": "リスニングモデルは録音そのものを聞くため、言葉だけでなく音楽、口調、群衆の騒音などの音も考慮されます。文字起こしはヒントとして渡されます。",
+      "offHelp": "リスニングはオフです。要約とフィールドは文字起こしのテキストのみから作成されます。",
+      "sampleClips": "抜粋数",
+      "clipSeconds": "抜粋の長さ (秒)",
+      "excerptHelp": "録音がエンドポイントのリスニング上限より長く、セクションがオフの場合に使用します: 指定した数 (1 から 32) の抜粋を均等な間隔で、それぞれ指定した長さ (5 から 300 秒) で取り出します。",
+      "fallbackTitle": "この分析は文字起こしにフォールバックします",
+      "firstStartHint": "初回起動時は、ローカルの llama-server がまだモデルをダウンロード中の場合があります。エンドポイントページで状態を確認してください。",
+      "noTranscriptHint": "文字起こしがオフのため、使用できるリスニングエンドポイントがないと分析対象がなく、サーバーはリクエストを拒否します。フォールバックを残すには文字起こしをオンにしてください。",
+      "willFallBack": "使用できるリスニングエンドポイントがありません。結果は文字起こしから作成されます。",
+      "status": {
+        "ok": "{{name}} ({{model}}) でリスニングします。",
+        "unchecked": "{{name}} はまだヘルスチェックされていません。応答すれば使用され、呼び出しに失敗した場合はエラーとして報告されます。",
+        "unknown": "サーバーの既定のリスニングエンドポイント (Inference.DefaultListening) を使用します。ジョブ開始時に存在しないか異常な場合、分析は文字起こしにフォールバックします。",
+        "none": "このサーバーには音声入力を受け付ける有効なエンドポイントがありません。設定で Gemini または OpenAI 互換のエンドポイント (llama-server など) を追加してください。",
+        "noDefault": "既定のリスニングエンドポイント (Inference.DefaultListening) が設定されていません。上でエンドポイントを選ぶか、設定で既定値を設定してください。",
+        "unhealthy": "{{name}} は現在異常です。ジョブ開始までに回復しない限り、結果は文字起こしのみから作成されます。",
+        "allUnhealthy": "音声に対応したエンドポイントはすべて現在異常です。ジョブ開始までにいずれかが回復しない限り、結果は文字起こしのみから作成されます。"
+      }
+    },
+    "measure": {
+      "enable": "ラウドネス、レベル、無音、ステレオ幅を測定",
+      "help": "モデルを呼び出さない、決定的な ffmpeg による測定です。数値はコンテキストとしてモデルにも渡されます。"
+    },
+    "sectionsPanel": {
+      "enable": "録音を無音位置で分割し、各セクションを分析",
+      "help": "セクションはモデルではなく ffmpeg の無音検出で決まります。各セクションはダウンロードでき、それぞれ独自の要約とフィールドを持ちます。",
+      "silenceDb": "無音のしきい値 (dBFS)",
+      "silenceDbHelp": "このレベルを下回る音声は無音とみなされます (-90 から -10)。",
+      "minSilenceMs": "最小無音長 (ms)",
+      "minSectionMs": "最小セクション長 (ms)",
+      "maxSectionMs": "最大セクション長 (ms)",
+      "maxSections": "最大セクション数",
+      "maxSectionsHelp": "コストを抑えます。超過したセクションは結合されます。",
+      "summary": "セクションごとの要約",
+      "extract": "セクションごとにフィールドを抽出",
+      "reduceHelp": "上でテキストエンドポイントを選択すると、録音全体の要約とフィールドはセクションの結果から集約されます。"
     }
   },
   "analysisJob": {
@@ -1320,7 +1492,7 @@
     "notAdminTitle": "アナリティクスには管理者キーが必要です",
     "notAdminMessage": "すべての分析のパフォーマンスとテレメトリを確認するには、管理者キーでサインインしてください。",
     "unavailableTitle": "このサーバーではアナリティクスを利用できません",
-    "unavailableMessage": "GET /v1.0/analytics/summary が見つかりませんでした。アナリティクスに対応したバージョンにサーバーをアップグレードし、設定で Analytics.Enabled がオンになっていることを確認してください。",
+    "unavailableMessage": "GET /v1.0/analytics/summary が見つかりませんでした。アナリティクスに対応したバージョンにサーバーをアップグレードし、設定で Analytics.Enable がオンになっていることを確認してください。",
     "emptyTitle": "この期間の分析はありません",
     "emptyMessage": "分析を実行するか、期間を広げてください。完了したすべての画像、動画、音声の分析がここに記録されます。",
     "windowNote": "{{from}} から {{to}} までを {{bucket}} 単位で表示しています。",
@@ -1540,5 +1712,79 @@
     "toast": {
       "deleted": "分析の記録 {{id}} を削除しました。"
     }
+  },
+  "listening": {
+    "title": "リスニング",
+    "listened": "モデルは音声を聞きました。",
+    "notListened": "モデルは音声を聞いていません。",
+    "mode": "モード",
+    "reason": "理由",
+    "endpoint": "エンドポイント",
+    "model": "モデル",
+    "rendition": "送信した音声",
+    "heard": "聞いた範囲",
+    "heardOf": "{{total}} 中 {{heard}} ({{percent}})",
+    "clipCount": "クリップ",
+    "clips_other": "{{count}} 件のクリップを送信",
+    "scopeIndex": "{{scope}} {{n}}",
+    "mono": "モノラル",
+    "stereo": "ステレオ",
+    "channels_other": "{{count}} チャンネル",
+    "columns": {
+      "scope": "送信単位",
+      "start": "開始",
+      "end": "終了",
+      "length": "長さ",
+      "size": "サイズ"
+    },
+    "modeHelp": {
+      "Sections": "録音全体の結果はセクションごとのクリップから集約されたもので、録音全体を聞いた呼び出しはありません。",
+      "Excerpts": "録音が長すぎて全体を送信できなかったため、モデルは均等に配置された抜粋のみを聞きました。結果はそれらの抜粋についてのものです。"
+    }
+  },
+  "measurements": {
+    "help": "ffmpeg が 1 回のデコードで測定し、モデルは呼び出しません。レベルはフルスケール基準です。",
+    "none": "この分析では測定がオフでした。",
+    "missingTitle": "測定結果なし",
+    "missingMessage": "測定がオフだったか、測定に失敗しました。上のエラーを確認してください。",
+    "monoSource": "該当なし (モノラルのソース)",
+    "copy": "{{name}} をコピー",
+    "fields": {
+      "IntegratedLufs": "統合ラウドネス",
+      "LoudnessRangeLu": "ラウドネスレンジ",
+      "TruePeakDbtp": "トゥルーピーク",
+      "PeakDbfs": "サンプルピーク",
+      "RmsDbfs": "RMS レベル",
+      "CrestFactorDb": "クレストファクター",
+      "PeakCount": "ピークレベルのサンプル数",
+      "ClippingLikely": "クリッピングの可能性",
+      "SilenceRatio": "無音",
+      "SilenceCount": "無音区間の数",
+      "LeadingSilenceMs": "先頭の無音",
+      "TrailingSilenceMs": "末尾の無音",
+      "Channels": "チャンネル",
+      "StereoWidthDb": "ステレオ幅",
+      "EffectivelyMono": "実質モノラル"
+    }
+  },
+  "sections": {
+    "notRequested": "この分析ではセクションは要求されていません。",
+    "none": "セクション検出でセクションは見つかりませんでした。",
+    "barAria": "{{duration}} の録音のセクション。矢印キーでセクションを選択します。",
+    "sectionAria": "セクション {{n}} / {{count}}、{{start}} から {{end}}、{{duration}}",
+    "hasErrors_other": "{{count}} 件のエラーがあります。",
+    "legend": {
+      "section": "セクション",
+      "silence": "先頭または末尾の無音",
+      "heard": "リスニングモデルが聞いた範囲"
+    },
+    "keyboardHint": "破線は無音位置での区切りです。矢印キー、Home、End でセクション間を移動できます。",
+    "heading": "セクション {{n}} / {{count}}",
+    "prev": "前のセクション",
+    "next": "次のセクション",
+    "heardClips": "モデルが聞いた音声",
+    "results": "セクションの結果",
+    "fields": "セクションのフィールド",
+    "transcript": "このセクション中の文字起こし"
   }
 }

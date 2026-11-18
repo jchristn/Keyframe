@@ -85,6 +85,22 @@ namespace Keyframe.Core.Inference.Providers
         }
 
         /// <summary>
+        /// Whether a provider accepts audio input on chat: Gemini, OpenAI-compatible servers (including llama-server, vLLM,
+        /// and OpenAI's Chat Completions audio models), and the mock provider. A specific model can still lack audio.
+        /// </summary>
+        /// <param name="endpoint">Endpoint settings.</param>
+        /// <returns>True when audio input is accepted.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when endpoint is null.</exception>
+        public static bool SupportsAudioInput(EndpointSettings endpoint)
+        {
+            ArgumentNullException.ThrowIfNull(endpoint);
+            if (endpoint.Kind != EndpointKindEnum.Completion) return false;
+            return endpoint.Provider == ProviderTypeEnum.Mock
+                || endpoint.Provider == ProviderTypeEnum.Gemini
+                || endpoint.Provider == ProviderTypeEnum.OpenAiCompatible;
+        }
+
+        /// <summary>
         /// Whether a provider is sent a native JSON object response format: OpenAI, Azure OpenAI, xAI, and the mock provider.
         /// </summary>
         /// <param name="endpoint">Endpoint settings.</param>
@@ -114,7 +130,8 @@ namespace Keyframe.Core.Inference.Providers
                 TimeoutMs = endpoint.TimeoutMs,
                 CallDetailCapture = global::PolyPrompt.Models.CallDetailCapture.None,
                 RedactCredentials = true,
-                RedactMediaInCallDetails = true
+                RedactMediaInCallDetails = true,
+                MaxInlineMediaBytes = endpoint.MaxInlineMediaBytes
             };
 
             string? url = String.IsNullOrWhiteSpace(endpoint.Endpoint) ? null : endpoint.Endpoint.Trim();

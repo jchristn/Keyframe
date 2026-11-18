@@ -164,7 +164,7 @@ namespace Keyframe.Server.Services
             if (context == null) return;
             try
             {
-                if (!_Settings().RequestHistory.Enabled) return;
+                if (!_Settings().RequestHistory.Enable) return;
                 RequestHistoryEntry entry = Build(context, _Settings().RequestHistory);
                 if (!_Queue.Writer.TryWrite(entry)) Interlocked.Increment(ref _Dropped);
             }

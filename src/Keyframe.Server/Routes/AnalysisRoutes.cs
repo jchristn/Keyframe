@@ -62,23 +62,31 @@ namespace Keyframe.Server.Routes
             routes.Add(HttpMethod.POST, "/v1.0/video", RouteAuthEnum.Key, VideoAsync,
                 RouteRegistrar.Meta("analyzeVideo", "Analyze a video", "Analysis",
                     "Queue a video analysis job: scenes, transcript, per-scene and whole-video summaries and fields. Returns 202 with the job. "
+                    + "Scene calls also hear each scene's audio by default (Functions.Scenes.Audio.Enable) when the vision endpoint accepts audio "
+                    + "(Gemini, OpenAiCompatible); otherwise they use frames and transcript, and Listening says why. Scene audio never causes a 400. "
                     + "When Wait is true and the job finishes within WaitTimeoutMs (capped by Jobs.MaxWaitTimeoutMs), returns 200 with the full result; "
                     + "a job that finished without succeeding returns 200 with the job so the caller can read its Error.")
                     .WithRequestBody(RouteRegistrar.Body(typeof(VideoAnalysisRequest), "Video analysis request."))
-                    .WithResponse(200, RouteRegistrar.Json("Finished result (Wait) with Scenes, Transcript, and Telemetry.", typeof(VideoAnalysisResponse)))
+                    .WithResponse(200, RouteRegistrar.Json("Finished result (Wait) with Scenes, Transcript, Listening (when scenes are enabled), and Telemetry.", typeof(VideoAnalysisResponse)))
                     .WithResponse(202, RouteRegistrar.Json("Job accepted. Poll /v1.0/jobs/{id}.", typeof(JobResponse)))
                     .WithResponse(400, RouteRegistrar.Error("Invalid request or unknown endpoint."))
                     .WithResponse(429, RouteRegistrar.Error("The job queue is full.")));
 
             routes.Add(HttpMethod.POST, "/v1.0/audio", RouteAuthEnum.Key, AudioAsync,
                 RouteRegistrar.Meta("analyzeAudio", "Analyze audio", "Analysis",
-                    "Queue an audio analysis job: chunked transcription, then a summary and typed fields from the transcript with the text model. "
+                    "Queue an audio analysis job. By default the listening model hears the audio itself (Listen.Enable, model from Listen.Model or "
+                    + "Inference.DefaultListening): the whole recording when it fits the listen budget, otherwise per-section clips or evenly spaced "
+                    + "excerpts, with the transcript as a hint. Without a usable audio-capable endpoint the analysis falls back to the transcript and the "
+                    + "text model, and Listening.Listened is false with a reason code. Measure (on by default) adds loudness, level, silence, and stereo "
+                    + "measurements with no model calls; Sections splits the recording at silences for per-section functions. "
                     + "Accepts audio files (mp3, wav, flac, m4a or aac, ogg or opus, webm audio) and video files (only the audio track is used). "
-                    + "Defaults: Transcribe and Summarize on, Extract off. Returns 202 with the job (MediaKind Audio). When Wait is true and the job finishes "
+                    + "Defaults: Transcribe, Summarize, Listen, and Measure on; Extract and Sections off. Returns 202 with the job (MediaKind Audio). "
+                    + "Returns 400 when Listen.Model names an endpoint that cannot take audio, when a Flac rendition targets an OpenAiCompatible "
+                    + "endpoint, or when Transcribe is off and no listening endpoint is usable. When Wait is true and the job finishes "
                     + "within WaitTimeoutMs (capped by Jobs.MaxWaitTimeoutMs), returns 200 with the full result; a job that finished without succeeding "
                     + "returns 200 with the job so the caller can read its Error.")
                     .WithRequestBody(RouteRegistrar.Body(typeof(AudioAnalysisRequest), "Audio analysis request."))
-                    .WithResponse(200, RouteRegistrar.Json("Finished result (Wait) with Transcript, Results, Fields, and Telemetry.", typeof(AudioAnalysisResponse)))
+                    .WithResponse(200, RouteRegistrar.Json("Finished result (Wait) with Transcript, Listening, Measurements, Sections, Results, Fields, and Telemetry.", typeof(AudioAnalysisResponse)))
                     .WithResponse(202, RouteRegistrar.Json("Job accepted. Poll /v1.0/jobs/{id}.", typeof(JobResponse)))
                     .WithResponse(400, RouteRegistrar.Error("Invalid request or unknown endpoint."))
                     .WithResponse(429, RouteRegistrar.Error("The job queue is full.")));

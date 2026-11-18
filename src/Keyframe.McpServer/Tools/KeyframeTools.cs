@@ -169,7 +169,18 @@ namespace Keyframe.McpServer.Tools
                                 Enable = new { type = "boolean" },
                                 FramesPerScene = new { type = "integer", description = "1 to 10, default 3." },
                                 Summarize = SummarizeSchema(),
-                                Extract = new { type = "object", properties = new { Enable = new { type = "boolean" }, Fields = FieldsSchema() } }
+                                Extract = new { type = "object", properties = new { Enable = new { type = "boolean" }, Fields = FieldsSchema() } },
+                                Audio = new
+                                {
+                                    type = "object",
+                                    description = "Scene audio, on by default: each scene call also hears that scene's audio when the vision endpoint accepts audio "
+                                        + "(Gemini, OpenAiCompatible). Otherwise scenes use frames and transcript and the result's Listening says why. Never an error.",
+                                    properties = new
+                                    {
+                                        Enable = new { type = "boolean", description = "Default true." },
+                                        Rendition = RenditionSchema()
+                                    }
+                                }
                             }
                         },
                         Transcribe = new
@@ -212,9 +223,13 @@ namespace Keyframe.McpServer.Tools
                 }));
 
             register("keyframe_audio_analyze",
-                "Analyze an audio file (mp3, wav, flac, m4a or aac, ogg or opus, webm audio) or the audio track of a video: a transcript, then a summary and typed fields "
-                + "from the transcript with the text model. Defaults: Transcribe and Summarize on, Extract off (supply Fields to extract). Starts a background job and returns it "
-                + "(poll keyframe_job_get, then keyframe_job_result). Set Wait to true for short recordings to get the result directly. Context and Fields work as in keyframe_image_analyze.",
+                "Analyze an audio file (mp3, wav, flac, m4a or aac, ogg or opus, webm audio) or the audio track of a video. By default a listening model hears the audio itself "
+                + "(Listen), with a transcript as a hint, so it can answer how the recording sounds (live or studio, instruments, mood), and deterministic Measurements "
+                + "(loudness, levels, silence, stereo width) are added with no model calls. Without a usable audio-capable endpoint the analysis falls back to the transcript. "
+                + "Read Listening.Listened (and Listening.Mode, Reason) in the result before trusting an answer about how the audio sounds: false means it came from the transcript only, "
+                + "and Mode Excerpts means only parts were heard. Defaults: Transcribe, Summarize, Listen, and Measure on; Extract and Sections off (supply Fields to extract). "
+                + "Starts a background job and returns it (poll keyframe_job_get, then keyframe_job_result). Set Wait to true for short recordings to get the result directly. "
+                + "Context and Fields work as in keyframe_image_analyze.",
                 new
                 {
                     type = "object",
@@ -225,10 +240,52 @@ namespace Keyframe.McpServer.Tools
                         Summarize = SummarizeSchema(),
                         Fields = FieldsSchema(),
                         Mode = new { type = "string", @enum = new[] { "Combined", "PerField" } },
+                        Listen = new
+                        {
+                            type = "object",
+                            description = "Listening, on by default. Summarize and Fields need Transcribe or Listen.",
+                            properties = new
+                            {
+                                Enable = new { type = "boolean", description = "Default true. False gives transcript-only analysis." },
+                                Model = ModelSchema(),
+                                Rendition = RenditionSchema(),
+                                SampleClips = new { type = "integer", description = "Excerpts heard when the recording is too long to hear whole, 1 to 32, default 4." },
+                                ClipSeconds = new { type = "integer", description = "Seconds per excerpt, 5 to 300, default 30." }
+                            }
+                        },
+                        Measure = new
+                        {
+                            type = "object",
+                            description = "Loudness, levels, silence, and stereo width measured with ffmpeg; no model calls.",
+                            properties = new { Enable = new { type = "boolean", description = "Default true." } }
+                        },
+                        Sections = new
+                        {
+                            type = "object",
+                            description = "Split the recording at silences and summarize or extract per section. With TextModel set, the whole-recording results are reduced from the sections.",
+                            properties = new
+                            {
+                                Enable = new { type = "boolean", description = "Default false." },
+                                Detection = new
+                                {
+                                    type = "object",
+                                    properties = new
+                                    {
+                                        SilenceDb = new { type = "number", description = "-90 to -10, default -40." },
+                                        MinSilenceMs = new { type = "integer", description = "100 to 30000, default 1500." },
+                                        MinSectionMs = new { type = "integer", description = "0 to 600000, default 20000." },
+                                        MaxSectionMs = new { type = "integer", description = "10000 to 3600000, default 600000." },
+                                        MaxSections = new { type = "integer", description = "1 to 1000, default 100." }
+                                    }
+                                },
+                                Summarize = SummarizeSchema(),
+                                Extract = new { type = "object", properties = new { Enable = new { type = "boolean" }, Fields = FieldsSchema() } }
+                            }
+                        },
                         Transcribe = new
                         {
                             type = "object",
-                            description = "Transcription runs by default and is required for Summarize and Fields.",
+                            description = "Transcription runs by default. Summarize and Fields need Transcribe or Listen.",
                             properties = new
                             {
                                 Enable = new { type = "boolean" },
@@ -257,6 +314,9 @@ namespace Keyframe.McpServer.Tools
 
                     if (input.WaitTimeoutMs != null) request.WaitTimeoutMs = input.WaitTimeoutMs.Value;
                     if (input.Transcribe != null) request.Functions.Transcribe = input.Transcribe;
+                    if (input.Listen != null) request.Listen = input.Listen;
+                    if (input.Measure != null) request.Functions.Measure = input.Measure;
+                    if (input.Sections != null) request.Functions.Sections = input.Sections;
                     ApplyFunctions(request.Functions.Summarize, request.Functions.Extract, input.Summarize, input.Fields, input.Mode, true);
 
                     AudioSubmitResult submitted = await _Resolve().Audio.AnalyzeAsync(request, token).ConfigureAwait(false);
@@ -354,7 +414,8 @@ namespace Keyframe.McpServer.Tools
                 (args, token) => Run("keyframe_job_cancel", async () => (object)await _Resolve().Jobs.CancelAsync(RequireJobId(args), token).ConfigureAwait(false)));
 
             register("keyframe_endpoints_list",
-                "Configured model endpoints (API keys masked) with provider availability and health. Use an endpoint Name in Model.Endpoint to choose it.",
+                "Configured model endpoints (API keys masked) with provider availability, capabilities, and health. Use an endpoint Name in Model.Endpoint to choose it. "
+                + "SupportsAudioInput marks endpoints that can listen to audio (use them in keyframe_audio_analyze Listen.Model).",
                 new { type = "object", properties = new { } },
                 (args, token) => Run("keyframe_endpoints_list", async () => (object)await _Resolve().Endpoints.ListAsync(token).ConfigureAwait(false)));
 
@@ -597,6 +658,22 @@ namespace Keyframe.McpServer.Tools
                         Required = new { type = "boolean" }
                     },
                     required = new[] { "Key", "Type", "Prompt" }
+                }
+            };
+        }
+
+        private static object RenditionSchema()
+        {
+            return new
+            {
+                type = "object",
+                description = "Quality of the audio sent to the model; omitted members use the server defaults (mono mp3, 16 kHz, 64 kbps).",
+                properties = new
+                {
+                    Format = new { type = "string", @enum = new[] { "Mp3", "Wav", "Flac" }, description = "OpenAiCompatible endpoints accept only Mp3 and Wav." },
+                    SampleRate = new { type = "integer", description = "8000 to 48000." },
+                    Channels = new { type = "integer", description = "1 or 2." },
+                    BitrateKbps = new { type = "integer", description = "16 to 320, Mp3 only." }
                 }
             };
         }

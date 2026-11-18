@@ -52,6 +52,21 @@ namespace Keyframe.Core.Analysis
         public AudioExtractor Audio { get; }
 
         /// <summary>
+        /// Renders the audio clips sent to listening models.
+        /// </summary>
+        public ListenRenditionExtractor Listen { get; }
+
+        /// <summary>
+        /// Audio measurer (loudness, levels, silence, stereo width).
+        /// </summary>
+        public AudioMeasurer Measurer { get; }
+
+        /// <summary>
+        /// Audio section detector (silence-based).
+        /// </summary>
+        public SectionDetector Sections { get; }
+
+        /// <summary>
         /// Media resolver.
         /// </summary>
         public MediaResolver Resolver { get; }
@@ -88,11 +103,29 @@ namespace Keyframe.Core.Analysis
         /// </summary>
         public Action<AnalysisCompletion>? Completed { get; set; } = null;
 
+        /// <summary>
+        /// Endpoint health, used to fall back when the listening endpoint is unhealthy. Set by the host; null treats
+        /// every endpoint as healthy. Default null.
+        /// </summary>
+        public IEndpointHealthLookup? Health
+        {
+            get
+            {
+                return _Health;
+            }
+            set
+            {
+                _Health = value;
+                Invoker.Health = value;
+            }
+        }
+
         #endregion
 
         #region Private-Members
 
         private bool _Disposed = false;
+        private IEndpointHealthLookup? _Health = null;
 
         #endregion
 
@@ -116,6 +149,9 @@ namespace Keyframe.Core.Analysis
             Scenes = new SceneDetector(Ffmpeg);
             Frames = new FrameExtractor(Ffmpeg);
             Audio = new AudioExtractor(Ffmpeg);
+            Listen = new ListenRenditionExtractor(Ffmpeg);
+            Measurer = new AudioMeasurer(Ffmpeg);
+            Sections = new SectionDetector(Ffmpeg);
             Resolver = new MediaResolver(current.Media);
             Segments = new SegmentExtractor(Ffmpeg, Resolver, Prober);
             if (clients == null)

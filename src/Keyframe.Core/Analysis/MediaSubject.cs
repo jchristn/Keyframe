@@ -37,5 +37,22 @@ namespace Keyframe.Core.Analysis
         /// Images, in order. May be empty for text-only reasoning. Never null.
         /// </summary>
         public List<InferenceImage> Images { get; set; } = new List<InferenceImage>();
+
+        /// <summary>
+        /// Audio clips the model listens to, in order. Empty when not listening. Never null; setting null stores an empty list.
+        /// </summary>
+        public List<InferenceAudio> Audio
+        {
+            get
+            {
+                return _Audio;
+            }
+            set
+            {
+                _Audio = value ?? new List<InferenceAudio>();
+            }
+        }
+
+        private List<InferenceAudio> _Audio = new List<InferenceAudio>();
     }
 }

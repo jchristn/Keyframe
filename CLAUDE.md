@@ -1,8 +1,8 @@
 # Keyframe: Agent Instructions
 
-Read `KEYFRAME_PLAN.md` first. It holds the decisions, the API contract, the phased work plan, and the progress log. Update the status markers and append to the progress log at the end of every working session.
+The active plan is `AUDIO_ENHANCEMENTS_PLAN.md`. Read it first. It holds the decisions, the API contract changes, the phased work plan, and the progress log. Update its status markers and append to its progress log (section 11) at the end of every working session. `archive/KEYFRAME_PLAN.md` is the original build plan, kept for history only; do not read or update it for this work.
 
-The requirement documents in `~/Code/Agents/requirements` are normative. Section 1 of the plan lists the deliberate exceptions (most importantly, authentication is DocumentAtom-style rather than full AAA).
+The requirement documents in `~/Code/Agents/requirements` are normative. Section 2 of the active plan lists the deliberate exceptions (most importantly, authentication is DocumentAtom-style rather than full AAA, and routes use the `/v1.0` prefix).
 
 ## Build and test
 

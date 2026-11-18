@@ -105,7 +105,7 @@ With `Wait: true`, `video.analyze` may resolve with `result` set directly (the j
 
 ## Audio
 
-`audio.analyze` and `audio.analyzeAndWait` work like their video counterparts. Audio files (mp3, wav, flac, m4a or aac, ogg or opus, webm audio) and video files (audio track only) are accepted. `Transcribe` and `Summarize` are on by default and `Extract` is off; when you send a `Functions` object, set `Enable: true` on each function you want.
+`audio.analyze` and `audio.analyzeAndWait` work like their video counterparts. Audio files (mp3, wav, flac, m4a or aac, ogg or opus, webm audio) and video files (audio track only) are accepted. `Transcribe`, `Summarize`, and `Measure` are on by default, and `Extract` and `Sections` are off; when you send a `Functions` object, set `Enable: true` on each function you want (every omitted function keeps its default, so `Transcribe`, `Summarize`, and `Measure` stay on). Summarize and Extract hear the audio through the listening model when one is usable (`Listen.Enable` is true by default), and use the transcript as well when transcription is on.
 
 ```js
 const result = await client.audio.analyzeAndWait({
@@ -123,6 +123,67 @@ console.log(result.Transcript?.Text, result.Results.Summary, result.Telemetry.Qu
 ```
 
 `jobs.getResult(id)` returns the `AudioAnalysisResponse` for audio jobs (in TypeScript, `jobs.getResult<AudioAnalysisResponse>(id)`).
+
+### Listening
+
+`Listening` is always present on an audio result and says whether the model heard the audio. `Listen.Model` names the listening endpoint; omitted, the server uses `Inference.DefaultListening`. `Listen.Rendition` sets the audio quality sent to it, and omitted members use the `Media.Listen*` settings.
+
+```js
+const result = await client.audio.analyzeAndWait({
+  Audio: await mediaFromFile('track07.flac'),
+  Listen: {
+    Model: { Endpoint: 'llama-listen' },
+    Rendition: { Format: 'Mp3', Channels: 2 },
+    SampleClips: 4,
+    ClipSeconds: 30
+  }
+});
+
+const { Listened, Mode, Reason, Endpoint, HeardMs, DurationMs, Clips } = result.Listening;
+if (Listened) console.log(`${Mode} via ${Endpoint}, heard ${HeardMs} of ${DurationMs} ms in ${Clips.length} clips`);
+else console.log(`transcript only: ${Reason}`);
+```
+
+`Mode` is `Full`, `Sections`, `Excerpts`, or `None` on audio (`Scenes` appears only on video). `Reason` is null when the audio was heard, and otherwise `NotRequested` (`Listen.Enable` is false), `NoModelFunctions`, `NoEndpointConfigured`, `EndpointLacksAudioInput`, `EndpointUnhealthy`, or `NoAudioTrack`. `SupportsAudioInput` on each `endpoints.list()` entry shows which endpoints can listen. On video, `Functions.Scenes.Audio` (on by default) attaches each scene's audio to its scene calls, and the result's `Listening` reports the outcome.
+
+### Measurements
+
+`Functions.Measure` is on by default and makes no model calls. With every other function off, the request is a measure-only job.
+
+```js
+const result = await client.audio.analyzeAndWait({
+  Audio: await mediaFromFile('master.wav'),
+  Functions: { Transcribe: { Enable: false }, Summarize: { Enable: false } }
+});
+
+const m = result.Measurements;
+console.log(m.IntegratedLufs, m.TruePeakDbtp, m.ClippingLikely, m.SilenceRatio, m.EffectivelyMono);
+```
+
+Level members are null when ffmpeg could not measure them, and `StereoWidthDb` is null for sources that are not stereo. The thresholds behind `ClippingLikely`, `EffectivelyMono`, and the silence figures are the `Media.Clipping*`, `Media.MonoMaxSideDb`, and `Media.MeasureSilence*` settings.
+
+### Sections
+
+`Functions.Sections` splits the recording at silences and runs its own `Summarize` and `Extract` on each section.
+
+```js
+const result = await client.audio.analyzeAndWait({
+  Audio: await mediaFromFile('concert.mp3'),
+  Functions: {
+    Sections: {
+      Enable: true,
+      Detection: { SilenceDb: -40, MinSilenceMs: 1500, MinSectionMs: 20000 },
+      Summarize: { Enable: true, MaxWords: 40 }
+    }
+  }
+});
+
+for (const section of result.Sections ?? []) {
+  console.log(section.Index, section.StartMs, section.EndMs, section.Results.Summary);
+}
+```
+
+Each section's `StartMs` and `EndMs` can be passed to `segments.get` to cut it back out. Per-section model calls have the purposes `SectionSummarize` and `SectionExtract`.
 
 ## Segments
 
@@ -176,7 +237,7 @@ An `AbortSignal` you pass rejects with the signal's own reason (usually an `Abor
 
 ## Settings
 
-`settings.get()` returns secrets masked as `****` plus the last four characters. Send the object back through `settings.update()` with masked values unchanged and the server keeps the stored secrets. `update` replaces the whole object, so always start from a fresh `get()`. `Analytics` (`Enabled`, `RetentionDays`) and `Media.MaxSegmentMs` and `Media.MaxAudioDurationMs` apply to the routes above.
+`settings.get()` returns secrets masked as `****` plus the last four characters. Send the object back through `settings.update()` with masked values unchanged and the server keeps the stored secrets. `update` replaces the whole object, so always start from a fresh `get()`. `Analytics` (`Enable`, `RetentionDays`) and `Media.MaxSegmentMs` and `Media.MaxAudioDurationMs` apply to the routes above.
 
 ## Browser use
 

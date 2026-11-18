@@ -126,7 +126,7 @@ Analyzes a video. By default it queues a job and returns `JobResponse`; poll `ke
 |---|---|---|---|
 | `Video` | object | yes | `Url` or `Data`, as above |
 | `Context`, `Summarize`, `Fields`, `Mode`, `Model` | | no | Whole-video functions, as in `keyframe_image_analyze` |
-| `Scenes` | object | no | `Enable`, `FramesPerScene` (1 to 10), `Summarize`, `Extract` (`{ "Enable", "Fields" }`), `Detection` (`Threshold`, `MinSceneMs`, `MaxSceneMs`, `MaxScenes`) |
+| `Scenes` | object | no | `Enable`, `FramesPerScene` (1 to 10), `Summarize`, `Extract` (`{ "Enable", "Fields" }`), `Detection` (`Threshold`, `MinSceneMs`, `MaxSceneMs`, `MaxScenes`), `Audio` (`{ "Enable", "Rendition" }`, see below) |
 | `Transcribe` | object | no | `Enable`, `Language` (ISO 639-1; omit to detect) |
 | `TextModel` | object | no | Text-only endpoint for the whole-video summary and fields, computed from scene results and transcript |
 | `Wait` | boolean | no | Default false |
@@ -134,30 +134,43 @@ Analyzes a video. By default it queues a job and returns `JobResponse`; poll `ke
 
 When `Scenes` and `Transcribe` are both off and neither `Summarize` nor `Fields` is given, the tool produces a default whole-video summary.
 
+`Scenes.Audio` is on by default: each scene's Summarize and Extract calls also hear that scene's audio when the vision endpoint accepts audio (`Gemini` or `OpenAiCompatible`). `Scenes.Audio.Rendition` takes `Format` (`Mp3`, `Wav`, or `Flac`; `OpenAiCompatible` endpoints accept only `Mp3` and `Wav`), `SampleRate` (8000 to 48000), `Channels` (1 or 2), and `BitrateKbps` (16 to 320, `Mp3` only); omitted members use the server defaults (mono mp3, 16 kHz, 64 kbps). Scene audio is never an error. When the vision endpoint cannot take audio, is unhealthy, or the video has no audio track, scenes use frames and transcript, and the result's `Listening` says why (`Mode` `None` with a `Reason`). The default Ollama vision endpoints cannot take audio, so set `Model` to an audio-capable vision endpoint to hear scenes. Send `"Audio": { "Enable": false }` to turn it off.
+
 ```json
 {
   "Video": { "Url": "https://download.samplelib.com/mp4/sample-5s.mp4" },
-  "Scenes": { "Enable": true, "Summarize": { "Enable": true, "Style": "Caption" } },
+  "Scenes": { "Enable": true, "Summarize": { "Enable": true, "Style": "Caption" }, "Audio": { "Enable": true } },
   "Transcribe": { "Enable": true },
   "Summarize": { "Enable": true, "MaxWords": 120 }
 }
 ```
 
+The result adds `Listening` whenever scenes are enabled: `Mode` `Scenes` with one `Scene` clip per scene when the scene calls heard audio, otherwise `Mode` `None` and a `Reason` (`NotRequested`, `NoModelFunctions`, `EndpointLacksAudioInput`, `EndpointUnhealthy`, or `NoAudioTrack`).
+
 ### keyframe_audio_analyze
 
-Analyzes an audio file (mp3, wav, flac, m4a or aac, ogg or opus, webm audio) or the audio track of a video file. The recording is transcribed, then the summary and fields run on the transcript with the text model. By default it queues a job and returns `JobResponse` (`MediaKind` `Audio`); poll `keyframe_job_get`, then read `keyframe_job_result`. With `Wait` true it returns the full `AudioAnalysisResponse` when the job finishes in time, or the job when it does not.
+Analyzes an audio file (mp3, wav, flac, m4a or aac, ogg or opus, webm audio) or the audio track of a video file. By default a listening model hears the audio itself, with a transcript as a hint, so it can answer how the recording sounds (live or studio, instruments, mood) and not only what was said. Deterministic `Measurements` (loudness, levels, silence, stereo width) are added with no model calls. Without a usable audio-capable endpoint, the analysis falls back to the transcript and the text model. By default the tool queues a job and returns `JobResponse` (`MediaKind` `Audio`); poll `keyframe_job_get`, then read `keyframe_job_result`. With `Wait` true it returns the full `AudioAnalysisResponse` when the job finishes in time, or the job when it does not.
+
+**Read `Listening.Listened` in the result before trusting any answer about how the audio sounds.** `false` means every answer came from the transcript only, and `Listening.Reason` says why. `Listening.Mode` `Excerpts` means the model heard only parts of the recording (`Listening.Clips` lists them), so treat whole-recording judgments with care.
 
 | Argument | Type | Required | Notes |
 |---|---|---|---|
 | `Audio` | object | yes | `Url` or `Data`, as above |
-| `Context`, `Summarize`, `Fields`, `Mode` | | no | As in `keyframe_image_analyze`, applied to the transcript |
-| `Transcribe` | object | no | `Enable` (default true; required for `Summarize` and `Fields`), `Language` (ISO 639-1; omit to detect), `Prompt` (vocabulary hints) |
+| `Context`, `Summarize`, `Fields`, `Mode` | | no | As in `keyframe_image_analyze`. They run on the audio when the model listens, otherwise on the transcript |
+| `Listen` | object | no | Listening, on by default. `Enable` (default true; false gives transcript-only analysis), `Model` (`{ "Endpoint", "Name" }` of an endpoint with `SupportsAudioInput`; default `Inference.DefaultListening`), `Rendition` (`Format` `Mp3`, `Wav`, or `Flac`; `SampleRate` 8000 to 48000; `Channels` 1 or 2; `BitrateKbps` 16 to 320, `Mp3` only; omitted members use mono mp3, 16 kHz, 64 kbps), `SampleClips` (excerpts heard when the recording is too long to hear whole, 1 to 32, default 4), `ClipSeconds` (seconds per excerpt, 5 to 300, default 30) |
+| `Measure` | object | no | `Enable` (default true). Loudness, levels, silence, and stereo width measured with ffmpeg; no model calls |
+| `Sections` | object | no | `Enable` (default false), `Detection` (`SilenceDb` -90 to -10, default -40; `MinSilenceMs` 100 to 30000, default 1500; `MinSectionMs` 0 to 600000, default 20000; `MaxSectionMs` 10000 to 3600000, default 600000; `MaxSections` 1 to 1000, default 100), `Summarize`, `Extract` (`{ "Enable", "Fields" }`). Splits the recording at silences and summarizes or extracts per section. With `TextModel` set, the whole-recording results are reduced from the sections |
+| `Transcribe` | object | no | `Enable` (default true), `Language` (ISO 639-1; omit to detect), `Prompt` (vocabulary hints). `Summarize` and `Fields` need `Transcribe` or `Listen` |
 | `TranscriptionModel` | object | no | `{ "Endpoint", "Name" }` of a transcription endpoint. Default `Inference.DefaultTranscription` |
-| `TextModel` | object | no | Text endpoint for the summary and fields. Default `Inference.DefaultText` |
+| `TextModel` | object | no | Text endpoint for the summary and fields when the analysis does not listen, and for reducing section results. Default `Inference.DefaultText` |
 | `Wait` | boolean | no | Default false |
 | `WaitTimeoutMs` | integer | no | Default 120000, capped by the server |
 
-Defaults match the REST route: transcription and the summary are on, extraction is off until `Fields` is supplied.
+`Listen`, `Measure`, and `Sections` are top-level arguments here; the tool places `Measure` and `Sections` under `Functions` in the REST request. Defaults match the REST route: Transcribe, Summarize, Listen, and Measure are on; extraction is off until `Fields` is supplied, and Sections are off. A request with Transcribe and Summarize off and no `Fields` is a measure-only job.
+
+The tool fails with a `400` tool error when `Listen.Model` names an endpoint that is missing, inactive, not a completion endpoint, or cannot take audio; when the rendition is `Flac` and the listening endpoint is `OpenAiCompatible`; or when `Transcribe` is off and no listening endpoint is usable. A listening endpoint that is down is not an error: the job falls back to the transcript with `Listening.Reason` `EndpointUnhealthy`.
+
+A meeting, transcribed and summarized:
 
 ```json
 {
@@ -169,7 +182,55 @@ Defaults match the REST route: transcription and the summary are on, extraction 
 }
 ```
 
-The result has `Transcript` (`Language`, `Text`, `Segments` with `StartMs` and `EndMs`), `Results`, `Fields`, `Properties`, and `Telemetry` (including `QueueWaitMs` and, per model call, `TimeToFirstTokenMs`, `GenerationMs`, `TokensPerSecond`, and `QueueMs`).
+Listening to a music track, with a named listening endpoint:
+
+```json
+{
+  "Audio": { "Url": "https://example.com/track07.mp3" },
+  "Listen": { "Enable": true, "Model": { "Endpoint": "llama-listen" } },
+  "Context": [ { "Label": "Artist", "Text": "Archive of a touring rock band, 1978 to 1994." } ],
+  "Summarize": { "Enable": true, "MaxWords": 80 },
+  "Fields": [
+    { "Key": "recording", "Type": "Enum", "Options": [ "Live", "Studio", "Rehearsal", "Demo" ], "Prompt": "How was this recorded?" },
+    { "Key": "instruments", "Type": "StringList", "Prompt": "Instruments you can hear." }
+  ],
+  "Wait": true
+}
+```
+
+Part of the result:
+
+```json
+{
+  "Listening": {
+    "Listened": true, "Mode": "Excerpts", "Reason": null,
+    "Endpoint": "llama-listen", "Model": "voxtral-mini-3b",
+    "Rendition": { "Format": "Mp3", "SampleRate": 16000, "Channels": 1, "BitrateKbps": 64 },
+    "DurationMs": 241000, "HeardMs": 120000,
+    "Clips": [
+      { "Scope": "Recording", "Index": null, "StartMs": 0, "EndMs": 30000, "SizeBytes": 241005 },
+      { "Scope": "Recording", "Index": null, "StartMs": 70333, "EndMs": 100333, "SizeBytes": 241005 },
+      { "Scope": "Recording", "Index": null, "StartMs": 140666, "EndMs": 170666, "SizeBytes": 241005 },
+      { "Scope": "Recording", "Index": null, "StartMs": 211000, "EndMs": 241000, "SizeBytes": 241005 }
+    ]
+  },
+  "Results": { "Summary": "A loud, crowded live rock performance ...", "recording": "Live", "instruments": [ "electric guitar", "bass guitar", "drums", "vocals" ] },
+  "Warnings": [ "Listened to 4 excerpts (2m00s) of a 4m01s recording." ]
+}
+```
+
+Sections of a long recording, reduced to a whole-recording summary with the text model:
+
+```json
+{
+  "Audio": { "Url": "https://example.com/live-set.mp3" },
+  "TextModel": { "Endpoint": "ollama-gpt-oss-20b" },
+  "Summarize": { "Enable": true, "MaxWords": 120 },
+  "Sections": { "Enable": true, "Summarize": { "Enable": true, "Style": "Caption" } }
+}
+```
+
+The result has `Transcript` (`Language`, `Text`, `Segments` with `StartMs` and `EndMs`), `Listening` (always present: `Listened`, `Mode` `Full`, `Excerpts`, `Sections`, or `None`, `Reason`, `Endpoint`, `Model`, `Rendition`, `DurationMs`, `HeardMs`, `Clips`), `Measurements` (when `Measure` is on), `Sections` (when `Sections` is on: `Index`, `StartMs`, `EndMs`, `DurationMs`, `TranscriptText`, `Results`, `Fields`, `Errors`), `Results`, `Fields`, `Properties`, and `Telemetry` (including `QueueWaitMs` and, per model call, `TimeToFirstTokenMs`, `GenerationMs`, `TokensPerSecond`, `QueueMs`, and `InputAudioBytes`). `Listening.Reason` codes are `NotRequested`, `NoModelFunctions`, `NoEndpointConfigured`, `EndpointLacksAudioInput`, `EndpointUnhealthy`, and `NoAudioTrack`; [REST_API.md](REST_API.md#listening) explains each.
 
 ### keyframe_segment
 
@@ -204,7 +265,7 @@ Returns `JobResponse`: `Status` (`Queued`, `Running`, `Succeeded`, `Failed`, `Ca
 |---|---|---|
 | `JobId` | string | yes |
 
-Returns the result of a succeeded job. For a video job, the `VideoAnalysisResponse`: `Results`, `Fields`, `Scenes` (with `StartMs`, `EndMs`, keyframes, per-scene results), `Transcript`, `Properties`, and `Telemetry`. For an audio job, the `AudioAnalysisResponse`: the same members without `Scenes`. Fails with `409` until the job has succeeded.
+Returns the result of a succeeded job. For a video job, the `VideoAnalysisResponse`: `Results`, `Fields`, `Scenes` (with `StartMs`, `EndMs`, keyframes, per-scene results), `Transcript`, `Properties`, and `Telemetry`. For an audio job, the `AudioAnalysisResponse`: the same members without `Scenes`, plus `Listening`, `Measurements`, and `Sections`. A video result also has `Listening` when scenes ran. Fails with `409` until the job has succeeded.
 
 ### keyframe_job_list
 
@@ -226,7 +287,7 @@ Cancels a queued or running job and returns it. Fails with `409` when the job al
 
 ### keyframe_endpoints_list
 
-No arguments. Returns the configured model endpoints with API keys masked, whether each provider is available in this build, its capabilities (`SupportsImages`, `SupportsStructuredOutput`, `SupportsTranscription`), and last observed health. Use a `Name` from this list in `Model.Endpoint`.
+No arguments. Returns the configured model endpoints with API keys masked, whether each provider is available in this build, its capabilities (`SupportsImages`, `SupportsStructuredOutput`, `SupportsTranscription`, `SupportsAudioInput`), and last observed health. Use a `Name` from this list in `Model.Endpoint`. `SupportsAudioInput` marks the endpoints that can listen to audio (Gemini, OpenAI-compatible, and mock completion endpoints); use one of those in `keyframe_audio_analyze` `Listen.Model`, or as the video `Model` to hear scene audio.
 
 ### keyframe_analytics_summary
 

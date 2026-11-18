@@ -42,7 +42,7 @@ namespace Keyframe.Server.Routes
         public void Register(RouteRegistrar routes)
         {
             routes.Add(HttpMethod.GET, "/v1.0/endpoints", RouteAuthEnum.Key, ListAsync,
-                RouteRegistrar.Meta("listEndpoints", "List model endpoints", "Endpoints", "Configured completion and transcription endpoints with API keys masked, provider availability, and last observed health. Edit endpoints through the settings API.")
+                RouteRegistrar.Meta("listEndpoints", "List model endpoints", "Endpoints", "Configured completion and transcription endpoints with API keys masked, provider availability, capabilities (SupportsImages, SupportsStructuredOutput, SupportsTranscription, SupportsAudioInput), and last observed health. Edit endpoints through the settings API.")
                     .WithResponse(200, RouteRegistrar.Json("Endpoints.", typeof(List<EndpointResponse>))));
 
             routes.Add(HttpMethod.POST, "/v1.0/endpoints/{name}/test", RouteAuthEnum.Admin, TestAsync,

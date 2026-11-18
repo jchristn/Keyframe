@@ -62,6 +62,8 @@ namespace Keyframe.Core.Observability
         private static readonly Histogram<double> _JobQueueDuration = _Meter.CreateHistogram<double>(TelemetryNames.JobQueueDuration, "s", "Time a job waited in the queue.");
         private static readonly Histogram<double> _AnalysisRealtimeFactor = _Meter.CreateHistogram<double>(TelemetryNames.AnalysisRealtimeFactor, "1", "Analysis time divided by media duration.");
         private static readonly Counter<long> _AnalyticsWrites = _Meter.CreateCounter<long>(TelemetryNames.AnalyticsWrites, "{analysis}", "Analytics rows written.");
+        private static readonly Histogram<long> _ModelInputAudioBytes = _Meter.CreateHistogram<long>(TelemetryNames.ModelInputAudioBytes, "By", "Bytes of audio attached to completion calls.");
+        private static readonly Counter<long> _AnalysisListen = _Meter.CreateCounter<long>(TelemetryNames.AnalysisListenTotal, "{analysis}", "Analyses by listening mode and skip reason.");
 
         #endregion
 
@@ -215,6 +217,46 @@ namespace Keyframe.Core.Observability
                     _ModelTokens.Add(promptTokens.Value, new KeyValuePair<string, object?>("provider", provider), new KeyValuePair<string, object?>("kind", "prompt"));
                 if (completionTokens.HasValue && completionTokens.Value > 0)
                     _ModelTokens.Add(completionTokens.Value, new KeyValuePair<string, object?>("provider", provider), new KeyValuePair<string, object?>("kind", "completion"));
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        /// <summary>
+        /// Record the bytes of audio attached to one completion call. Calls without audio are not recorded.
+        /// </summary>
+        /// <param name="provider">Provider label.</param>
+        /// <param name="purpose">Purpose label.</param>
+        /// <param name="bytes">Audio bytes attached to the call.</param>
+        public static void RecordModelInputAudio(string provider, string purpose, long bytes)
+        {
+            if (bytes <= 0) return;
+            try
+            {
+                _ModelInputAudioBytes.Record(bytes,
+                    new KeyValuePair<string, object?>("provider", provider),
+                    new KeyValuePair<string, object?>("purpose", purpose));
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        /// <summary>
+        /// Record the listening outcome of one analysis, including fallbacks.
+        /// </summary>
+        /// <param name="mediaKind">Media kind label (audio or video).</param>
+        /// <param name="mode">Listening mode label.</param>
+        /// <param name="reason">Skip reason label, or "none" when listening happened.</param>
+        public static void RecordListen(string mediaKind, string mode, string reason)
+        {
+            try
+            {
+                _AnalysisListen.Add(1,
+                    new KeyValuePair<string, object?>("media_kind", mediaKind),
+                    new KeyValuePair<string, object?>("mode", mode),
+                    new KeyValuePair<string, object?>("reason", reason));
             }
             catch (Exception)
             {

@@ -5,6 +5,8 @@ import LoginView from './LoginView';
 import JobsView from './JobsView';
 import SettingsView from './SettingsView';
 import ServerInfoView from './ServerInfoView';
+import EndpointsView from './EndpointsView';
+import { ENDPOINTS } from '../test/fixtures';
 import { ApiError } from '../utils/api';
 import { makeAuth, renderWithProviders } from '../test/render';
 
@@ -116,5 +118,71 @@ describe('ServerInfoView', () => {
     renderWithProviders(<ServerInfoView />, { auth: makeAuth() });
     expect(screen.getByText('http://127.0.0.1:8700/openapi.json')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Copy OpenAPI document' })).toBeInTheDocument();
+  });
+});
+
+describe('EndpointsView capabilities', () => {
+  it('shows capability badges with icon and text, including audio input, and filters by capability', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<EndpointsView />, { auth: makeAuth({ apiClient: { listEndpoints: vi.fn().mockResolvedValue(ENDPOINTS) } }) });
+    const table = await screen.findByRole('table');
+    const row = within(table).getByText('llama-listen').closest('tr');
+    for (const name of ['Images', 'Structured output', 'Audio input']) {
+      const badge = within(row).getByText(name);
+      expect(badge.querySelector('svg')).not.toBeNull();
+    }
+    const whisper = within(table).getByText('whisper').closest('tr');
+    expect(within(whisper).getByText('Transcription', { selector: '.capability-badge' })).toBeInTheDocument();
+    expect(within(whisper).queryByText('Audio input')).not.toBeInTheDocument();
+    const ollama = within(table).getByText('ollama-gemma3-4b').closest('tr');
+    expect(within(ollama).queryByText('Audio input')).not.toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText('Capability'), 'audioInput');
+    expect(within(screen.getByRole('table')).getByText('llama-listen')).toBeInTheDocument();
+    expect(within(screen.getByRole('table')).queryByText('ollama-gemma3-4b')).not.toBeInTheDocument();
+  });
+});
+
+describe('SettingsView listening settings', () => {
+  const settings = {
+    SettingsFile: '/app/keyframe.json',
+    RestartRequired: false,
+    Fields: [{ Path: 'Media.ListenFormat', ApplyMode: 'Live' }, { Path: 'Inference.Endpoints[].MaxInlineMediaBytes', ApplyMode: 'Live' }],
+    Settings: {
+      Rest: { Hostname: '127.0.0.1', Port: 8700, Ssl: false, MaxRequestBodyBytes: 1048576 },
+      Auth: { AccessKeys: [] },
+      Database: { Type: 'Sqlite', Filename: 'keyframe.db' },
+      Jobs: {},
+      RequestHistory: {},
+      Logging: { Servers: [] },
+      Telemetry: {},
+      Inference: {
+        DefaultVision: 'ollama',
+        DefaultListening: 'llama-listen',
+        HealthProbeIntervalMs: 300000,
+        UnhealthyProbeIntervalMs: 15000,
+        Endpoints: [
+          { Name: 'ollama', Provider: 'Ollama', Kind: 'Completion', MaxInlineMediaBytes: 20971520, MaxListenSeconds: null, Active: true },
+          { Name: 'llama-listen', Provider: 'OpenAiCompatible', Kind: 'Completion', MaxInlineMediaBytes: 20971520, MaxListenSeconds: 120, Active: true },
+          { Name: 'gemini', Provider: 'Gemini', Kind: 'Completion', MaxInlineMediaBytes: 20971520, MaxListenSeconds: null, Active: true }
+        ]
+      },
+      Media: { MaxAudioDurationMs: 14400000, ListenFormat: 'Mp3', ListenSampleRate: 16000, ListenChannels: 1, ListenBitrateKbps: 64, MaxListenSeconds: 1200, MeasureSilenceDb: -50, MeasureMinSilenceMs: 500, ClippingTruePeakDbtp: -0.1, ClippingMinPeaksPerMinute: 10, MonoMaxSideDb: -40 }
+    }
+  };
+
+  it('offers only audio-capable endpoints as the default listening endpoint and shows the new media settings', async () => {
+    renderWithProviders(<SettingsView />, { auth: makeAuth({ apiClient: { getSettings: vi.fn().mockResolvedValue(settings) } }) });
+    const select = await screen.findByLabelText('Default listening endpoint');
+    expect(select).toHaveValue('llama-listen');
+    const names = within(select).getAllByRole('option').map((o) => o.value);
+    expect(names).toEqual(['', 'llama-listen', 'gemini']);
+    expect(screen.getByLabelText('Max audio duration (ms)')).toHaveValue(14400000);
+    expect(screen.getByLabelText(/Listen format/)).toHaveValue('Mp3');
+    expect(screen.getByLabelText('Silence threshold (dBFS)')).toHaveValue(-50);
+    expect(screen.getByLabelText('Unhealthy re-probe interval (ms)')).toHaveValue(15000);
+    expect(screen.getAllByLabelText(/Listen budget \(seconds\)/).length).toBe(4);
+    expect(screen.getAllByLabelText(/Max inline media per call/)[0]).toHaveValue(20971520);
+    expect(screen.getByText('Listening audio')).toBeInTheDocument();
+    expect(screen.getByText('Measurement thresholds')).toBeInTheDocument();
   });
 });

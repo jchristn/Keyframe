@@ -133,11 +133,21 @@ namespace Keyframe.Core.Requests
             ValidateModel(request.TranscriptionModel, "TranscriptionModel", errors);
 
             AudioFunctionsSpec functions = request.Functions;
-            if (!functions.Summarize.Enable && !functions.Extract.Enable && !functions.Transcribe.Enable)
-                errors.Add("Enable at least one function (Transcribe, Summarize, or Extract).");
+            SectionsSpec sections = functions.Sections;
+            bool sectionFunctions = sections.Summarize.Enable || sections.Extract.Enable;
+            if (!functions.Summarize.Enable && !functions.Extract.Enable && !functions.Transcribe.Enable && !functions.Measure.Enable && !sections.Enable)
+                errors.Add("Enable at least one function (Transcribe, Summarize, Extract, Measure, or Sections).");
 
-            if ((functions.Summarize.Enable || functions.Extract.Enable) && !functions.Transcribe.Enable)
-                errors.Add("Functions.Summarize and Functions.Extract run on the transcript; enable Functions.Transcribe.");
+            if ((functions.Summarize.Enable || functions.Extract.Enable || (sections.Enable && sectionFunctions)) && !functions.Transcribe.Enable && !request.Listen.Enable)
+                errors.Add("Functions.Summarize, Functions.Extract, and section functions need evidence; enable Functions.Transcribe or Listen.");
+
+            if (sectionFunctions && !sections.Enable)
+                errors.Add("Functions.Sections.Summarize and Functions.Sections.Extract require Functions.Sections.Enable.");
+            if (sections.Detection.MaxSectionMs < sections.Detection.MinSectionMs)
+                errors.Add("Functions.Sections.Detection.MaxSectionMs must be at least MinSectionMs.");
+            if (sections.Enable) ValidateFunctions(sections.Summarize, sections.Extract, "Functions.Sections", errors);
+
+            ValidateModel(request.Listen.Model, "Listen.Model", errors);
 
             ValidateFunctions(functions.Summarize, functions.Extract, "Functions", errors);
             ValidateTranscribe(functions.Transcribe, errors);

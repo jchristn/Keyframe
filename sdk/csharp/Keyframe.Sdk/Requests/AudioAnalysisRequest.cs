@@ -62,8 +62,24 @@ namespace Keyframe.Sdk.Requests
         public ModelSelection? TranscriptionModel { get; set; } = null;
 
         /// <summary>
-        /// Text endpoint and model for Summarize and Extract on the transcript. Null uses the default text endpoint,
-        /// then the default vision endpoint.
+        /// Listening options. Never null; by default the listening model hears the audio (Listen.Enable true).
+        /// </summary>
+        public ListenSpec Listen
+        {
+            get
+            {
+                return _Listen;
+            }
+            set
+            {
+                _Listen = value ?? new ListenSpec();
+            }
+        }
+
+        /// <summary>
+        /// Text endpoint and model for Summarize and Extract on the transcript when the analysis does not listen, and for
+        /// reducing section results to whole-recording results. Null uses the default text endpoint, then the default
+        /// vision endpoint.
         /// </summary>
         public ModelSelection? TextModel { get; set; } = null;
 
@@ -94,6 +110,7 @@ namespace Keyframe.Sdk.Requests
         private List<ContextItem> _Context = new List<ContextItem>();
         private int _WaitTimeoutMs = 120000;
         private AudioFunctionsSpec _Functions = new AudioFunctionsSpec();
+        private ListenSpec _Listen = new ListenSpec();
 
         #endregion
     }

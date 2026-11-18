@@ -16,4 +16,8 @@
     <PackageReference Include="Touchstone.Core" Version="1.1.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="TestData\**\*.txt" LogicalName="Test.Shared.Data.%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
 </Project>

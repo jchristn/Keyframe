@@ -80,7 +80,8 @@
     "unhealthy": "Fehlerhaft",
     "unreachable": "Nicht erreichbar",
     "valid": "Gültig",
-    "invalid": "Ungültig"
+    "invalid": "Ungültig",
+    "notChecked": "Noch nicht geprüft"
   },
   "topbar": {
     "toggleNav": "Navigation ein-/ausblenden",
@@ -337,7 +338,8 @@
     "name": "Modell überschreiben",
     "namePlaceholder": "Standardmodell des Endpunkts",
     "textHelp": "Der Text-Endpunkt übernimmt reine Textschritte wie die Zusammenfassung des gesamten Videos. Standard ist Inference.DefaultText, danach der Vision-Endpunkt.",
-    "transcriptionEndpoint": "Transkriptions-Endpunkt"
+    "transcriptionEndpoint": "Transkriptions-Endpunkt",
+    "listeningEndpoint": "Hör-Endpunkt"
   },
   "summarize": {
     "enable": "Zusammenfassen",
@@ -368,7 +370,9 @@
       "fields": "Felder",
       "telemetry": "Telemetrie",
       "properties": "Eigenschaften",
-      "raw": "Roh-JSON"
+      "raw": "Roh-JSON",
+      "measurements": "Messwerte",
+      "sections": "Abschnitte"
     },
     "columns": {
       "key": "Schlüssel",
@@ -438,6 +442,20 @@
       "done": "Analyse in {{duration}} abgeschlossen.",
       "partial": "Analyse in {{duration}} mit Fehlern abgeschlossen. Prüfen Sie das Ergebnis.",
       "canceled": "Analyse abgebrochen."
+    },
+    "audioQuality": {
+      "title": "Audioqualität",
+      "help": "Qualität des Audios, das das Modell hört. Höhere Qualität bedeutet weniger Minuten pro Aufruf, daher wechseln lange Aufnahmen früher zu Ausschnitten oder kürzeren Clips.",
+      "custom": "Benutzerdefiniert",
+      "serverDefault": "Serverstandard",
+      "serverDefaultValue": "Serverstandard ({{value}})",
+      "format": "Format",
+      "sampleRate": "Abtastrate",
+      "channels": "Kanäle",
+      "bitrate": "Bitrate (kbps)",
+      "bitrateHelp": "16 bis 320 kbps.",
+      "bitrateMp3Only": "Gilt nur für MP3. Wählen Sie MP3 als Format, um sie festzulegen.",
+      "flacRejected": "OpenAI-kompatible Endpunkte wie llama-server akzeptieren nur MP3 oder WAV. Eine FLAC-Anfrage an einen solchen Endpunkt wird abgelehnt."
     }
   },
   "analyzeImage": {
@@ -486,7 +504,15 @@
     },
     "languagePlaceholder": "en",
     "emptyTitle": "Noch kein Video-Job",
-    "emptyMessage": "Wählen Sie oben eine Datei oder URL und senden Sie sie ab. Fortschritt, Szenen, Transkript und Ergebnisse erscheinen hier."
+    "emptyMessage": "Wählen Sie oben eine Datei oder URL und senden Sie sie ab. Fortschritt, Szenen, Transkript und Ergebnisse erscheinen hier.",
+    "sceneAudio": {
+      "title": "Szenenaudio",
+      "enable": "Audio jeder Szene an das Vision-Modell senden",
+      "help": "{{name}} akzeptiert Audioeingabe, daher wird jede Szene anhand von Bildern, Transkript und Ton bewertet.",
+      "helpUnknown": "Wird verwendet, wenn der Vision-Endpunkt Audioeingabe akzeptiert (Gemini oder OpenAI-kompatibel). Andernfalls nutzen Szenen nur Bilder und Transkript.",
+      "noAudioInput": "{{name}} akzeptiert keine Audioeingabe. Szenen nutzen nur Bilder und Transkript.",
+      "offHelp": "Szenen nutzen nur Bilder und Transkript."
+    }
   },
   "samples": {
     "image": {
@@ -502,7 +528,8 @@
       "showsText": "Ist deutlich sichtbarer Text im Bild zu sehen?"
     },
     "audio": {
-      "speakerCount": "Wie viele verschiedene Sprecher gibt es?"
+      "speakerCount": "Wie viele verschiedene Sprecher gibt es?",
+      "sectionTopic": "Worum geht es in diesem Teil der Aufnahme?"
     }
   },
   "home": {
@@ -659,7 +686,9 @@
       "scenes": "Szenen",
       "transcript": "Transkript",
       "telemetry": "Telemetrie",
-      "raw": "Roh-JSON"
+      "raw": "Roh-JSON",
+      "sections": "Abschnitte",
+      "measurements": "Messwerte"
     },
     "wholeResults": "Ergebnisse für das gesamte Video",
     "noScenes": "Die Szenenerkennung war deaktiviert oder hat keine Szenen gefunden.",
@@ -676,7 +705,8 @@
     "noTranscript": "Die Transkription war deaktiviert oder das Video hat keinen Ton.",
     "noTranscriptMatches": "Keine passenden Transkriptsegmente.",
     "transcriptLanguage": "Sprache: {{language}}",
-    "searchTranscript": "Transkript durchsuchen"
+    "searchTranscript": "Transkript durchsuchen",
+    "wholeRecordingResults": "Ergebnisse der gesamten Aufnahme"
   },
   "endpoints": {
     "title": "Endpunkte",
@@ -695,12 +725,14 @@
       "timeout": "Timeout",
       "apiKey": "API-Schlüssel",
       "lastChecked": "Zuletzt geprüft",
-      "test": "Test"
+      "test": "Test",
+      "capabilities": "Fähigkeiten"
     },
     "filters": {
       "kind": "Art",
       "search": "Suche",
-      "searchPlaceholder": "Name, Anbieter oder Modell"
+      "searchPlaceholder": "Name, Anbieter oder Modell",
+      "capability": "Fähigkeit"
     },
     "localFilterNote": "{{shown}} von {{total}} angezeigt. Die Filterung erfolgt lokal; der Server liefert alle Endpunkte.",
     "default": "Standard",
@@ -724,6 +756,17 @@
       "testOk": "Endpunkt {{name}} hat in {{duration}} geantwortet.",
       "testFailed": "Endpunkt {{name}} hat den Test nach {{duration}} nicht bestanden.",
       "testError": "Endpunkt {{name}} konnte nicht getestet werden."
+    },
+    "capabilities": {
+      "images": "Bilder",
+      "imagesHelp": "Akzeptiert Bilder und kann daher Bilder, Einzelbilder und Szenen analysieren.",
+      "structuredOutput": "Strukturierte Ausgabe",
+      "structuredOutputHelp": "Erhält ein natives JSON-Antwortformat für die Feldextraktion.",
+      "audioInput": "Audioeingabe",
+      "audioInputHelp": "Akzeptiert Audio im Chat und kann daher Hör-Endpunkt sein und Szenenaudio hören.",
+      "transcription": "Transkription",
+      "transcriptionHelp": "Wandelt Sprache in Text um.",
+      "noAudioInputHelp": "Dieser Anbieter akzeptiert keine Audioeingabe und kann daher kein Hör-Endpunkt sein."
     }
   },
   "requestHistory": {
@@ -776,7 +819,7 @@
     },
     "jsonTitle": "Anfrage-JSON",
     "emptyTitle": "Kein gespeicherter Verkehr",
-    "emptyMessage": "Anfragen erscheinen hier, sobald der Server sie verarbeitet. Bleibt die Liste leer, prüfen Sie, ob RequestHistory.Enabled in den Einstellungen aktiviert ist.",
+    "emptyMessage": "Anfragen erscheinen hier, sobald der Server sie verarbeitet. Bleibt die Liste leer, prüfen Sie, ob RequestHistory.Enable in den Einstellungen aktiviert ist.",
     "emptyFiltered": "Keine Anfragen entsprechen diesen Filtern",
     "emptyFilteredMessage": "Setzen Sie die Filter zurück, erweitern Sie sie oder wählen Sie einen anderen Zeitraum.",
     "inspector": {
@@ -937,7 +980,10 @@
       "grpc": "gRPC",
       "httpprotobuf": "HTTP (protobuf)",
       "Completion": "Completion",
-      "Transcription": "Transkription"
+      "Transcription": "Transkription",
+      "Mp3": "MP3",
+      "Wav": "WAV",
+      "Flac": "FLAC"
     },
     "severity": {
       "0": "0 Debug",
@@ -979,7 +1025,7 @@
       },
       "media": {
         "title": "Medien",
-        "help": "ffmpeg, Download-Limits und Bildgrößen."
+        "help": "ffmpeg, Download-Limits, Bildgrößen, Höraudio und Messschwellen."
       },
       "jobs": {
         "title": "Jobs",
@@ -1052,8 +1098,13 @@
           "TimeoutMs": "Timeout (ms)",
           "Temperature": "Temperatur",
           "MaxOutputTokens": "Max. Ausgabe-Tokens",
-          "Active": "Aktiv"
-        }
+          "Active": "Aktiv",
+          "MaxInlineMediaBytes": "Max. Inline-Medien je Aufruf",
+          "MaxListenSeconds": "Hörbudget (Sekunden)"
+        },
+        "DefaultListening": "Standard-Hör-Endpunkt",
+        "HealthProbeIntervalMs": "Prüfintervall (ms)",
+        "UnhealthyProbeIntervalMs": "Prüfintervall bei Fehler (ms)"
       },
       "Media": {
         "TempDirectory": "Temporäres Verzeichnis",
@@ -1069,7 +1120,18 @@
         "FfmpegTimeoutMs": "ffmpeg-Timeout (ms)",
         "MaxVideoDurationMs": "Max. Videodauer (ms)",
         "TranscriptionChunkSeconds": "Transkriptionsabschnitt (Sekunden)",
-        "MaxSegmentMs": "Max. Segmentlänge (ms)"
+        "MaxSegmentMs": "Max. Segmentlänge (ms)",
+        "MaxAudioDurationMs": "Max. Audiodauer (ms)",
+        "ListenFormat": "Hörformat",
+        "ListenSampleRate": "Hör-Abtastrate (Hz)",
+        "ListenChannels": "Hörkanäle",
+        "ListenBitrateKbps": "Hör-Bitrate (kbps, nur MP3)",
+        "MaxListenSeconds": "Hörbudget (Sekunden)",
+        "MeasureSilenceDb": "Stilleschwelle (dBFS)",
+        "MeasureMinSilenceMs": "Min. Stille (ms)",
+        "ClippingTruePeakDbtp": "Clipping-True-Peak (dBTP)",
+        "ClippingMinPeaksPerMinute": "Clipping-Spitzen pro Minute",
+        "MonoMaxSideDb": "Mono-Schwelle (dB)"
       },
       "Jobs": {
         "MaxConcurrentJobs": "Max. gleichzeitige Jobs",
@@ -1078,7 +1140,7 @@
         "MaxWaitTimeoutMs": "Max. Warte-Timeout (ms)"
       },
       "RequestHistory": {
-        "Enabled": "Anfragen erfassen",
+        "Enable": "Anfragen erfassen",
         "MaxRequestBodyBytes": "Max. erfasster Anfrage-Body",
         "MaxResponseBodyBytes": "Max. erfasster Antwort-Body",
         "RetentionDays": "Aufbewahrung (Tage)"
@@ -1112,8 +1174,19 @@
         "TraceSamplingRatio": "Trace-Sampling-Rate"
       },
       "Analytics": {
-        "Enabled": "Analytics aufzeichnen",
+        "Enable": "Analytics aufzeichnen",
         "RetentionDays": "Aufbewahrung (Tage)"
+      }
+    },
+    "audioInputOnly": "Nur Endpunkte, deren Anbieter Audioeingabe akzeptiert (Gemini, OpenAI-kompatibel), werden aufgeführt.",
+    "subgroups": {
+      "listen": {
+        "title": "Höraudio",
+        "help": "Standardwerte für das an Hörmodelle gesendete Audio, wenn eine Anfrage Listen.Rendition nicht setzt."
+      },
+      "measure": {
+        "title": "Messschwellen",
+        "help": "Schwellen für die Werte zu Stille, Clipping und Mono unter Messwerte."
       }
     }
   },
@@ -1220,7 +1293,11 @@
       "Scenes": "Szenen",
       "Summarize": "Zusammenfassen",
       "Extract": "Extrahieren",
-      "Reduce": "Zusammenführen"
+      "Reduce": "Zusammenführen",
+      "Measure": "Messen",
+      "SectionDetection": "Abschnittserkennung",
+      "ListenExtraction": "Höraudio",
+      "Sections": "Abschnitte"
     },
     "progressStage": {
       "Queued": "In Warteschlange",
@@ -1234,23 +1311,70 @@
       "Scenes": "Szenen werden analysiert",
       "Reduce": "Video wird zusammengefasst",
       "Summarize": "Wird zusammengefasst",
-      "Extract": "Felder werden extrahiert"
+      "Extract": "Felder werden extrahiert",
+      "Complete": "Fertig",
+      "Measure": "Audio wird gemessen",
+      "SectionDetection": "Abschnitte werden erkannt",
+      "Listen": "Höraudio wird vorbereitet",
+      "ListenExtraction": "Höraudio wird vorbereitet",
+      "Sections": "Abschnitte werden analysiert"
     },
     "purpose": {
       "Summarize": "Zusammenfassen",
       "Extract": "Extrahieren",
       "SceneSummarize": "Szenenzusammenfassung",
       "SceneExtract": "Szenenfelder",
-      "Transcribe": "Transkribieren"
+      "Transcribe": "Transkribieren",
+      "SectionSummarize": "Abschnittszusammenfassung",
+      "SectionExtract": "Abschnittsfelder"
     },
     "health": {
       "Healthy": "Fehlerfrei",
       "Degraded": "Beeinträchtigt"
+    },
+    "listeningMode": {
+      "Full": "Gesamte Aufnahme",
+      "Sections": "Clips je Abschnitt",
+      "Excerpts": "Nur Ausschnitte",
+      "Scenes": "Szenenaudio",
+      "None": "Nicht gehört"
+    },
+    "listenReason": {
+      "NotRequested": "Hören war für diese Anfrage deaktiviert",
+      "NoModelFunctions": "Keine Funktion benötigte das Audio",
+      "NoEndpointConfigured": "Kein Hör-Endpunkt konfiguriert",
+      "EndpointLacksAudioInput": "Der Endpunkt akzeptiert keine Audioeingabe",
+      "EndpointUnhealthy": "Der Hör-Endpunkt war fehlerhaft",
+      "NoAudioTrack": "Das Medium hat keine Audiospur"
+    },
+    "listenReasonHelp": {
+      "NotRequested": "Die Anfrage hat Listen.Enable auf false gesetzt, daher stammen die Ergebnisse nur aus dem Transkript.",
+      "NoModelFunctions": "Es lief keine Zusammenfassungs-, Feld- oder Abschnittsfunktion, daher hatte ein Hörmodell nichts zu tun.",
+      "NoEndpointConfigured": "Setzen Sie Inference.DefaultListening in den Einstellungen oder wählen Sie einen Hör-Endpunkt. Die Ergebnisse stammen nur aus dem Transkript.",
+      "EndpointLacksAudioInput": "Wählen Sie einen Endpunkt, dessen Anbieter Audio akzeptiert (Gemini, OpenAI-kompatibel). Die Ergebnisse stammen nur aus Bildern und Transkript.",
+      "EndpointUnhealthy": "Der Endpunkt hat beim Jobstart seine letzte Zustandsprüfung nicht bestanden, daher stammen die Ergebnisse nur aus dem Transkript. Ein lokaler llama-server lädt möglicherweise noch sein Modell; prüfen Sie Endpunkte und führen Sie die Analyse erneut aus.",
+      "NoAudioTrack": "Es gab kein Audio zum Senden."
+    },
+    "listenScope": {
+      "Recording": "Aufnahme",
+      "Section": "Abschnitt",
+      "Scene": "Szene"
+    },
+    "listenFormat": {
+      "Mp3": "MP3",
+      "Wav": "WAV",
+      "Flac": "FLAC"
     }
   },
   "units": {
     "tokensPerSecond": "{{value}} Tok./s",
-    "realtimeFactor": "{{value}}x"
+    "realtimeFactor": "{{value}}x",
+    "lufs": "{{value}} LUFS",
+    "lu": "{{value}} LU",
+    "dbtp": "{{value}} dBTP",
+    "dbfs": "{{value}} dBFS",
+    "db": "{{value}} dB",
+    "kilohertz": "{{value}} kHz"
   },
   "appearance": {
     "title": "Darstellung",
@@ -1284,10 +1408,10 @@
   },
   "analyzeAudio": {
     "title": "Audio analysieren",
-    "summary": "Eine Audiodatei (oder die Audiospur eines Videos) transkribieren, dann zusammenfassen und typisierte Felder aus dem Transkript extrahieren. Läuft als Job; Fortschritt und Transkript erscheinen unten.",
-    "modelHelp": "Der Transkriptions-Endpunkt wandelt Sprache in Text um (Standard Inference.DefaultTranscription). Der Text-Endpunkt erstellt Zusammenfassung und Felder aus dem Transkript (Standard Inference.DefaultText).",
+    "summary": "Eine Audiodatei (oder die Audiospur eines Videos) anhören, transkribieren, messen und an Stillen teilen, dann zusammenfassen und typisierte Felder extrahieren. Läuft als Job; Fortschritt und Ergebnisse erscheinen unten.",
+    "modelHelp": "Der Transkriptions-Endpunkt wandelt Sprache in Text um (Standard Inference.DefaultTranscription). Der Text-Endpunkt erstellt Zusammenfassung und Felder aus dem Transkript, wenn die Analyse nicht hört, und führt Abschnittsergebnisse zusammen (Standard Inference.DefaultText).",
     "languageHelp": "Optionaler ISO-639-Code. Leer lassen, damit das Modell die Sprache erkennt.",
-    "transcribeRequired": "Die Transkription ist erforderlich: Zusammenfassung und Felder werden aus dem Transkript erstellt.",
+    "transcribeRequired": "Aktivieren Sie Transkribieren oder Hören: Zusammenfassung und Felder benötigen ein Transkript oder das Audio selbst.",
     "summaryHelp": "Wird vom Text-Endpunkt aus dem Transkript erstellt.",
     "submit": "Audio-Job übermitteln",
     "emptyTitle": "Noch kein Audio-Job",
@@ -1296,7 +1420,55 @@
       "submitted": "Audio-Job {{id}} in Warteschlange gestellt."
     },
     "errors": {
-      "notSupported": "Dieser Server unterstützt keine Audioanalyse (POST /v1.0/audio wurde nicht gefunden)."
+      "notSupported": "Dieser Server unterstützt keine Audioanalyse (POST /v1.0/audio wurde nicht gefunden).",
+      "sectionRange": "Der maximale Abschnitt muss mindestens so lang wie der minimale Abschnitt sein.",
+      "noFunction": "Aktivieren Sie mindestens eine der Optionen Transkribieren, Zusammenfassen, Extrahieren, Messen oder Abschnitte."
+    },
+    "transcribeOffListening": "Die Transkription ist deaktiviert. Das Hörmodell arbeitet nur mit dem Audio, ohne Transkript als Hinweis.",
+    "summaryHelpListen": "Wird vom Hörmodell aus dem Audio erstellt, mit dem Transkript als Hinweis. Fällt auf den Text-Endpunkt und das Transkript zurück, wenn kein Hör-Endpunkt nutzbar ist.",
+    "sections": {
+      "listen": "Hören",
+      "measure": "Messwerte",
+      "sections": "Abschnitte"
+    },
+    "listen": {
+      "enable": "Audio anhören",
+      "help": "Das Hörmodell hört die Aufnahme selbst, daher zählen Musik, Tonfall, Publikumsgeräusche und andere Klänge, nicht nur Worte. Das Transkript wird als Hinweis mitgegeben.",
+      "offHelp": "Hören ist deaktiviert. Zusammenfassung und Felder stammen nur aus dem Transkript, als Text.",
+      "sampleClips": "Ausschnitte",
+      "clipSeconds": "Ausschnittlänge (Sekunden)",
+      "excerptHelp": "Wird verwendet, wenn die Aufnahme das Hörbudget des Endpunkts überschreitet und Abschnitte deaktiviert sind: so viele gleichmäßig verteilte Ausschnitte (1 bis 32), jeweils so lang (5 bis 300 Sekunden).",
+      "fallbackTitle": "Diese Analyse fällt auf das Transkript zurück",
+      "firstStartHint": "Beim ersten Start lädt ein lokaler llama-server möglicherweise noch sein Modell herunter. Prüfen Sie seinen Zustand auf der Seite Endpunkte.",
+      "noTranscriptHint": "Transkribieren ist deaktiviert, daher gibt es ohne nutzbaren Hör-Endpunkt nichts zu analysieren und der Server lehnt die Anfrage ab. Aktivieren Sie Transkribieren, um einen Fallback zu behalten.",
+      "willFallBack": "Kein nutzbarer Hör-Endpunkt; die Ergebnisse stammen aus dem Transkript.",
+      "status": {
+        "ok": "Hören über {{name}} ({{model}}).",
+        "unchecked": "{{name}} wurde noch nicht auf Zustand geprüft. Er wird verwendet, wenn er antwortet, und ein fehlgeschlagener Aufruf wird als Fehler gemeldet.",
+        "unknown": "Verwendet den Standard-Hör-Endpunkt des Servers (Inference.DefaultListening). Fehlt er oder ist er beim Jobstart fehlerhaft, fällt die Analyse auf das Transkript zurück.",
+        "none": "Kein aktiver Endpunkt auf diesem Server akzeptiert Audioeingabe. Fügen Sie in den Einstellungen einen Gemini- oder OpenAI-kompatiblen Endpunkt (etwa llama-server) hinzu.",
+        "noDefault": "Kein Standard-Hör-Endpunkt festgelegt (Inference.DefaultListening). Wählen Sie oben einen Endpunkt oder legen Sie in den Einstellungen einen Standard fest.",
+        "unhealthy": "{{name}} ist derzeit fehlerhaft. Erholt er sich nicht vor dem Jobstart, stammen die Ergebnisse nur aus dem Transkript.",
+        "allUnhealthy": "Alle audiofähigen Endpunkte sind derzeit fehlerhaft. Erholt sich keiner vor dem Jobstart, stammen die Ergebnisse nur aus dem Transkript."
+      }
+    },
+    "measure": {
+      "enable": "Lautheit, Pegel, Stille und Stereobreite messen",
+      "help": "Deterministische ffmpeg-Messungen ohne Modellaufrufe. Die Werte werden den Modellen auch als Kontext übergeben."
+    },
+    "sectionsPanel": {
+      "enable": "Aufnahme an Stillen teilen und jeden Abschnitt analysieren",
+      "help": "Abschnitte stammen aus der Stilleerkennung von ffmpeg, nie von einem Modell. Jeder Abschnitt kann heruntergeladen werden und erhält eigene Zusammenfassung und Felder.",
+      "silenceDb": "Stilleschwelle (dBFS)",
+      "silenceDbHelp": "Audio unter diesem Pegel gilt als Stille (-90 bis -10).",
+      "minSilenceMs": "Min. Stille (ms)",
+      "minSectionMs": "Min. Abschnitt (ms)",
+      "maxSectionMs": "Max. Abschnitt (ms)",
+      "maxSections": "Max. Abschnitte",
+      "maxSectionsHelp": "Begrenzt die Kosten. Zusätzliche Abschnitte werden zusammengeführt.",
+      "summary": "Zusammenfassung je Abschnitt",
+      "extract": "Felder für jeden Abschnitt extrahieren",
+      "reduceHelp": "Mit einem oben gewählten Text-Endpunkt werden Zusammenfassung und Felder der gesamten Aufnahme aus den Abschnittsergebnissen zusammengeführt."
     }
   },
   "analysisJob": {
@@ -1336,7 +1508,7 @@
     "notAdminTitle": "Analytics erfordern den Admin-Schlüssel",
     "notAdminMessage": "Melden Sie sich mit dem Admin-Schlüssel an, um Leistung und Telemetrie aller Analysen zu sehen.",
     "unavailableTitle": "Analytics sind auf diesem Server nicht verfügbar",
-    "unavailableMessage": "GET /v1.0/analytics/summary wurde nicht gefunden. Aktualisieren Sie den Server auf eine Version mit Analytics und prüfen Sie, ob Analytics.Enabled in den Einstellungen aktiviert ist.",
+    "unavailableMessage": "GET /v1.0/analytics/summary wurde nicht gefunden. Aktualisieren Sie den Server auf eine Version mit Analytics und prüfen Sie, ob Analytics.Enable in den Einstellungen aktiviert ist.",
     "emptyTitle": "Keine Analysen in diesem Zeitraum",
     "emptyMessage": "Führen Sie eine Analyse aus oder erweitern Sie den Zeitraum. Jede abgeschlossene Bild-, Video- und Audioanalyse wird hier erfasst.",
     "windowNote": "{{from}} bis {{to}}, gruppiert nach {{bucket}}.",
@@ -1558,5 +1730,82 @@
     "toast": {
       "deleted": "Analyseeintrag {{id}} gelöscht."
     }
+  },
+  "listening": {
+    "title": "Hören",
+    "listened": "Das Modell hat das Audio gehört.",
+    "notListened": "Das Modell hat das Audio nicht gehört.",
+    "mode": "Modus",
+    "reason": "Grund",
+    "endpoint": "Endpunkt",
+    "model": "Modell",
+    "rendition": "Gesendetes Audio",
+    "heard": "Gehört",
+    "heardOf": "{{heard}} von {{total}} ({{percent}})",
+    "clipCount": "Clips",
+    "clips_one": "{{count}} Clip gesendet",
+    "clips_other": "{{count}} Clips gesendet",
+    "scopeIndex": "{{scope}} {{n}}",
+    "mono": "Mono",
+    "stereo": "Stereo",
+    "channels_one": "{{count}} Kanal",
+    "channels_other": "{{count}} Kanäle",
+    "columns": {
+      "scope": "Gesendet mit",
+      "start": "Beginn",
+      "end": "Ende",
+      "length": "Länge",
+      "size": "Größe"
+    },
+    "modeHelp": {
+      "Sections": "Die Ergebnisse der gesamten Aufnahme wurden aus Clips je Abschnitt zusammengeführt, daher hat kein einzelner Aufruf die vollständige Aufnahme gehört.",
+      "Excerpts": "Die Aufnahme war zu lang, um sie vollständig zu senden, daher hat das Modell nur gleichmäßig verteilte Ausschnitte gehört. Die Ergebnisse beschreiben diese Ausschnitte."
+    }
+  },
+  "measurements": {
+    "help": "Von ffmpeg in einem Decodierdurchlauf gemessen, ohne Modellaufrufe. Pegel beziehen sich auf Vollaussteuerung.",
+    "none": "Messungen waren für diese Analyse deaktiviert.",
+    "missingTitle": "Keine Messwerte",
+    "missingMessage": "Messen war deaktiviert oder die Messung ist fehlgeschlagen. Prüfen Sie die Fehler oben.",
+    "monoSource": "k. A. (Monoquelle)",
+    "copy": "{{name}} kopieren",
+    "fields": {
+      "IntegratedLufs": "Integrierte Lautheit",
+      "LoudnessRangeLu": "Lautheitsbereich",
+      "TruePeakDbtp": "True Peak",
+      "PeakDbfs": "Sample-Spitze",
+      "RmsDbfs": "RMS-Pegel",
+      "CrestFactorDb": "Crestfaktor",
+      "PeakCount": "Samples auf Spitzenpegel",
+      "ClippingLikely": "Clipping wahrscheinlich",
+      "SilenceRatio": "Stille",
+      "SilenceCount": "Stille-Abschnitte",
+      "LeadingSilenceMs": "Stille am Anfang",
+      "TrailingSilenceMs": "Stille am Ende",
+      "Channels": "Kanäle",
+      "StereoWidthDb": "Stereobreite",
+      "EffectivelyMono": "Faktisch mono"
+    }
+  },
+  "sections": {
+    "notRequested": "Für diese Analyse wurden keine Abschnitte angefordert.",
+    "none": "Die Abschnittserkennung hat keine Abschnitte gefunden.",
+    "barAria": "Abschnitte einer Aufnahme von {{duration}}. Wählen Sie mit den Pfeiltasten einen Abschnitt.",
+    "sectionAria": "Abschnitt {{n}} von {{count}}, {{start}} bis {{end}}, {{duration}}",
+    "hasErrors_one": "Hat {{count}} Fehler.",
+    "hasErrors_other": "Hat {{count}} Fehler.",
+    "legend": {
+      "section": "Abschnitt",
+      "silence": "Stille am Anfang oder Ende",
+      "heard": "Vom Hörmodell gehört"
+    },
+    "keyboardHint": "Gestrichelte Linien sind Schnitte an Stillen. Pfeiltasten, Pos1 und Ende wechseln zwischen Abschnitten.",
+    "heading": "Abschnitt {{n}} von {{count}}",
+    "prev": "Vorheriger Abschnitt",
+    "next": "Nächster Abschnitt",
+    "heardClips": "Vom Modell gehörtes Audio",
+    "results": "Abschnittsergebnisse",
+    "fields": "Abschnittsfelder",
+    "transcript": "Transkript während dieses Abschnitts"
   }
 }

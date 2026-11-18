@@ -33,11 +33,14 @@
     "DefaultVision": "ollama-gemma3-4b",
     "DefaultText": "ollama-gpt-oss-20b",
     "DefaultTranscription": "whisper",
+    "DefaultListening": "llama-listen",
     "MaxRetries": 2,
     "MaxRepairAttempts": 1,
     "RetryBackoffMs": 500,
     "RequestTimeoutMs": 300000,
     "MaxTranscriptCharacters": 60000,
+    "HealthProbeIntervalMs": 300000,
+    "UnhealthyProbeIntervalMs": 15000,
     "Endpoints": [
       {
         "Name": "ollama-gemma3-4b",
@@ -50,6 +53,8 @@
         "TimeoutMs": 300000,
         "Temperature": null,
         "MaxOutputTokens": 4096,
+        "MaxInlineMediaBytes": 20971520,
+        "MaxListenSeconds": null,
         "Active": true
       },
       {
@@ -63,6 +68,8 @@
         "TimeoutMs": 300000,
         "Temperature": null,
         "MaxOutputTokens": 4096,
+        "MaxInlineMediaBytes": 20971520,
+        "MaxListenSeconds": null,
         "Active": true
       },
       {
@@ -76,6 +83,8 @@
         "TimeoutMs": 300000,
         "Temperature": null,
         "MaxOutputTokens": 4096,
+        "MaxInlineMediaBytes": 20971520,
+        "MaxListenSeconds": null,
         "Active": true
       },
       {
@@ -89,6 +98,23 @@
         "TimeoutMs": 120000,
         "Temperature": null,
         "MaxOutputTokens": 2048,
+        "MaxInlineMediaBytes": 20971520,
+        "MaxListenSeconds": null,
+        "Active": true
+      },
+      {
+        "Name": "llama-listen",
+        "Provider": "OpenAiCompatible",
+        "Kind": "Completion",
+        "Endpoint": "http://127.0.0.1:8720/v1",
+        "ApiKey": null,
+        "Model": "voxtral-mini-3b",
+        "MaxConcurrentRequests": 1,
+        "TimeoutMs": 600000,
+        "Temperature": null,
+        "MaxOutputTokens": 4096,
+        "MaxInlineMediaBytes": 20971520,
+        "MaxListenSeconds": 120,
         "Active": true
       }
     ]
@@ -108,7 +134,17 @@
     "MaxVideoDurationMs": 14400000,
     "MaxAudioDurationMs": 14400000,
     "MaxSegmentMs": 600000,
-    "TranscriptionChunkSeconds": 600
+    "TranscriptionChunkSeconds": 600,
+    "ListenFormat": "Mp3",
+    "ListenSampleRate": 16000,
+    "ListenChannels": 1,
+    "ListenBitrateKbps": 64,
+    "MaxListenSeconds": 1200,
+    "MeasureSilenceDb": -50.0,
+    "MeasureMinSilenceMs": 500,
+    "ClippingTruePeakDbtp": -0.1,
+    "ClippingMinPeaksPerMinute": 10.0,
+    "MonoMaxSideDb": -40.0
   },
   "Jobs": {
     "MaxConcurrentJobs": 2,
@@ -117,13 +153,13 @@
     "MaxWaitTimeoutMs": 600000
   },
   "RequestHistory": {
-    "Enabled": true,
+    "Enable": true,
     "MaxRequestBodyBytes": 65536,
     "MaxResponseBodyBytes": 65536,
     "RetentionDays": 30
   },
   "Analytics": {
-    "Enabled": true,
+    "Enable": true,
     "RetentionDays": 90
   },
   "Logging": {

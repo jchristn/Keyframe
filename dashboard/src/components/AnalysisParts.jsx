@@ -6,8 +6,9 @@ import JsonViewer from './JsonViewer';
 import StatusBadge from './StatusBadge';
 import CopyButton from './CopyButton';
 import TelemetryWaterfall, { ModelCallTable, TelemetryTotals } from './TelemetryWaterfall';
+import SectionTimeline from './SectionTimeline';
 import { useLocale } from '../i18n';
-import { formatBytes, formatDuration, formatNumber } from '../i18n/formatters';
+import { formatBytes, formatDuration, formatList, formatNumber, formatPercent, formatTimestamp } from '../i18n/formatters';
 import { SNIPPET_LANGUAGES, buildSnippets } from '../utils/snippets';
 
 /** Upload-or-URL media picker. value: { mode, file, url }. */
@@ -109,13 +110,33 @@ export function MediaInput({ kind, value, onChange, error = null, disabled = fal
   );
 }
 
-/** Endpoint and model override picker. Lists active completion endpoints. */
-export function ModelPicker({ endpoints, value, onChange, labelKey = 'model.endpoint', disabled = false, kind = 'Completion' }) {
+/** True when an endpoint has never been health-checked (the server treats it as usable). */
+export function isUncheckedEndpoint(endpoint) {
+  return !!endpoint && !endpoint.Healthy && !endpoint.LastCheckedUtc;
+}
+
+/** Health pill for an endpoint: healthy, unhealthy, or not checked yet. */
+export function EndpointHealthBadge({ endpoint }) {
+  const { t } = useTranslation();
+  if (!endpoint) return null;
+  if (isUncheckedEndpoint(endpoint)) return <StatusBadge tone="neutral" label={t('status.notChecked')} />;
+  return <StatusBadge kind="health" value={!!endpoint.Healthy} />;
+}
+
+/**
+ * Endpoint and model override picker. Lists active endpoints of one kind, optionally narrowed by
+ * filter (for example audio-capable endpoints). showHealth labels every option with its health.
+ */
+export function ModelPicker({ endpoints, value, onChange, labelKey = 'model.endpoint', disabled = false, kind = 'Completion', filter = null, showHealth = false, help = null }) {
   const { t } = useTranslation();
   const epId = useId();
   const nameId = useId();
-  const options = (endpoints || []).filter((e) => e.Kind === kind && e.Active);
+  const options = (endpoints || []).filter((e) => e.Kind === kind && e.Active && (!filter || filter(e)));
   const selected = options.find((e) => e.Name === value.Endpoint);
+  const health = (e) => {
+    if (showHealth) return ' · ' + (isUncheckedEndpoint(e) ? t('status.notChecked') : e.Healthy ? t('status.healthy') : t('status.unhealthy'));
+    return e.Healthy ? '' : ' · ' + t('status.unhealthy');
+  };
   return (
     <div className="form-row">
       <div className="form-field">
@@ -126,10 +147,11 @@ export function ModelPicker({ endpoints, value, onChange, labelKey = 'model.endp
           <option value="">{t('model.useDefault')}</option>
           {options.map((e) => (
             <option key={e.Name} value={e.Name}>
-              {e.Name} ({t('enums.provider.' + e.Provider, { defaultValue: e.Provider })}){e.Healthy ? '' : ' · ' + t('status.unhealthy')}
+              {e.Name} ({t('enums.provider.' + e.Provider, { defaultValue: e.Provider })}){health(e)}
             </option>
           ))}
         </select>
+        {help ? <p className="help-text">{help}</p> : null}
       </div>
       <div className="form-field">
         <label htmlFor={nameId} className="field-label">
@@ -147,6 +169,161 @@ export function ModelPicker({ endpoints, value, onChange, labelKey = 'model.endp
       </div>
     </div>
   );
+}
+
+/** Parse and clamp a form value the way the server's setter does. Returns fallback when it is not a number. */
+export function clampNumber(value, min, max, fallback, integer = true) {
+  const n = integer ? parseInt(value, 10) : parseFloat(value);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(max, Math.max(min, n));
+}
+
+/** Labeled number input that clamps to [min, max] when it loses focus. */
+export function NumberField({ label, value, onChange, min, max, step = 1, help = null, disabled = false, error = null, placeholder = '' }) {
+  const id = useId();
+  const { t } = useTranslation();
+  return (
+    <div className="form-field form-field-sm">
+      <label htmlFor={id} className="field-label">
+        {label}
+      </label>
+      <input
+        id={id}
+        type="number"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={() => {
+          if (value === '' || value === null || value === undefined) return;
+          const n = Number(value);
+          if (!Number.isFinite(n)) return;
+          const clamped = Math.min(max, Math.max(min, n));
+          if (clamped !== n) onChange(String(clamped));
+        }}
+        disabled={disabled}
+        aria-invalid={!!error || undefined}
+      />
+      {help ? <p className="help-text">{help}</p> : null}
+      {error ? <div className="field-error">{t(error)}</div> : null}
+    </div>
+  );
+}
+
+export const LISTEN_FORMATS = ['Mp3', 'Wav', 'Flac'];
+export const LISTEN_SAMPLE_RATES = [8000, 11025, 16000, 22050, 24000, 32000, 44100, 48000];
+export const EMPTY_RENDITION = { Format: '', SampleRate: '', Channels: '', BitrateKbps: '' };
+
+/** Wire AudioRenditionSpec from the editable rendition; only members the user set. Null when all are server defaults. */
+export function toRenditionSpec(value) {
+  const v = value || EMPTY_RENDITION;
+  const out = {};
+  if (LISTEN_FORMATS.includes(v.Format)) out.Format = v.Format;
+  if (v.SampleRate !== '' && v.SampleRate !== null && v.SampleRate !== undefined) out.SampleRate = clampNumber(v.SampleRate, 8000, 48000, 16000);
+  if (v.Channels !== '' && v.Channels !== null && v.Channels !== undefined) out.Channels = clampNumber(v.Channels, 1, 2, 1);
+  if (v.Format === 'Mp3' && v.BitrateKbps !== '' && v.BitrateKbps !== null && v.BitrateKbps !== undefined && Number.isFinite(parseInt(v.BitrateKbps, 10))) {
+    out.BitrateKbps = clampNumber(v.BitrateKbps, 16, 320, 64);
+  }
+  return Object.keys(out).length ? out : null;
+}
+
+/**
+ * Collapsed "Audio quality" group for the audio sent to a listening model (Listen.Rendition or
+ * Scenes.Audio.Rendition). Every control starts at "Server default"; bitrate applies to Mp3 only.
+ * defaults: the server's Media.Listen* values when known, shown next to "Server default".
+ */
+export function AudioQualityOptions({ value, onChange, disabled = false, defaults = null, flacRejected = false }) {
+  const { t, locale } = useLocale();
+  const id = useId();
+  const v = value || EMPTY_RENDITION;
+  const set = (prop) => (e) => onChange({ ...v, [prop]: e.target.value });
+  const serverDefault = (shown) => (shown === null || shown === undefined || shown === '' ? t('analyze.audioQuality.serverDefault') : t('analyze.audioQuality.serverDefaultValue', { value: shown }));
+  const d = defaults || {};
+  const changed = !!toRenditionSpec(v);
+  return (
+    <details className="option-details">
+      <summary>
+        {t('analyze.audioQuality.title')}
+        {changed ? <span className="badge badge-accent badge-xs">{t('analyze.audioQuality.custom')}</span> : null}
+      </summary>
+      <p className="help-text">{t('analyze.audioQuality.help')}</p>
+      <div className="form-row form-row-wrap audio-quality-grid">
+        <div className="form-field form-field-sm">
+          <label htmlFor={id + 'fmt'} className="field-label">
+            {t('analyze.audioQuality.format')}
+          </label>
+          <select id={id + 'fmt'} value={v.Format} onChange={set('Format')} disabled={disabled}>
+            <option value="">{serverDefault(d.ListenFormat ? t('enums.listenFormat.' + d.ListenFormat, { defaultValue: d.ListenFormat }) : null)}</option>
+            {LISTEN_FORMATS.map((f) => (
+              <option key={f} value={f}>
+                {t('enums.listenFormat.' + f)}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="form-field form-field-sm">
+          <label htmlFor={id + 'rate'} className="field-label">
+            {t('analyze.audioQuality.sampleRate')}
+          </label>
+          <select id={id + 'rate'} value={v.SampleRate} onChange={set('SampleRate')} disabled={disabled}>
+            <option value="">{serverDefault(d.ListenSampleRate ? formatSampleRate(t, d.ListenSampleRate, locale) : null)}</option>
+            {LISTEN_SAMPLE_RATES.map((r) => (
+              <option key={r} value={String(r)}>
+                {formatSampleRate(t, r, locale)}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="form-field form-field-sm">
+          <label htmlFor={id + 'ch'} className="field-label">
+            {t('analyze.audioQuality.channels')}
+          </label>
+          <select id={id + 'ch'} value={v.Channels} onChange={set('Channels')} disabled={disabled}>
+            <option value="">{serverDefault(d.ListenChannels ? formatChannels(t, d.ListenChannels) : null)}</option>
+            <option value="1">{formatChannels(t, 1)}</option>
+            <option value="2">{formatChannels(t, 2)}</option>
+          </select>
+        </div>
+        <NumberField
+          label={t('analyze.audioQuality.bitrate')}
+          value={v.Format === 'Mp3' ? v.BitrateKbps : ''}
+          onChange={(x) => onChange({ ...v, BitrateKbps: x })}
+          min={16}
+          max={320}
+          placeholder={serverDefault(d.ListenBitrateKbps ? formatNumber(d.ListenBitrateKbps, locale) : null)}
+          disabled={disabled || v.Format !== 'Mp3'}
+          help={v.Format === 'Mp3' ? t('analyze.audioQuality.bitrateHelp') : t('analyze.audioQuality.bitrateMp3Only')}
+        />
+      </div>
+      {v.Format === 'Flac' && flacRejected ? <p className="help-text text-warning">{t('analyze.audioQuality.flacRejected')}</p> : null}
+    </details>
+  );
+}
+
+/** "16 kHz" style label for a sample rate in Hz. */
+export function formatSampleRate(t, hz, locale) {
+  return t('units.kilohertz', { value: formatNumber(Number(hz) / 1000, locale, { maximumFractionDigits: 3 }) });
+}
+
+/** "Mono", "Stereo", or a channel count. */
+export function formatChannels(t, channels) {
+  const n = Number(channels);
+  if (n === 1) return t('listening.mono');
+  if (n === 2) return t('listening.stereo');
+  return t('listening.channels', { count: n });
+}
+
+/** One-line description of an effective rendition: format, sample rate, channels, and (Mp3) bitrate. */
+export function describeRendition(t, rendition, locale) {
+  if (!rendition) return '';
+  const parts = [];
+  if (rendition.Format) parts.push(t('enums.listenFormat.' + rendition.Format, { defaultValue: rendition.Format }));
+  if (rendition.SampleRate) parts.push(formatSampleRate(t, rendition.SampleRate, locale));
+  if (rendition.Channels) parts.push(formatChannels(t, rendition.Channels));
+  if (rendition.BitrateKbps && (!rendition.Format || rendition.Format === 'Mp3')) parts.push(formatNumber(rendition.BitrateKbps, locale, { style: 'unit', unit: 'kilobit-per-second' }));
+  return formatList(parts, locale, 'unit');
 }
 
 /** Summarize options: enable, key, max words, style, instructions. */
@@ -394,32 +571,222 @@ export function Problems({ warnings, errors }) {
   );
 }
 
-/** Result tabs for an image analysis: Results, Fields, Telemetry, Properties, Raw JSON. */
+const MEASUREMENT_ROWS = [
+  ['IntegratedLufs', 'lufs'],
+  ['LoudnessRangeLu', 'lu'],
+  ['TruePeakDbtp', 'dbtp'],
+  ['PeakDbfs', 'dbfs'],
+  ['RmsDbfs', 'dbfs'],
+  ['CrestFactorDb', 'db'],
+  ['PeakCount', 'count'],
+  ['ClippingLikely', 'bool'],
+  ['SilenceRatio', 'percent'],
+  ['SilenceCount', 'count'],
+  ['LeadingSilenceMs', 'ms'],
+  ['TrailingSilenceMs', 'ms'],
+  ['Channels', 'channels'],
+  ['StereoWidthDb', 'db'],
+  ['EffectivelyMono', 'bool']
+];
+
+/** Format one measurement value with its unit. */
+export function formatMeasurement(t, locale, key, unit, value) {
+  if (value === null || value === undefined) return key === 'StereoWidthDb' ? t('measurements.monoSource') : t('common.notAvailable');
+  if (unit === 'bool') return value ? t('common.yes') : t('common.no');
+  if (unit === 'percent') return formatPercent(value, locale, 1);
+  if (unit === 'ms') return formatDuration(value, locale);
+  if (unit === 'count') return formatNumber(value, locale);
+  if (unit === 'channels') return formatChannels(t, value);
+  return t('units.' + unit, { value: formatNumber(value, locale, { maximumFractionDigits: 1 }) });
+}
+
+/**
+ * Deterministic audio measurements as a key/value grid with copy buttons. Missing measurements
+ * get an empty state that says whether Measure was off or failed.
+ */
+export function MeasurementsGrid({ measurements, failed = false }) {
+  const { t, locale } = useLocale();
+  if (!measurements) {
+    return failed ? (
+      <div className="banner banner-warning" role="status">
+        <Icon name="alert" />
+        <div className="banner-body">
+          <div className="banner-title">{t('measurements.missingTitle')}</div>
+          <div>{t('measurements.missingMessage')}</div>
+        </div>
+      </div>
+    ) : (
+      <p className="muted">{t('measurements.none')}</p>
+    );
+  }
+  return (
+    <div className="stack">
+      <p className="help-text">{t('measurements.help')}</p>
+      <dl className="kv-list measurements-grid">
+        {MEASUREMENT_ROWS.map(([key, unit]) => {
+          const raw = measurements[key];
+          const text = formatMeasurement(t, locale, key, unit, raw);
+          return (
+            <div key={key} className="kv-item">
+              <dt>
+                {t('measurements.fields.' + key)}
+                {raw !== null && raw !== undefined ? <CopyButton value={String(raw)} label={t('measurements.copy', { name: t('measurements.fields.' + key) })} /> : null}
+              </dt>
+              <dd>
+                {unit === 'bool' && raw !== null && raw !== undefined ? (
+                  <StatusBadge tone={key === 'ClippingLikely' && raw ? 'warning' : raw ? 'success' : 'neutral'} label={text} />
+                ) : (
+                  <span className="mono">{text}</span>
+                )}
+              </dd>
+            </div>
+          );
+        })}
+      </dl>
+    </div>
+  );
+}
+
+/** True when the Listening mode is a degraded one that deserves a warning badge. */
+export function isDegradedListening(listening) {
+  return !!listening && listening.Mode !== 'Full' && listening.Mode !== 'Scenes';
+}
+
+/** Listening badge: icon plus text, warning tone whenever the mode is not Full or Scenes. */
+export function ListeningBadge({ listening }) {
+  const { t } = useTranslation();
+  if (!listening) return null;
+  const degraded = isDegradedListening(listening);
+  return (
+    <span className={'badge ' + (degraded ? 'badge-warning' : 'badge-success')} data-testid="listening-badge">
+      <Icon name={degraded ? 'alert' : 'check'} size={12} />
+      {t('enums.listeningMode.' + listening.Mode, { defaultValue: String(listening.Mode) })}
+    </span>
+  );
+}
+
+/**
+ * Whether, how, and through which model the audio was heard. Shown on every audio result and on
+ * video results with scenes, so a transcript-only answer is never mistaken for a listened one.
+ */
+export function ListeningCard({ listening }) {
+  const { t, locale } = useLocale();
+  const titleId = useId();
+  if (!listening) return null;
+  const clips = listening.Clips || [];
+  const total = Number(listening.DurationMs || 0);
+  const heard = Number(listening.HeardMs || 0);
+  const monoOrNone = (v) => (v ? <span className="mono">{v}</span> : t('common.none'));
+  const rows = [
+    ['listening.mode', t('enums.listeningMode.' + listening.Mode, { defaultValue: String(listening.Mode) })],
+    listening.Reason ? ['listening.reason', t('enums.listenReason.' + listening.Reason, { defaultValue: String(listening.Reason) })] : null,
+    ['listening.endpoint', monoOrNone(listening.Endpoint)],
+    ['listening.model', monoOrNone(listening.Model)],
+    ['listening.rendition', describeRendition(t, listening.Rendition, locale) || t('common.notAvailable')],
+    [
+      'listening.heard',
+      t('listening.heardOf', {
+        heard: formatTimestamp(heard, locale),
+        total: formatTimestamp(total, locale),
+        percent: formatPercent(total ? heard / total : 0, locale, 0)
+      })
+    ],
+    ['listening.clipCount', formatNumber(clips.length, locale)]
+  ].filter(Boolean);
+  return (
+    <section className={'listening-card' + (isDegradedListening(listening) ? ' degraded' : '')} aria-labelledby={titleId} data-testid="listening-card">
+      <div className="listening-card-header">
+        <Icon name="headphones" />
+        <h3 id={titleId} className="panel-subtitle">
+          {t('listening.title')}
+        </h3>
+        <ListeningBadge listening={listening} />
+        <span className="muted">{listening.Listened ? t('listening.listened') : t('listening.notListened')}</span>
+      </div>
+      {listening.Reason ? <p className={'help-text' + (listening.Reason === 'EndpointUnhealthy' || listening.Reason === 'NoEndpointConfigured' || listening.Reason === 'EndpointLacksAudioInput' ? ' text-warning' : '')}>{t('enums.listenReasonHelp.' + listening.Reason, { defaultValue: '' })}</p> : null}
+      {listening.Listened && listening.Mode !== 'Full' && listening.Mode !== 'Scenes' ? <p className="help-text text-warning">{t('listening.modeHelp.' + listening.Mode, { defaultValue: '' })}</p> : null}
+      <dl className="kv-grid">
+        {rows.map(([k, v]) => (
+          <div key={k}>
+            <dt>{t(k)}</dt>
+            <dd>{v}</dd>
+          </div>
+        ))}
+      </dl>
+      {clips.length ? (
+        <details className="listening-clips" open={clips.length <= 8}>
+          <summary>{t('listening.clips', { count: clips.length })}</summary>
+          <div className="table-scroll">
+            <table className="data-table data-table-compact">
+              <thead>
+                <tr>
+                  <th scope="col">{t('listening.columns.scope')}</th>
+                  <th scope="col">{t('listening.columns.start')}</th>
+                  <th scope="col">{t('listening.columns.end')}</th>
+                  <th scope="col">{t('listening.columns.length')}</th>
+                  <th scope="col">{t('listening.columns.size')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {clips.map((c, i) => (
+                  <tr key={i}>
+                    <td>
+                      {c.Index === null || c.Index === undefined
+                        ? t('enums.listenScope.' + c.Scope, { defaultValue: String(c.Scope) })
+                        : t('listening.scopeIndex', { scope: t('enums.listenScope.' + c.Scope, { defaultValue: String(c.Scope) }), n: c.Index + 1 })}
+                    </td>
+                    <td className="mono">{formatTimestamp(c.StartMs, locale)}</td>
+                    <td className="mono">{formatTimestamp(c.EndMs, locale)}</td>
+                    <td className="mono">{formatDuration(Math.max(0, c.EndMs - c.StartMs), locale)}</td>
+                    <td className="mono">{formatBytes(c.SizeBytes, locale)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </details>
+      ) : null}
+    </section>
+  );
+}
+
+/**
+ * Result tabs for a synchronous analysis: Results, Fields, Telemetry, Properties, Raw JSON, plus
+ * Measurements and Sections when the response carries them and a Listening card above the tabs.
+ */
 export function AnalysisResultTabs({ response, filename = 'keyframe-result.json' }) {
   const { t } = useTranslation();
   const [tab, setTab] = useState('results');
   const invalid = (response.Fields || []).filter((f) => !f.Valid).length;
+  const sections = Array.isArray(response.Sections) ? response.Sections : null;
   const tabs = [
     { id: 'results', label: t('results.tabs.results') },
     { id: 'fields', label: t('results.tabs.fields'), badge: invalid ? invalid : null },
+    response.Measurements !== undefined ? { id: 'measurements', label: t('results.tabs.measurements') } : null,
+    sections ? { id: 'sections', label: t('results.tabs.sections'), badge: sections.length } : null,
     { id: 'telemetry', label: t('results.tabs.telemetry') },
     { id: 'properties', label: t('results.tabs.properties') },
     { id: 'raw', label: t('results.tabs.raw') }
-  ];
+  ].filter(Boolean);
   return (
-    <Tabs tabs={tabs} active={tab} onChange={setTab} label={t('results.title')}>
-      {tab === 'results' ? <ResultsList results={response.Results} /> : null}
-      {tab === 'fields' ? <FieldsTable fields={response.Fields} /> : null}
-      {tab === 'telemetry' ? (
-        <>
-          <TelemetryTotals telemetry={response.Telemetry} />
-          <TelemetryWaterfall telemetry={response.Telemetry} />
-          <ModelCallTable telemetry={response.Telemetry} />
-        </>
-      ) : null}
-      {tab === 'properties' ? <PropertiesGrid properties={response.Properties} /> : null}
-      {tab === 'raw' ? <JsonViewer value={response} maxHeight="60vh" filename={filename} /> : null}
-    </Tabs>
+    <>
+      <ListeningCard listening={response.Listening} />
+      <Tabs tabs={tabs} active={tab} onChange={setTab} label={t('results.title')}>
+        {tab === 'results' ? <ResultsList results={response.Results} /> : null}
+        {tab === 'fields' ? <FieldsTable fields={response.Fields} /> : null}
+        {tab === 'measurements' ? <MeasurementsGrid measurements={response.Measurements} failed={!!(response.Errors && response.Errors.length)} /> : null}
+        {tab === 'sections' ? <SectionTimeline sections={sections} durationMs={response.Properties && response.Properties.DurationMs} measurements={response.Measurements} listening={response.Listening} /> : null}
+        {tab === 'telemetry' ? (
+          <>
+            <TelemetryTotals telemetry={response.Telemetry} />
+            <TelemetryWaterfall telemetry={response.Telemetry} />
+            <ModelCallTable telemetry={response.Telemetry} />
+          </>
+        ) : null}
+        {tab === 'properties' ? <PropertiesGrid properties={response.Properties} /> : null}
+        {tab === 'raw' ? <JsonViewer value={response} maxHeight="60vh" filename={filename} /> : null}
+      </Tabs>
+    </>
   );
 }
 

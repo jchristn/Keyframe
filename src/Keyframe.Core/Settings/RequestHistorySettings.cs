@@ -12,7 +12,7 @@ namespace Keyframe.Core.Settings
         /// <summary>
         /// Whether request capture is enabled. Default true.
         /// </summary>
-        public bool Enabled { get; set; } = true;
+        public bool Enable { get; set; } = true;
 
         /// <summary>
         /// Maximum request body bytes captured before truncation. Default 65536. Minimum 0, maximum 1048576.

@@ -16,7 +16,7 @@ import { DEFAULT_CHART_HEIGHT } from '../components/ActivityChart';
 import ApiClient, { ApiError } from '../utils/api';
 import { PALETTES } from '../theme/palettes';
 import { makeAuth, renderWithProviders } from '../test/render';
-import { ENDPOINTS, OPENAPI, analysisDetail, analysisRecord, audioJob, audioResult, makeSummary } from '../test/fixtures';
+import { ENDPOINTS, OPENAPI, analysisDetail, analysisRecord, audioJob, audioResult, fallbackListening, listening, listeningResult, makeSummary, settingsResponse } from '../test/fixtures';
 
 const page = (items) => ({ items, pageNumber: 1, pageSize: 25, totalCount: items.length, totalPages: 1 });
 
@@ -170,6 +170,9 @@ describe('AnalyzeAudioView', () => {
       const sent = api.analyzeAudio.mock.calls[0][0];
       expect(sent.Audio).toEqual({ Url: 'https://media.example.com/talk.mp3' });
       expect(sent.Functions.Transcribe.Enable).toBe(true);
+      expect(sent.Listen).toEqual({ Enable: true, SampleClips: 4, ClipSeconds: 30 });
+      expect(sent.Functions.Measure).toEqual({ Enable: true });
+      expect(sent.Functions.Sections).toEqual({ Enable: false });
       expect(await screen.findByText('kfj_900')).toBeInTheDocument();
       await act(async () => {
         vi.advanceTimersByTime(1600);
@@ -183,6 +186,274 @@ describe('AnalyzeAudioView', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe('buildAudioRequest', () => {
+  const base = {
+    media: { mode: 'url', url: 'https://x/set.flac', file: null },
+    context: [],
+    transcriptionModel: { Endpoint: '', Name: '' },
+    textModel: { Endpoint: '', Name: '' },
+    transcribe: { Enable: true, Language: '', Prompt: '' },
+    summarize: { Enable: true, Key: 'Summary', MaxWords: 80, Style: 'Paragraph', Instructions: '' },
+    extractEnable: true,
+    mode: 'Combined',
+    fields: [{ uid: 'f1', Key: 'recording', Type: 'Enum', Prompt: 'Live or studio?', Options: ['Live', 'Studio'] }]
+  };
+  const sectionsOn = { Enable: true, SilenceDb: '-40', MinSilenceMs: '1500', MinSectionMs: '20000', MaxSectionMs: '600000', MaxSections: '100' };
+
+  it('listens, measures, and leaves sections off by default', () => {
+    const body = buildAudioRequest(base);
+    expect(body.Listen).toEqual({ Enable: true, SampleClips: 4, ClipSeconds: 30 });
+    expect(body.Functions.Measure).toEqual({ Enable: true });
+    expect(body.Functions.Sections).toEqual({ Enable: false });
+    expect(body.Functions.Extract.Enable).toBe(true);
+  });
+
+  it('sends the listening model and excerpt counts clamped to the server ranges', () => {
+    const body = buildAudioRequest({ ...base, listen: { Enable: true, Endpoint: 'llama-listen', Name: ' qwen2.5-omni ', SampleClips: '99', ClipSeconds: '1' } });
+    expect(body.Listen.Model).toEqual({ Endpoint: 'llama-listen', Name: 'qwen2.5-omni' });
+    expect(body.Listen.SampleClips).toBe(32);
+    expect(body.Listen.ClipSeconds).toBe(5);
+    expect(buildAudioRequest({ ...base, listen: { Enable: true, Endpoint: '', Name: '', SampleClips: '0', ClipSeconds: '900' } }).Listen).toMatchObject({ SampleClips: 1, ClipSeconds: 300 });
+  });
+
+  it('sends only the rendition members the user set, with bitrate for Mp3 only', () => {
+    const rendition = (r) => buildAudioRequest({ ...base, rendition: { Format: '', SampleRate: '', Channels: '', BitrateKbps: '', ...r } }).Listen.Rendition;
+    expect(rendition({})).toBeUndefined();
+    expect(rendition({ Format: 'Mp3', SampleRate: '44100', Channels: '2', BitrateKbps: '128' })).toEqual({ Format: 'Mp3', SampleRate: 44100, Channels: 2, BitrateKbps: 128 });
+    expect(rendition({ Format: 'Mp3', BitrateKbps: '999' })).toEqual({ Format: 'Mp3', BitrateKbps: 320 });
+    expect(rendition({ Format: 'Mp3', BitrateKbps: '4' })).toEqual({ Format: 'Mp3', BitrateKbps: 16 });
+    expect(rendition({ Format: 'Wav', BitrateKbps: '128' })).toEqual({ Format: 'Wav' });
+    expect(rendition({ BitrateKbps: '128', Channels: '2' })).toEqual({ Channels: 2 });
+    expect(rendition({ SampleRate: '96000' })).toEqual({ SampleRate: 48000 });
+  });
+
+  it('sends only Listen.Enable false when listening is off', () => {
+    const body = buildAudioRequest({ ...base, listen: { Enable: false, Endpoint: 'llama-listen', Name: 'x', SampleClips: '4', ClipSeconds: '30' }, rendition: { Format: 'Wav', SampleRate: '', Channels: '', BitrateKbps: '' } });
+    expect(body.Listen).toEqual({ Enable: false });
+  });
+
+  it('turns Measure off when asked', () => {
+    expect(buildAudioRequest({ ...base, measure: false }).Functions.Measure).toEqual({ Enable: false });
+  });
+
+  it('clamps section detection exactly like the backend and sends per-section functions', () => {
+    const body = buildAudioRequest({
+      ...base,
+      sections: { Enable: true, SilenceDb: '-200', MinSilenceMs: '50', MinSectionMs: '999999', MaxSectionMs: '5', MaxSections: '5000' },
+      sectionSummarize: { Enable: true, Key: 'Summary', MaxWords: 40, Style: 'Caption', Instructions: '' },
+      sectionExtractEnable: true,
+      sectionFields: [{ uid: 's1', Key: 'topic', Type: 'String', Prompt: 'Topic?' }]
+    });
+    expect(body.Functions.Sections.Detection).toEqual({ SilenceDb: -90, MinSilenceMs: 100, MinSectionMs: 600000, MaxSectionMs: 10000, MaxSections: 1000 });
+    expect(body.Functions.Sections.Summarize).toMatchObject({ Enable: true, MaxWords: 40, Style: 'Caption' });
+    expect(body.Functions.Sections.Extract).toEqual({ Enable: true, Fields: [{ Key: 'topic', Type: 'String', Prompt: 'Topic?' }] });
+    const upper = buildAudioRequest({ ...base, sections: { ...sectionsOn, SilenceDb: '0', MinSilenceMs: '99999', MinSectionMs: '-5', MaxSectionMs: '99999999', MaxSections: '0' } }).Functions.Sections.Detection;
+    expect(upper).toEqual({ SilenceDb: -10, MinSilenceMs: 30000, MinSectionMs: 0, MaxSectionMs: 3600000, MaxSections: 1 });
+    expect(buildAudioRequest({ ...base, sections: { ...sectionsOn, SilenceDb: '-35.5' } }).Functions.Sections.Detection.SilenceDb).toBe(-35.5);
+  });
+
+  it('keeps Summarize and Extract with Listen alone, and drops every model function with neither', () => {
+    const listenOnly = buildAudioRequest({ ...base, transcribe: { Enable: false, Language: '', Prompt: '' }, sections: sectionsOn, sectionSummarize: { Enable: true, Key: 'Summary', MaxWords: 40, Style: 'Paragraph', Instructions: '' } });
+    expect(listenOnly.Functions.Transcribe).toEqual({ Enable: false });
+    expect(listenOnly.Functions.Summarize.Enable).toBe(true);
+    expect(listenOnly.Functions.Extract.Enable).toBe(true);
+    expect(listenOnly.Functions.Sections.Summarize.Enable).toBe(true);
+    const neither = buildAudioRequest({
+      ...base,
+      transcribe: { Enable: false, Language: '', Prompt: '' },
+      listen: { Enable: false, Endpoint: '', Name: '', SampleClips: '4', ClipSeconds: '30' },
+      sections: sectionsOn,
+      sectionSummarize: { Enable: true, Key: 'Summary', MaxWords: 40, Style: 'Paragraph', Instructions: '' },
+      sectionExtractEnable: true,
+      sectionFields: [{ uid: 's1', Key: 'topic', Type: 'String', Prompt: 'Topic?' }]
+    });
+    expect(neither.Functions.Summarize.Enable).toBe(false);
+    expect(neither.Functions.Extract).toEqual({ Enable: false, Mode: 'Combined', Fields: [] });
+    expect(neither.Functions.Sections.Summarize.Enable).toBe(false);
+    expect(neither.Functions.Sections.Extract).toEqual({ Enable: false, Fields: [] });
+    expect(neither.Functions.Sections.Enable).toBe(true);
+  });
+});
+
+describe('AnalyzeAudioView listening form', () => {
+  const api = (over = {}) => ({ listEndpoints: vi.fn().mockResolvedValue(ENDPOINTS), getSettings: vi.fn().mockResolvedValue(settingsResponse()), ...over });
+
+  it('enables the field builder when Transcribe or Listen is on, and only then', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<AnalyzeAudioView />, { auth: makeAuth({ apiClient: api() }) });
+    await user.click(screen.getByRole('checkbox', { name: 'Extract typed fields' }));
+    const key = () => screen.getAllByLabelText(/^Key/)[0];
+    expect(key()).toBeEnabled();
+    await user.click(screen.getByRole('checkbox', { name: 'Transcribe the audio track' }));
+    expect(key()).toBeEnabled();
+    expect(screen.getByRole('checkbox', { name: 'Extract typed fields' })).toBeEnabled();
+    expect(screen.getByText(/works from the audio alone/)).toBeInTheDocument();
+    await user.click(screen.getByRole('checkbox', { name: 'Listen to the audio' }));
+    expect(key()).toBeDisabled();
+    expect(screen.getByRole('checkbox', { name: 'Extract typed fields' })).toBeDisabled();
+    expect(screen.getAllByText(/Turn on Transcribe or Listen/).length).toBeGreaterThan(0);
+    await user.click(screen.getByRole('checkbox', { name: 'Transcribe the audio track' }));
+    expect(key()).toBeEnabled();
+  });
+
+  it('lists only audio-capable endpoints with their health and shows the default listening endpoint', async () => {
+    renderWithProviders(<AnalyzeAudioView />, { auth: makeAuth({ apiClient: api() }) });
+    const select = await screen.findByLabelText('Listening endpoint');
+    await waitFor(() => expect(within(select).getAllByRole('option')).toHaveLength(2));
+    expect(within(select).getByRole('option', { name: /llama-listen \(OpenAI-compatible\) · Healthy/ })).toBeInTheDocument();
+    expect(within(select).queryByRole('option', { name: /ollama/ })).not.toBeInTheDocument();
+    expect(await screen.findByText('Listening through llama-listen (voxtral-mini-3b).')).toBeInTheDocument();
+    expect(screen.queryByTestId('listen-fallback')).not.toBeInTheDocument();
+  });
+
+  it('warns that the analysis falls back to the transcript when the listening endpoint is unhealthy or missing', async () => {
+    const sick = ENDPOINTS.map((e) => (e.Name === 'llama-listen' ? { ...e, Healthy: false } : e));
+    const { unmount } = renderWithProviders(<AnalyzeAudioView />, { auth: makeAuth({ apiClient: api({ listEndpoints: vi.fn().mockResolvedValue(sick) }) }) });
+    const banner = await screen.findByTestId('listen-fallback');
+    expect(banner).toHaveTextContent('This analysis will fall back to the transcript');
+    expect(banner).toHaveTextContent('llama-listen is unhealthy right now');
+    expect(banner).toHaveTextContent(/llama-server may still be downloading its model/);
+    expect(screen.getByRole('checkbox', { name: 'Listen to the audio' })).toBeChecked();
+    expect(screen.getByText('No usable listening endpoint; results will come from the transcript.')).toBeInTheDocument();
+    unmount();
+    const none = ENDPOINTS.filter((e) => e.Name !== 'llama-listen');
+    renderWithProviders(<AnalyzeAudioView />, { auth: makeAuth({ apiClient: api({ listEndpoints: vi.fn().mockResolvedValue(none) }) }) });
+    expect(await screen.findByTestId('listen-fallback')).toHaveTextContent('No active endpoint on this server can take audio input');
+  });
+
+  it('starts the audio quality controls at the server default and enables bitrate for Mp3 only', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<AnalyzeAudioView />, { auth: makeAuth({ apiClient: api() }) });
+    await user.click(screen.getByText('Audio quality'));
+    const format = screen.getByLabelText('Format');
+    expect(format).toHaveValue('');
+    await waitFor(() => expect(within(format).getAllByRole('option')[0]).toHaveTextContent('Server default (MP3)'));
+    expect(screen.getByLabelText('Sample rate')).toHaveValue('');
+    expect(screen.getByLabelText('Channels')).toHaveValue('');
+    expect(screen.getByLabelText('Bitrate (kbps)')).toBeDisabled();
+    await user.selectOptions(format, 'Mp3');
+    const bitrate = screen.getByLabelText('Bitrate (kbps)');
+    expect(bitrate).toBeEnabled();
+    await user.type(bitrate, '500');
+    await user.tab();
+    expect(bitrate).toHaveValue(320);
+    await user.selectOptions(format, 'Flac');
+    expect(screen.getByText(/accept only MP3 or WAV/)).toBeInTheDocument();
+  });
+
+  it('validates the section range and reports a request with nothing to do', async () => {
+    const user = userEvent.setup();
+    const analyzeAudio = vi.fn();
+    renderWithProviders(<AnalyzeAudioView />, { auth: makeAuth({ apiClient: api({ analyzeAudio }) }) });
+    await user.click(screen.getByRole('tab', { name: 'URL' }));
+    await user.type(screen.getByLabelText('Audio or video URL'), 'https://media.example.com/set.mp3');
+    await user.click(screen.getByRole('checkbox', { name: 'Split the recording at silences and analyze each section' }));
+    const max = screen.getByLabelText('Max section (ms)');
+    await user.clear(max);
+    await user.type(max, '15000');
+    await user.click(screen.getByRole('button', { name: 'Submit audio job' }));
+    expect(screen.getByText('Max section must be at least min section.')).toBeInTheDocument();
+    expect(analyzeAudio).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('checkbox', { name: 'Split the recording at silences and analyze each section' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Transcribe the audio track' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Listen to the audio' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Measure loudness, levels, silence, and stereo width' }));
+    await user.click(screen.getByRole('button', { name: 'Submit audio job' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('Enable at least one of Transcribe, Summarize, Extract, Measure, or Sections.');
+    expect(analyzeAudio).not.toHaveBeenCalled();
+  });
+});
+
+describe('Listening, measurements, and sections results', () => {
+  const open = (result, job = audioJob('Succeeded')) => {
+    const api = { getJob: vi.fn().mockResolvedValue(job), getJobResult: vi.fn().mockResolvedValue(result), downloadSegment: vi.fn().mockResolvedValue({ blob: new Blob(['x']), filename: null }) };
+    renderWithProviders(<JobDetailView />, { auth: makeAuth({ apiClient: api }), route: '/dashboard/jobs/kfj_900', path: '/dashboard/jobs/:id' });
+    return api;
+  };
+
+  it('shows the Listening card with a warning badge (icon and text) when the mode is not Full', async () => {
+    open(listeningResult());
+    const card = await screen.findByTestId('listening-card');
+    const badge = within(card).getByTestId('listening-badge');
+    expect(badge).toHaveTextContent('Per-section clips');
+    expect(badge.classList.contains('badge-warning')).toBe(true);
+    expect(badge.querySelector('svg')).not.toBeNull();
+    expect(within(card).getByText('llama-listen')).toBeInTheDocument();
+    expect(within(card).getByText('voxtral-mini-3b')).toBeInTheDocument();
+    expect(within(card).getByText('MP3, 16 kHz, Mono, 64 kb/s')).toBeInTheDocument();
+    expect(within(card).getByText('2:30.0 of 3:02.0 (82%)')).toBeInTheDocument();
+    expect(within(card).getByText('3 clips sent')).toBeInTheDocument();
+    expect(within(card).getByText('Section 3')).toBeInTheDocument();
+  });
+
+  it('uses a success badge for a full listen and explains a fallback with the localized reason', async () => {
+    const { unmount } = renderWithProviders(<JobDetailView />, {
+      auth: makeAuth({ apiClient: { getJob: vi.fn().mockResolvedValue(audioJob('Succeeded')), getJobResult: vi.fn().mockResolvedValue(listeningResult({ Listening: listening({ Mode: 'Full', Clips: [{ Scope: 'Recording', Index: null, StartMs: 0, EndMs: 182000, SizeBytes: 1456000 }] }) })) } }),
+      route: '/dashboard/jobs/kfj_900',
+      path: '/dashboard/jobs/:id'
+    });
+    const badge = await screen.findByTestId('listening-badge');
+    expect(badge).toHaveTextContent('Full recording');
+    expect(badge.classList.contains('badge-success')).toBe(true);
+    expect(screen.getByText('1 clip sent')).toBeInTheDocument();
+    unmount();
+    open(listeningResult({ Listening: fallbackListening() }));
+    const fallback = await screen.findByTestId('listening-badge');
+    expect(fallback).toHaveTextContent('Not listened');
+    expect(fallback.classList.contains('badge-warning')).toBe(true);
+    expect(screen.getByText('The listening endpoint was unhealthy')).toBeInTheDocument();
+    expect(screen.getByText(/llama-server may still be loading its model/)).toBeInTheDocument();
+    expect(screen.queryByText(/clips sent/)).not.toBeInTheDocument();
+  });
+
+  it('shows measurements with units and copy buttons', async () => {
+    const user = userEvent.setup();
+    open(listeningResult());
+    await user.click(await screen.findByRole('tab', { name: 'Measurements' }));
+    expect(screen.getByText('Integrated loudness')).toBeInTheDocument();
+    expect(screen.getByText('-9.4 LUFS')).toBeInTheDocument();
+    expect(screen.getByText('5.1 LU')).toBeInTheDocument();
+    expect(screen.getByText('-0.2 dBTP')).toBeInTheDocument();
+    expect(screen.getByText('-11.8 dBFS')).toBeInTheDocument();
+    expect(screen.getByText('11.5 dB')).toBeInTheDocument();
+    expect(screen.getByText('3%')).toBeInTheDocument();
+    expect(screen.getByText('Stereo')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy Integrated loudness' })).toBeInTheDocument();
+  });
+
+  it('shows the section timeline and downloads a section as audio', async () => {
+    const user = userEvent.setup();
+    URL.createObjectURL = vi.fn(() => 'blob:x');
+    URL.revokeObjectURL = vi.fn();
+    const api = open(listeningResult());
+    await user.click(await screen.findByRole('tab', { name: /Sections/ }));
+    const bar = screen.getByRole('listbox', { name: /Sections of a 3 min recording/ });
+    fireEvent.keyDown(bar, { key: 'ArrowRight' });
+    expect(screen.getByRole('heading', { name: 'Section 2 of 3' })).toBeInTheDocument();
+    await user.click(screen.getAllByRole('button', { name: 'Download audio' })[0]);
+    await waitFor(() => expect(api.downloadSegment).toHaveBeenCalledWith({ Source: { Url: 'https://media.example.com/talk.mp3' }, StartMs: 60000, EndMs: 120000, Output: 'Audio', Format: 'mp3' }));
+  });
+
+  it('shows empty and error states on the new tabs', async () => {
+    const user = userEvent.setup();
+    const { unmount } = renderWithProviders(<JobDetailView />, {
+      auth: makeAuth({ apiClient: { getJob: vi.fn().mockResolvedValue(audioJob('Succeeded')), getJobResult: vi.fn().mockResolvedValue(audioResult()) } }),
+      route: '/dashboard/jobs/kfj_900',
+      path: '/dashboard/jobs/:id'
+    });
+    await user.click(await screen.findByRole('tab', { name: 'Measurements' }));
+    expect(screen.getByText('Measurements were turned off for this analysis.')).toBeInTheDocument();
+    await user.click(screen.getByRole('tab', { name: 'Sections' }));
+    expect(screen.getByText('Sections were not requested for this analysis.')).toBeInTheDocument();
+    unmount();
+    open({ ...audioResult(), Errors: ['Measure failed: ffmpeg exited with code 1.'], Sections: [] });
+    await user.click(await screen.findByRole('tab', { name: 'Measurements' }));
+    expect(screen.getByText('No measurements')).toBeInTheDocument();
+    await user.click(screen.getByRole('tab', { name: /Sections/ }));
+    expect(screen.getByText('Section detection found no sections.')).toBeInTheDocument();
   });
 });
 
@@ -223,6 +494,45 @@ describe('AnalyzeVideoView', () => {
       await waitFor(() => expect(api.getJobResult).toHaveBeenCalledWith('kfj_901'));
       expect(await screen.findByRole('tab', { name: /Scenes/ })).toHaveAttribute('aria-selected', 'true');
       expect(await screen.findByText('Title slide.')).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe('AnalyzeVideoView scene audio', () => {
+  it('sends scene audio by default, warns when the vision endpoint lacks audio input, and shows Listening on the result', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      const videoJob = (status) => audioJob(status, { Id: 'kfj_902', MediaKind: 'Video', SourceUrl: 'https://media.example.com/talk.mp4' });
+      const videoResult = { ...audioResult(), MediaKind: 'Video', Scenes: [{ Index: 0, StartMs: 0, EndMs: 4000, Results: {}, Fields: [], Keyframes: [] }], Listening: listening({ Mode: 'None', Listened: false, Reason: 'EndpointLacksAudioInput', Endpoint: null, Model: null, HeardMs: 0, Clips: [] }) };
+      const api = {
+        listEndpoints: vi.fn().mockResolvedValue(ENDPOINTS),
+        getSettings: vi.fn().mockResolvedValue(settingsResponse()),
+        analyzeVideo: vi.fn().mockResolvedValue({ status: 202, data: videoJob('Queued') }),
+        getJob: vi.fn().mockResolvedValue(videoJob('Succeeded')),
+        getJobResult: vi.fn().mockResolvedValue(videoResult)
+      };
+      renderWithProviders(<AnalyzeVideoView />, { auth: makeAuth({ apiClient: api }), route: '/dashboard/analyze/video' });
+      expect(screen.getByRole('checkbox', { name: "Send each scene's audio to the vision model" })).toBeChecked();
+      expect(await screen.findByTestId('scene-audio-warning')).toHaveTextContent('ollama-gemma3-4b cannot take audio input. Scenes will use frames and transcript only.');
+      await user.selectOptions(screen.getByLabelText('Vision endpoint'), 'llama-listen');
+      expect(screen.queryByTestId('scene-audio-warning')).not.toBeInTheDocument();
+      expect(screen.getByText(/llama-listen can take audio input/)).toBeInTheDocument();
+      await user.click(screen.getAllByText('Audio quality')[0]);
+      await user.selectOptions(screen.getByLabelText('Channels'), '2');
+      await user.type(screen.getByLabelText('Video URL'), 'https://media.example.com/talk.mp4');
+      await user.click(screen.getByRole('button', { name: 'Submit job' }));
+      await waitFor(() => expect(api.analyzeVideo).toHaveBeenCalled());
+      expect(api.analyzeVideo.mock.calls[0][0].Functions.Scenes.Audio).toEqual({ Enable: true, Rendition: { Channels: 2 } });
+      await act(async () => {
+        vi.advanceTimersByTime(1600);
+      });
+      await waitFor(() => expect(api.getJobResult).toHaveBeenCalledWith('kfj_902'));
+      const card = await screen.findByTestId('listening-card');
+      expect(within(card).getByTestId('listening-badge')).toHaveTextContent('Not listened');
+      expect(within(card).getByText('The endpoint cannot take audio input')).toBeInTheDocument();
     } finally {
       vi.useRealTimers();
     }

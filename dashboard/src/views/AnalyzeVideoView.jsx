@@ -8,7 +8,7 @@ import ContextEditor, { createContextRow } from '../components/ContextEditor';
 import PresetBar from '../components/PresetBar';
 import Icon from '../components/Icon';
 import { EmptyState, ErrorBanner } from '../components/States';
-import { MediaInput, ModelPicker, SnippetPanel, SummarizeOptions, toSummarizeSpec } from '../components/AnalysisParts';
+import { AudioQualityOptions, EMPTY_RENDITION, MediaInput, ModelPicker, SnippetPanel, SummarizeOptions, clampNumber, toRenditionSpec, toSummarizeSpec } from '../components/AnalysisParts';
 import AnalysisJobPanel, { useAnalysisJob } from '../components/AnalysisJobPanel';
 import useRemote from '../hooks/useRemote';
 import { createField, fromFieldSpec, toContextItems, toFieldSpec, validateFields } from '../utils/fields';
@@ -19,12 +19,6 @@ const LANGUAGE_PATTERN = /^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})?$/;
 
 const DEFAULT_SCENES = { Enable: true, Threshold: '0.30', MinSceneMs: '2000', MaxSceneMs: '60000', MaxScenes: '200', FramesPerScene: '3' };
 const DEFAULT_TRANSCRIBE = { Enable: true, Endpoint: '', Model: '', Language: '', Prompt: '' };
-
-function clampNumber(value, min, max, fallback, integer = true) {
-  const n = integer ? parseInt(value, 10) : parseFloat(value);
-  if (!Number.isFinite(n)) return fallback;
-  return Math.min(max, Math.max(min, n));
-}
 
 function NumberInput({ label, value, onChange, min, max, step = 1, help = null, disabled, error = null }) {
   const id = useId();
@@ -44,9 +38,11 @@ function NumberInput({ label, value, onChange, min, max, step = 1, help = null, 
 /** Video analysis: same builder as images plus scenes and transcription; submits a job. */
 function AnalyzeVideoView() {
   const { t } = useLocale();
-  const { apiClient, serverUrl } = useAuth();
+  const { apiClient, serverUrl, isAdmin } = useAuth();
   const { notify } = useToast();
   const endpoints = useRemote(() => apiClient.listEndpoints(), [apiClient]);
+  // Inference.DefaultVision and the Media.Listen* defaults are only visible with the admin key.
+  const settings = useRemote(() => apiClient.getSettings(), [apiClient], { enabled: !!isAdmin });
   const idBase = useId();
 
   const [media, setMedia] = useState({ mode: 'url', file: null, url: '' });
@@ -60,6 +56,8 @@ function AnalyzeVideoView() {
   const [sceneSummarize, setSceneSummarize] = useState({ ...DEFAULT_SUMMARIZE, MaxWords: 40 });
   const [sceneExtractEnable, setSceneExtractEnable] = useState(false);
   const [sceneFields, setSceneFields] = useState(() => [createField('Boolean', { Key: 'showsText', Prompt: t('samples.video.showsText') })]);
+  const [sceneAudio, setSceneAudio] = useState(true);
+  const [sceneRendition, setSceneRendition] = useState(EMPTY_RENDITION);
   const [transcribe, setTranscribe] = useState(DEFAULT_TRANSCRIBE);
   const [sampleFrames, setSampleFrames] = useState('8');
   const [includeKeyframeData, setIncludeKeyframeData] = useState(true);
@@ -102,7 +100,8 @@ function AnalyzeVideoView() {
           },
           FramesPerScene: clampNumber(scenes.FramesPerScene, 1, 10, 3),
           Summarize: toSummarizeSpec(sceneSummarize),
-          Extract: { Enable: scenes.Enable && sceneExtractEnable, Fields: scenes.Enable && sceneExtractEnable ? sceneFields.map(toFieldSpec) : [] }
+          Extract: { Enable: scenes.Enable && sceneExtractEnable, Fields: scenes.Enable && sceneExtractEnable ? sceneFields.map(toFieldSpec) : [] },
+          Audio: { Enable: scenes.Enable && sceneAudio }
         },
         Transcribe: { Enable: transcribe.Enable }
       }
@@ -113,6 +112,8 @@ function AnalyzeVideoView() {
       if (transcribe.Language.trim()) body.Functions.Transcribe.Language = transcribe.Language.trim();
       if (transcribe.Prompt.trim()) body.Functions.Transcribe.Prompt = transcribe.Prompt.trim();
     }
+    const sceneRenditionSpec = scenes.Enable && sceneAudio ? toRenditionSpec(sceneRendition) : null;
+    if (sceneRenditionSpec) body.Functions.Scenes.Audio.Rendition = sceneRenditionSpec;
     const ctx = toContextItems(context);
     if (ctx.length) body.Context = ctx;
     const m = toModelSelection(model);
@@ -120,7 +121,7 @@ function AnalyzeVideoView() {
     const tm = toModelSelection(textModel);
     if (tm) body.TextModel = tm;
     return body;
-  }, [media, sampleFrames, includeKeyframeData, includeProperties, summarize, extractEnable, fields, scenes, sceneSummarize, sceneExtractEnable, sceneFields, transcribe, context, model, textModel]);
+  }, [media, sampleFrames, includeKeyframeData, includeProperties, summarize, extractEnable, fields, scenes, sceneSummarize, sceneExtractEnable, sceneFields, sceneAudio, sceneRendition, transcribe, context, model, textModel]);
 
   const submit = async () => {
     setShowErrors(true);
@@ -151,6 +152,8 @@ function AnalyzeVideoView() {
     sceneSummarize,
     sceneExtractEnable,
     sceneFields: sceneFields.map(toFieldSpec),
+    sceneAudio,
+    sceneRendition,
     transcribe,
     sampleFrames,
     includeKeyframeData,
@@ -167,6 +170,8 @@ function AnalyzeVideoView() {
     setSceneSummarize({ ...DEFAULT_SUMMARIZE, ...(c.sceneSummarize || {}) });
     setSceneExtractEnable(!!c.sceneExtractEnable);
     setSceneFields((c.sceneFields || []).map(fromFieldSpec));
+    setSceneAudio(c.sceneAudio !== false);
+    setSceneRendition({ ...EMPTY_RENDITION, ...(c.sceneRendition || {}) });
     setTranscribe({ ...DEFAULT_TRANSCRIBE, ...(c.transcribe || {}) });
     setSampleFrames(c.sampleFrames || '8');
     setIncludeKeyframeData(c.includeKeyframeData !== false);
@@ -175,6 +180,10 @@ function AnalyzeVideoView() {
   };
 
   const transcriptionEndpoints = (endpoints.data || []).filter((e) => e.Kind === 'Transcription' && e.Active);
+  const settingsData = settings.data && settings.data.Settings ? settings.data.Settings : null;
+  const visionName = model.Endpoint || (settingsData && settingsData.Inference ? settingsData.Inference.DefaultVision : null);
+  const visionEndpoint = visionName ? (endpoints.data || []).find((e) => String(e.Name).toLowerCase() === String(visionName).toLowerCase()) || null : null;
+  const visionHearsAudio = visionEndpoint ? !!visionEndpoint.SupportsAudioInput : null;
   const disabled = submitting;
 
   return (
@@ -251,6 +260,25 @@ function AnalyzeVideoView() {
                 <input type="checkbox" checked={includeKeyframeData} onChange={(e) => setIncludeKeyframeData(e.target.checked)} disabled={disabled} />
                 <span>{t('analyzeVideo.includeKeyframeData')}</span>
               </label>
+              <div className="section-label">{t('analyzeVideo.sceneAudio.title')}</div>
+              <label className="toggle-row">
+                <input type="checkbox" checked={sceneAudio} onChange={(e) => setSceneAudio(e.target.checked)} disabled={disabled} />
+                <span>{t('analyzeVideo.sceneAudio.enable')}</span>
+              </label>
+              {sceneAudio ? (
+                <>
+                  {visionHearsAudio === false ? (
+                    <p className="help-text text-warning" data-testid="scene-audio-warning">
+                      {t('analyzeVideo.sceneAudio.noAudioInput', { name: visionEndpoint.Name })}
+                    </p>
+                  ) : (
+                    <p className="help-text">{visionHearsAudio ? t('analyzeVideo.sceneAudio.help', { name: visionEndpoint.Name }) : t('analyzeVideo.sceneAudio.helpUnknown')}</p>
+                  )}
+                  <AudioQualityOptions value={sceneRendition} onChange={setSceneRendition} disabled={disabled} defaults={settingsData ? settingsData.Media : null} flacRejected={!visionEndpoint || visionEndpoint.Provider === 'OpenAiCompatible'} />
+                </>
+              ) : (
+                <p className="help-text">{t('analyzeVideo.sceneAudio.offHelp')}</p>
+              )}
             </>
           ) : null}
         </section>
