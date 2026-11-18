@@ -4,7 +4,7 @@
     <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
     <RootNamespace>Keyframe.Sdk</RootNamespace>
     <AssemblyName>Keyframe.Sdk</AssemblyName>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <Authors>Joel Christner</Authors>
     <Copyright>(c)2026 Joel Christner</Copyright>
     <Description>C# client SDK for Keyframe: summaries and typed metadata fields extracted from images and video.</Description>
@@ -22,6 +22,9 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>glyph.png</PackageIcon>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
   </PropertyGroup>
 
   <ItemGroup>
