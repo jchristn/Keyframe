@@ -24,17 +24,17 @@ This image runs the Keyframe REST server with ffmpeg and ffprobe included. Sourc
 
 ## Screenshots
 
+**Typed fields from an image.** A photo of a dog gives `animalCount` 1, `animals` [dog], `colors` [yellow, white, green], and `isOutdoors` true, next to a summary.
+
+<img src="https://raw.githubusercontent.com/jchristn/Keyframe/main/assets/screenshots/analyze-image.png" alt="Image analysis result with a summary and typed fields: animalCount 1, animals dog, colors yellow white green, isOutdoors true" width="100%" />
+
+**Typed fields from a video.** For a clip of Big Buck Bunny, the whole-video results report `animalCount` 2, `animals` [rabbit, butterfly], `colors`, and `mood`, with each value's type and validity.
+
+<img src="https://raw.githubusercontent.com/jchristn/Keyframe/main/assets/screenshots/video-fields.png" alt="Video job overview with whole-video results and a fields table: animalCount 2, animals rabbit and butterfly, colors, mood Calm" width="100%" />
+
 **Audio results.** The Listening card shows what the model heard and every clip sent; Measurements reports loudness, levels, and silence with no model calls.
 
 <img src="https://raw.githubusercontent.com/jchristn/Keyframe/main/assets/screenshots/audio-result.png" alt="Audio result with the Listening card listing four clips and the Measurements tab showing loudness and level values" width="100%" />
-
-**Sections.** The recording is split at silences. Each section heard its own clip and has its own results and transcript slice.
-
-<img src="https://raw.githubusercontent.com/jchristn/Keyframe/main/assets/screenshots/audio-sections.png" alt="Section timeline of three sections with the second selected, its listened clip, summary, and transcript" width="100%" />
-
-**Video jobs.** Scenes come from ffmpeg cuts with keyframes per scene, and the Listening card says whether the vision model heard the scene audio.
-
-<img src="https://raw.githubusercontent.com/jchristn/Keyframe/main/assets/screenshots/video-job.png" alt="Video job detail with a three-scene timeline, keyframes, and a Listening card" width="100%" />
 
 The full tour of the dashboard is in the [README on GitHub](https://github.com/jchristn/Keyframe#screenshots).
 

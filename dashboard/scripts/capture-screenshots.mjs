@@ -1,7 +1,9 @@
 // Captures the README screenshots (AUDIO_ENHANCEMENTS_PLAN.md section 5.11): drives the dashboard
 // with Playwright against a running Keyframe server, seeds the analyses it needs from the factory
 // samples, waits for the listening endpoint to report healthy when one is configured, and writes
-// ten PNGs at 1280 by 800 in the light theme. Rerun it to regenerate every image.
+// eleven PNGs at 1280 by 800 in the light theme. Rerun it to regenerate every image. The image and video
+// screenshots use real photos and film from test-data so the extracted fields (animalCount, colors, and
+// so on) have something to describe.
 //
 // Usage (from dashboard/):
 //   KEYFRAME_KEY=keyframeadmin node scripts/capture-screenshots.mjs
@@ -11,7 +13,9 @@
 //   KEYFRAME_KEY        admin key (required; Analytics and Settings need it)
 //   DASHBOARD_URL       dashboard URL (default http://127.0.0.1:8701)
 //   SCREENSHOT_DIR      output directory (default ../assets/screenshots)
-//   SAMPLES_DIR         directory holding sample.jpg, sample.mp4, sample.mp3 (default ../docker/factory/samples)
+//   SAMPLES_DIR         directory holding sample.mp3 (default ../docker/factory/samples)
+//   IMAGE_FILE          image for the field-extraction screenshot (default ../test-data/images/dog.jpg)
+//   VIDEO_FILE          video for the video screenshots (default ../test-data/video/big-buck-bunny-45s.mp4)
 //   LISTEN_TIMEOUT_MS   how long to wait for the listening endpoint to become healthy (default 900000)
 //   JOB_TIMEOUT_MS      how long to wait for each seeded job (default 900000)
 //   PLAYWRIGHT_MODULE   path to a playwright package directory, when 'playwright' is not installed here
@@ -33,6 +37,8 @@ const KEY = process.env.KEYFRAME_KEY || '';
 const DASHBOARD_URL = (process.env.DASHBOARD_URL || 'http://127.0.0.1:8701').replace(/\/+$/, '');
 const OUT_DIR = absolute(process.env.SCREENSHOT_DIR || join(repoRoot, 'assets', 'screenshots'));
 const SAMPLES_DIR = absolute(process.env.SAMPLES_DIR || join(repoRoot, 'docker', 'factory', 'samples'));
+const IMAGE_FILE = absolute(process.env.IMAGE_FILE || join(repoRoot, 'test-data', 'images', 'dog.jpg'));
+const VIDEO_FILE = absolute(process.env.VIDEO_FILE || join(repoRoot, 'test-data', 'video', 'big-buck-bunny-45s.mp4'));
 const LISTEN_TIMEOUT_MS = Number(process.env.LISTEN_TIMEOUT_MS || 900000);
 const JOB_TIMEOUT_MS = Number(process.env.JOB_TIMEOUT_MS || 900000);
 const VIEWPORT = { width: 1280, height: 800 };
@@ -82,6 +88,17 @@ function sample(name, mediaType) {
   return { Data: readFileSync(join(SAMPLES_DIR, name)).toString('base64'), MediaType: mediaType };
 }
 
+function media(path) {
+  return { Data: readFileSync(path).toString('base64') };
+}
+
+const IMAGE_FIELDS = [
+  { Key: 'animalCount', Type: 'Integer', Prompt: 'How many animals do you see?' },
+  { Key: 'animals', Type: 'StringList', Prompt: 'Which animals do you see?' },
+  { Key: 'colors', Type: 'StringList', Prompt: 'What colors do you see?' },
+  { Key: 'isOutdoors', Type: 'Boolean', Prompt: 'Is the photo taken outdoors?' }
+];
+
 async function waitForServer() {
   const until = Date.now() + 60000;
   for (;;) {
@@ -130,24 +147,35 @@ async function waitForJob(id) {
 }
 
 async function seed() {
-  log('seeding an image analysis');
+  log('seeding an image analysis with typed fields');
   await api('POST', '/v1.0/image', {
-    Image: sample('sample.jpg', 'image/jpeg'),
-    Functions: {
-      Summarize: { Enable: true, MaxWords: 60 },
-      Extract: { Enable: true, Fields: [{ Key: 'objects', Type: 'StringList', Prompt: 'Objects you can see.' }, { Key: 'hasPeople', Type: 'Boolean', Prompt: 'Are there people?' }] }
-    }
+    Image: media(IMAGE_FILE),
+    Functions: { Summarize: { Enable: true, MaxWords: 60 }, Extract: { Enable: true, Fields: IMAGE_FIELDS } }
   });
 
-  log('seeding a video job with scenes and scene audio');
+  log('seeding a video job with typed fields, scenes, and per-scene fields');
   const video = await api('POST', '/v1.0/video', {
-    Video: sample('sample.mp4', 'video/mp4'),
+    Video: media(VIDEO_FILE),
     IncludeKeyframeData: true,
     Functions: {
       Summarize: { Enable: true, MaxWords: 80 },
-      Extract: { Enable: true, Fields: [{ Key: 'topics', Type: 'StringList', Prompt: 'Topics covered.' }] },
-      Scenes: { Enable: true, Detection: { MinSceneMs: 2000 }, Summarize: { Enable: true, MaxWords: 30 }, Audio: { Enable: true } },
-      Transcribe: { Enable: true }
+      Extract: {
+        Enable: true,
+        Fields: [
+          { Key: 'animalCount', Type: 'Integer', Prompt: 'How many different animals did you see in the video?' },
+          { Key: 'animals', Type: 'StringList', Prompt: 'Which animals did you see in the video?' },
+          { Key: 'colors', Type: 'StringList', Prompt: 'What colors did you see in the video?' },
+          { Key: 'mood', Type: 'Enum', Options: ['Calm', 'Playful', 'Tense', 'Sad'], Prompt: 'What is the overall mood?' }
+        ]
+      },
+      Scenes: {
+        Enable: true,
+        Detection: { MinSceneMs: 4000 },
+        Summarize: { Enable: true, MaxWords: 25 },
+        Extract: { Enable: true, Fields: [{ Key: 'animals', Type: 'StringList', Prompt: 'Which animals are visible in this scene?' }] },
+        Audio: { Enable: true }
+      },
+      Transcribe: { Enable: false }
     }
   });
 
@@ -251,11 +279,31 @@ async function main() {
 
     await capture(page, 'analyze-image.png', async () => {
       await go(page, '/dashboard/analyze/image');
-      await page.locator('input[type="file"]').first().setInputFiles(join(SAMPLES_DIR, 'sample.jpg'));
+      await page.locator('input[type="file"]').first().setInputFiles(IMAGE_FILE);
+      const extract = page.getByRole('checkbox', { name: 'Extract typed fields' });
+      if (!(await extract.isChecked())) await extract.check();
+      // Field rows have ids ending in key, type, and prompt; select by id because the labels carry a hidden required mark.
+      const rows = page.locator('form.analyze-form [data-testid="field-row"]');
+      const keys = rows.locator('input[id$="key"]');
+      for (let i = 0; i < IMAGE_FIELDS.length; i++) {
+        const f = IMAGE_FIELDS[i];
+        if ((await keys.count()) <= i) await page.getByRole('button', { name: 'Add field' }).click();
+        await keys.nth(i).waitFor();
+        await keys.nth(i).fill(f.Key);
+        await rows.nth(i).locator('select[id$="type"]').selectOption(f.Type);
+        await rows.nth(i).locator('[id$="prompt"]').fill(f.Prompt);
+      }
       await page.locator('form.analyze-form button[type="submit"]').click();
-      await page.getByRole('tab', { name: 'Telemetry' }).first().waitFor({ timeout: JOB_TIMEOUT_MS });
-      await page.getByRole('tab', { name: 'Telemetry' }).first().click();
+      await page.getByRole('tab', { name: 'Results' }).first().waitFor({ timeout: JOB_TIMEOUT_MS });
+      await page.getByRole('tab', { name: 'Results' }).first().click();
       await scrollTo(page, '.analyze-result');
+    });
+
+    await capture(page, 'video-fields.png', async () => {
+      await go(page, '/dashboard/jobs/' + encodeURIComponent(seeded.videoJobId));
+      await page.getByRole('tab', { name: /Overview/ }).click();
+      await page.locator('.fields-table, table').first().waitFor();
+      await scrollTo(page, '.tabs');
     });
 
     await capture(page, 'video-job.png', async () => {
@@ -321,7 +369,7 @@ async function main() {
   } finally {
     await browser.close();
   }
-  log('done: ten screenshots in ' + OUT_DIR);
+  log('done: eleven screenshots in ' + OUT_DIR);
 }
 
 main().catch((err) => {

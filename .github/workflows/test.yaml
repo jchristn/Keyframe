@@ -57,6 +57,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # The three runners (automated, xUnit, NUnit) open their own connection pools against the same server, which
+      # exceeds PostgreSQL's default of 100 connections ("53300: sorry, too many clients already"). Service containers
+      # take no server flags, so raise the limit with ALTER SYSTEM and restart the container before any test runs.
+      - name: Raise the PostgreSQL connection limit
+        run: |
+          docker exec ${{ job.services.postgresql.id }} psql -U postgres -c "ALTER SYSTEM SET max_connections = 500;"
+          docker restart ${{ job.services.postgresql.id }}
+          for i in $(seq 1 30); do
+            if docker exec ${{ job.services.postgresql.id }} pg_isready -h 127.0.0.1 -U postgres > /dev/null; then break; fi
+            sleep 2
+          done
+          docker exec ${{ job.services.postgresql.id }} psql -U postgres -tAc "SHOW max_connections;"
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:

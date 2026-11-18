@@ -29,17 +29,21 @@ Most media metadata work ends up as a pile of one-off scripts: something to pull
 
 <br />
 
+**Typed fields from an image.** Ask questions as fields and get typed answers back. Here a photo of a dog gives `animalCount` 1 (Integer), `animals` [dog] and `colors` [yellow, white, green] (string lists), and `isOutdoors` true (Boolean), next to a summary.
+
+<img src="assets/screenshots/analyze-image.png" alt="Image analysis result with a summary and typed fields: animalCount 1, animals dog, colors yellow white green, isOutdoors true" width="100%" />
+
+**Typed fields from a video.** The same fields work on video. For a 45-second clip of Big Buck Bunny, the whole-video results report `animalCount` 2, `animals` [rabbit, butterfly], `colors` [white, green, blue, pink, red], and `mood` Calm (Enum), and the Fields table shows each value's type, validity, and the raw model output.
+
+<img src="assets/screenshots/video-fields.png" alt="Video job overview with whole-video results and a fields table: animalCount 2, animals rabbit and butterfly, colors white green blue pink red, mood Calm" width="100%" />
+
+**Scenes.** Scene boundaries come from ffmpeg cuts, with keyframes per scene and per-scene summaries and fields. The Listening card states plainly when the vision model could not hear the scene audio.
+
+<img src="assets/screenshots/video-job.png" alt="Video job scenes tab with six Big Buck Bunny scenes, keyframes, and a Listening card reporting that the endpoint cannot take audio" width="100%" />
+
 **Home.** The landing page shows request volume, success rate, latency, active jobs, endpoint health, and a request activity chart.
 
 <img src="assets/screenshots/home.png" alt="Keyframe dashboard home page with request, latency, job, and endpoint health tiles" width="100%" />
-
-**Analyze an image.** One call returns a summary and typed fields; the telemetry tab shows every stage and model call with timings and tokens.
-
-<img src="assets/screenshots/analyze-image.png" alt="Image analysis result showing the telemetry waterfall and per-call model statistics" width="100%" />
-
-**Video jobs.** Scenes come from ffmpeg cuts with keyframes per scene. The Listening card states plainly when the vision model could not hear the scene audio.
-
-<img src="assets/screenshots/video-job.png" alt="Video job detail with a three-scene timeline, keyframes, and a Listening card reporting that the endpoint cannot take audio" width="100%" />
 
 **Analyze audio.** Listening is on by default: pick the listening endpoint, see its health, and tune excerpts and audio quality.
 
@@ -68,6 +72,8 @@ Most media metadata work ends up as a pile of one-off scripts: something to pull
 **Settings.** Settings are typed, clamped, and marked Live or Restart; the Media group holds the listening and measurement defaults.
 
 <img src="assets/screenshots/settings.png" alt="Settings page Media group with listening audio defaults and measurement thresholds, each marked Live" width="100%" />
+
+Captured against a local stack: Ollama `gemma3:4b` and `gpt-oss:20b` for vision and text, Whisper `faster-whisper-small` for transcription, and Voxtral Mini 3B on llama-server for listening. Media credits: the dog photo is [YellowLabradorLooking_new.jpg](https://commons.wikimedia.org/wiki/File:YellowLabradorLooking_new.jpg) (derivative work by Djmirko, CC BY-SA 3.0), and the video is from [Big Buck Bunny](https://peach.blender.org/) ((c) Blender Foundation, CC BY 3.0); both are in `test-data`.
 
 </details>
 
